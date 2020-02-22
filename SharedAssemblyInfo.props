@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <Authors>John Gietzen</Authors>
+    <Copyright>Copyright © 2020 $(Authors)</Copyright>
+    <Product>MediaLibrary</Product>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+</Project>
