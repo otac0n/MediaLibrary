@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MediaLibrary": {
+      "commandName": "Project",
+      "commandLineArgs": "-p %USERPROFILE%\\AppData\\Local\\MediaLibrary.test.db"
+    }
+  }
+}

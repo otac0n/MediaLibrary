@@ -2,14 +2,16 @@
 
 namespace MediaLibrary.Tests
 {
+    using System.IO;
     using Xunit;
 
-    public class ProgramTests
+    public class MediaIndexTests
     {
         [Fact]
         public void Who_When_What()
         {
-            var subject = new Program();
+            var testIndexPath = Path.Combine(Path.GetTempPath(), "TestDatabase.db");
+            var subject = new MediaIndex(testIndexPath);
         }
     }
 }
