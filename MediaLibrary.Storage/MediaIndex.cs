@@ -5,7 +5,11 @@ namespace MediaLibrary.Storage
     using System;
     using System.Collections.Generic;
     using System.Data.SQLite;
+    using System.Globalization;
+    using System.IO;
     using System.Linq;
+    using System.Security.Cryptography;
+    using System.Text;
     using System.Threading.Tasks;
     using Dapper;
 
@@ -74,6 +78,39 @@ namespace MediaLibrary.Storage
             {
                 var indexedPaths = this.GetIndexedPaths(conn);
             }
+        }
+
+        private static async Task<string> HashFileAsync(string path)
+        {
+            byte[] hash;
+            using (var hashAlgorithm = new SHA256Managed())
+            using (var file = File.OpenRead(path))
+            {
+                var buffer = new byte[4096];
+                hashAlgorithm.Initialize();
+                while (true)
+                {
+                    var count = await file.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+                    if (count == 0)
+                    {
+                        hash = hashAlgorithm.TransformFinalBlock(buffer, 0, 0);
+                        break;
+                    }
+                    else
+                    {
+                        hashAlgorithm.TransformBlock(buffer, 0, count, buffer, 0);
+                    }
+                }
+            }
+
+            var sb = new StringBuilder(hash.Length * 2);
+
+            for (var i = 0; i < hash.Length; i++)
+            {
+                sb.Append(hash[i].ToString("x2", CultureInfo.InvariantCulture));
+            }
+
+            return sb.ToString();
         }
 
         private async Task<List<string>> GetIndexedPaths(SQLiteConnection conn)
