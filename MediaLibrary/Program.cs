@@ -45,7 +45,7 @@ namespace MediaLibrary
         {
             if (string.IsNullOrWhiteSpace(options.IndexPath))
             {
-                options.IndexPath = Path.Combine(Environment.GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify), "MediaLibrary.db");
+                options.IndexPath = Path.Combine(Environment.GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify), "MediaLibrary", "MediaLibrary.db");
             }
         }
 

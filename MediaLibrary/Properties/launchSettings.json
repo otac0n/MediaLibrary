@@ -2,7 +2,7 @@
   "profiles": {
     "MediaLibrary": {
       "commandName": "Project",
-      "commandLineArgs": "-p %USERPROFILE%\\AppData\\Local\\MediaLibrary.test.db"
+      "commandLineArgs": "-p %USERPROFILE%\\AppData\\Local\\MediaLibrary\\MediaLibrary.test.db"
     }
   }
 }
