@@ -32,7 +32,7 @@ namespace MediaLibrary
             }
 
             var path = new MediaIndex(options.IndexPath);
-            path.Rescan(new ActionProgress<MediaIndex.RescanProgress>(progress =>
+            path.Rescan(OnProgress.Do<MediaIndex.RescanProgress>(progress =>
             {
                 Console.Write(new string('\b', Console.CursorLeft));
                 Console.WriteLine($"{progress.Estimate:p0} ({progress.PathsDiscovered}/{progress.PathsProcessed}{(progress.DiscoveryComplete ? string.Empty : "?")})");
@@ -53,18 +53,6 @@ namespace MediaLibrary
         {
             [Option('p', "index-path", HelpText = "The path of the index database.")]
             public string IndexPath { get; set; }
-        }
-
-        private class ActionProgress<T> : IProgress<T>
-        {
-            private readonly Action<T> action;
-
-            public ActionProgress(Action<T> action)
-            {
-                this.action = action;
-            }
-
-            public void Report(T value) => this.action(value);
         }
     }
 }
