@@ -17,13 +17,6 @@ namespace MediaLibrary
                 .WithParsed(o =>
                 {
                     PopulateDefaults(options = o);
-                })
-                .WithNotParsed(errors =>
-                {
-                    foreach (var error in errors)
-                    {
-                        Console.Write(error);
-                    }
                 });
 
             if (options == null)
