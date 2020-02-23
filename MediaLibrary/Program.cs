@@ -31,8 +31,11 @@ namespace MediaLibrary
                 return 1;
             }
 
-            var path = new MediaIndex(options.IndexPath);
-            path.Rescan(OnProgress.Do<MediaIndex.RescanProgress>(progress =>
+            Directory.CreateDirectory(Path.GetDirectoryName(options.IndexPath));
+
+            var index = new MediaIndex(options.IndexPath);
+            index.Initialize().Wait();
+            index.Rescan(OnProgress.Do<MediaIndex.RescanProgress>(progress =>
             {
                 Console.Write(new string('\b', Console.CursorLeft));
                 Console.WriteLine($"{progress.Estimate:p0} ({progress.PathsDiscovered}/{progress.PathsProcessed}{(progress.DiscoveryComplete ? string.Empty : "?")})");

@@ -26,7 +26,7 @@ namespace MediaLibrary.Storage
             }
         }
 
-        public async Task<SQLiteConnection> GetConnection(bool createSchema = false)
+        public async Task<SQLiteConnection> GetConnection()
         {
             var connectionString = new SQLiteConnectionStringBuilder
             {
@@ -39,11 +39,6 @@ namespace MediaLibrary.Storage
                 connection = new SQLiteConnection(connectionString.ToString());
                 await connection.OpenAsync().ConfigureAwait(false);
 
-                if (createSchema)
-                {
-                    await connection.ExecuteAsync(Queries.CreateSchema).ConfigureAwait(false);
-                }
-
                 var result = connection;
                 connection = null;
                 return result;
@@ -54,6 +49,14 @@ namespace MediaLibrary.Storage
                 {
                     connection.Dispose();
                 }
+            }
+        }
+
+        public async Task Initialize()
+        {
+            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            {
+                await conn.ExecuteAsync(Queries.CreateSchema).ConfigureAwait(false);
             }
         }
 
