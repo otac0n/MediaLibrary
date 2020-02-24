@@ -33,11 +33,12 @@ namespace MediaLibrary.Storage
             await this.RescanIndexedPath(path, progress).ConfigureAwait(false);
         }
 
-        public async Task<SQLiteConnection> GetConnection()
+        public async Task<SQLiteConnection> GetConnection(bool readOnly = false)
         {
             var connectionString = new SQLiteConnectionStringBuilder
             {
                 DataSource = this.indexPath,
+                ReadOnly = readOnly,
             };
 
             SQLiteConnection connection = null;
@@ -128,7 +129,7 @@ namespace MediaLibrary.Storage
 
         private async Task<FilePath> GetFilePath(string path)
         {
-            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            using (var conn = await this.GetConnection(readOnly: true).ConfigureAwait(false))
             {
                 return (await conn.QueryAsync<FilePath>(Queries.GetFilePathByPath, new { Path = path }).ConfigureAwait(false)).SingleOrDefault();
             }
@@ -136,7 +137,7 @@ namespace MediaLibrary.Storage
 
         private async Task<FilePath> GetFilePaths(string hash)
         {
-            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            using (var conn = await this.GetConnection(readOnly: true).ConfigureAwait(false))
             {
                 return (await conn.QueryAsync<FilePath>(Queries.GetFilePathsByHash, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault();
             }
@@ -144,7 +145,7 @@ namespace MediaLibrary.Storage
 
         private async Task<List<string>> GetIndexedPaths()
         {
-            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            using (var conn = await this.GetConnection(readOnly: true).ConfigureAwait(false))
             {
                 return (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList();
             }
@@ -238,7 +239,7 @@ namespace MediaLibrary.Storage
         private async Task UpdateIndex(string query, object param = null)
         {
             using (await this.writeLock.LockAsync().ConfigureAwait(false))
-            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
             {
                 await conn.ExecuteAsync(query, param).ConfigureAwait(false);
             }
