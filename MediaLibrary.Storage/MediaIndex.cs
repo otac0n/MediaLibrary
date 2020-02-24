@@ -6,6 +6,7 @@ namespace MediaLibrary.Storage
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Data.SQLite;
+    using System.Diagnostics;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -150,11 +151,16 @@ namespace MediaLibrary.Storage
             var queue = new ConcurrentQueue<string>();
             var pendingTasks = new List<Task>();
 
-            void ReportProgress()
+            var progressTimer = Stopwatch.StartNew();
+            void ReportProgress(bool force = false)
             {
                 lock (sync)
                 {
-                    progress?.Report(RescanProgress.Aggregate(ref lastProgress, new RescanProgress(0, discovered, processed, discoveryComplete)));
+                    if (force || progressTimer.Elapsed.TotalMilliseconds > 250)
+                    {
+                        progress?.Report(RescanProgress.Aggregate(ref lastProgress, new RescanProgress(0, discovered, processed, discoveryComplete)));
+                        progressTimer.Restart();
+                    }
                 }
             }
 
@@ -164,12 +170,9 @@ namespace MediaLibrary.Storage
                 {
                     foreach (var file in Directory.EnumerateFiles(path))
                     {
-                        if (Interlocked.Increment(ref discovered) % 100 == 0)
-                        {
-                            ReportProgress();
-                        }
-
+                        Interlocked.Increment(ref discovered);
                         queue.Enqueue(file);
+                        ReportProgress();
                     }
                 }
                 finally
@@ -177,7 +180,7 @@ namespace MediaLibrary.Storage
                     discoveryComplete = true;
                 }
 
-                ReportProgress();
+                ReportProgress(force: true);
             });
 
             var populateTask = Task.Run(async () =>
@@ -192,24 +195,22 @@ namespace MediaLibrary.Storage
                         }
                         else
                         {
-                            await Task.Delay(100).ConfigureAwait(false);
+                            await Task.Delay(TimeSpan.FromMilliseconds(10)).ConfigureAwait(false);
                             continue;
                         }
                     }
 
                     pendingTasks.Add(this.RescanFile(file).ContinueWith(result =>
                     {
-                        if (Interlocked.Increment(ref processed) % 100 == 0)
-                        {
-                            ReportProgress();
-                        }
+                        Interlocked.Increment(ref processed);
+                        ReportProgress();
                     }));
                 }
             });
 
             await Task.WhenAll(enumerateTask, populateTask).ConfigureAwait(false);
             await Task.WhenAll(pendingTasks).ConfigureAwait(false);
-            ReportProgress();
+            ReportProgress(force: true);
         }
 
         private async Task UpdateIndex(string query, object param = null)
