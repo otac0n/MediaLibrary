@@ -20,7 +20,7 @@ namespace MediaLibrary.Storage
     public class MediaIndex
     {
         private readonly string indexPath;
-        private AsyncLock writeLock = new AsyncLock();
+        private AsyncLock dbLock = new AsyncLock();
 
         public MediaIndex(string indexPath)
         {
@@ -131,27 +131,24 @@ namespace MediaLibrary.Storage
             return sb.ToString();
         }
 
-        private async Task<FilePath> GetFilePath(string path)
-        {
-            using (var conn = await this.GetConnection(readOnly: true).ConfigureAwait(false))
-            {
-                return (await conn.QueryAsync<FilePath>(Queries.GetFilePathByPath, new { Path = path }).ConfigureAwait(false)).SingleOrDefault();
-            }
-        }
+        private Task<FilePath> GetFilePath(string path) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<FilePath>(Queries.GetFilePathByPath, new { Path = path }).ConfigureAwait(false)).SingleOrDefault());
 
-        private async Task<FilePath> GetFilePaths(string hash)
-        {
-            using (var conn = await this.GetConnection(readOnly: true).ConfigureAwait(false))
-            {
-                return (await conn.QueryAsync<FilePath>(Queries.GetFilePathsByHash, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault();
-            }
-        }
+        private Task<FilePath> GetFilePaths(string hash) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<FilePath>(Queries.GetFilePathsByHash, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault());
 
-        private async Task<List<string>> GetIndexedPaths()
+        private Task<List<string>> GetIndexedPaths() =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList());
+
+        private async Task<T> QueryIndex<T>(Func<SQLiteConnection, Task<T>> query)
         {
-            using (var conn = await this.GetConnection(readOnly: true).ConfigureAwait(false))
+            using (await this.dbLock.LockAsync().ConfigureAwait(false))
+            using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
             {
-                return (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList();
+                return await query(conn).ConfigureAwait(false);
             }
         }
 
@@ -242,7 +239,7 @@ namespace MediaLibrary.Storage
 
         private async Task UpdateIndex(string query, object param = null)
         {
-            using (await this.writeLock.LockAsync().ConfigureAwait(false))
+            using (await this.dbLock.LockAsync().ConfigureAwait(false))
             using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
             {
                 await conn.ExecuteAsync(query, param).ConfigureAwait(false);
