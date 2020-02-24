@@ -4,12 +4,14 @@ namespace MediaLibrary
 {
     using System;
     using System.IO;
+    using System.Windows.Forms;
     using CommandLine;
     using MediaLibrary.Storage;
     using static System.Environment;
 
     internal class Program
     {
+        [STAThread]
         public static int Main(string[] args)
         {
             Options options = null;
@@ -27,13 +29,10 @@ namespace MediaLibrary
             Directory.CreateDirectory(Path.GetDirectoryName(options.IndexPath));
 
             var index = new MediaIndex(options.IndexPath);
-            index.Initialize().Wait();
-            index.Rescan(OnProgress.Do<MediaIndex.RescanProgress>(progress =>
-            {
-                Console.Write(new string('\b', Console.CursorLeft));
-                Console.WriteLine($"{progress.Estimate:p0} ({progress.PathsDiscovered}/{progress.PathsProcessed}{(progress.DiscoveryComplete ? string.Empty : "?")})");
-            })).Wait();
-            Console.WriteLine();
+
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new MainForm(index));
             return 0;
         }
 
