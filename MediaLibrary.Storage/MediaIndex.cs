@@ -3,6 +3,7 @@
 namespace MediaLibrary.Storage
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Data.SQLite;
     using System.Globalization;
@@ -10,6 +11,7 @@ namespace MediaLibrary.Storage
     using System.Linq;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Dapper;
 
@@ -27,6 +29,7 @@ namespace MediaLibrary.Storage
             using (var conn = await this.GetConnection().ConfigureAwait(false))
             {
                 await conn.ExecuteAsync(Queries.AddIndexedPath, new { Path = path }).ConfigureAwait(false);
+                await this.RescanIndexedPath(path, progress).ConfigureAwait(false);
             }
         }
 
@@ -76,7 +79,25 @@ namespace MediaLibrary.Storage
         {
             using (var conn = await this.GetConnection().ConfigureAwait(false))
             {
-                var indexedPaths = this.GetIndexedPaths(conn);
+                var indexedPaths = await this.GetIndexedPaths(conn).ConfigureAwait(false);
+                var progresses = new RescanProgress[indexedPaths.Count];
+                var tasks = new Task[indexedPaths.Count];
+
+                var progressSync = new object();
+                var lastProgress = 0.0;
+                for (var i = 0; i < indexedPaths.Count; i++)
+                {
+                    var p = i; // Closure copy.
+                    progresses[p] = new RescanProgress(0, 0, 0, false);
+                    tasks[p] = this.RescanIndexedPath(indexedPaths[p], progress == null ? null : OnProgress.Do<RescanProgress>(prog =>
+                    {
+                        lock (progressSync)
+                        {
+                            progresses[p] = prog;
+                            progress?.Report(RescanProgress.Aggregate(ref lastProgress, progresses));
+                        }
+                    }));
+                }
             }
         }
 
@@ -118,6 +139,83 @@ namespace MediaLibrary.Storage
             return (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList();
         }
 
+        private async Task RescanFile(string path)
+        {
+            var hash = await HashFileAsync(path).ConfigureAwait(false);
+        }
+
+        private async Task RescanIndexedPath(string path, IProgress<RescanProgress> progress = null)
+        {
+            var sync = new object();
+            var lastProgress = 0.0;
+            var discoveryComplete = false;
+            var discovered = 0;
+            var processed = 0;
+            var queue = new ConcurrentQueue<string>();
+            var pendingTasks = new List<Task>();
+
+            void ReportProgress()
+            {
+                lock (sync)
+                {
+                    progress?.Report(RescanProgress.Aggregate(ref lastProgress, new RescanProgress(0, discovered, processed, discoveryComplete)));
+                }
+            }
+
+            var enumerateTask = Task.Run(() =>
+            {
+                try
+                {
+                    foreach (var file in Directory.EnumerateFiles(path))
+                    {
+                        if (Interlocked.Increment(ref discovered) % 100 == 0)
+                        {
+                            ReportProgress();
+                        }
+
+                        queue.Enqueue(file);
+                    }
+                }
+                finally
+                {
+                    discoveryComplete = true;
+                }
+
+                ReportProgress();
+            });
+
+            var populateTask = Task.Run(async () =>
+            {
+                while (true)
+                {
+                    if (!queue.TryDequeue(out var file))
+                    {
+                        if (discoveryComplete && queue.Count == 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            await Task.Delay(100).ConfigureAwait(false);
+                            continue;
+                        }
+                    }
+
+                    pendingTasks.Add(this.RescanFile(file).ContinueWith(result =>
+                    {
+                        if (Interlocked.Increment(ref processed) % 100 == 0)
+                        {
+                            ReportProgress();
+                        }
+                    }));
+                }
+            });
+
+            await Task.WhenAll(enumerateTask, populateTask).ConfigureAwait(false);
+            await Task.WhenAll(pendingTasks).ConfigureAwait(false);
+            ReportProgress();
+        }
+
         public class RescanProgress
         {
             public RescanProgress(
@@ -139,6 +237,29 @@ namespace MediaLibrary.Storage
             public int PathsDiscovered { get; }
 
             public int PathsProcessed { get; }
+
+            internal static RescanProgress Aggregate(ref double lastProgress, params RescanProgress[] progresses)
+            {
+                var weight = 0.0;
+                var pathsDiscovered = 0;
+                var pathsProcessed = 0;
+                var discoveryComplete = true;
+                for (var i = 0; i < progresses.Length; i++)
+                {
+                    var p = progresses[i];
+                    pathsDiscovered += p.PathsDiscovered;
+                    pathsProcessed += p.PathsProcessed;
+                    discoveryComplete &= p.DiscoveryComplete;
+                    weight += p.DiscoveryComplete ? p.PathsDiscovered : Math.Max(p.PathsDiscovered + 100, p.PathsDiscovered * 2);
+                }
+
+                var progress = pathsProcessed / weight;
+                return new RescanProgress(
+                    lastProgress = Math.Max(lastProgress, progress * (discoveryComplete ? 1 : 0.99)),
+                    pathsDiscovered,
+                    pathsProcessed,
+                    discoveryComplete);
+            }
         }
 
         private static class Queries
