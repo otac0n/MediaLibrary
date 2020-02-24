@@ -14,10 +14,12 @@ namespace MediaLibrary.Storage
     using System.Threading;
     using System.Threading.Tasks;
     using Dapper;
+    using NeoSmart.AsyncLock;
 
     public class MediaIndex
     {
         private readonly string indexPath;
+        private AsyncLock writeLock = new AsyncLock();
 
         public MediaIndex(string indexPath)
         {
@@ -26,11 +28,8 @@ namespace MediaLibrary.Storage
 
         public async Task AddIndexedPath(string path, IProgress<RescanProgress> progress = null)
         {
-            using (var conn = await this.GetConnection().ConfigureAwait(false))
-            {
-                await conn.ExecuteAsync(Queries.AddIndexedPath, new { Path = path }).ConfigureAwait(false);
-                await this.RescanIndexedPath(path, progress).ConfigureAwait(false);
-            }
+            await this.UpdateIndex(Queries.AddIndexedPath, new { Path = path }).ConfigureAwait(false);
+            await this.RescanIndexedPath(path, progress).ConfigureAwait(false);
         }
 
         public async Task<SQLiteConnection> GetConnection()
@@ -61,18 +60,12 @@ namespace MediaLibrary.Storage
 
         public async Task Initialize()
         {
-            using (var conn = await this.GetConnection().ConfigureAwait(false))
-            {
-                await conn.ExecuteAsync(Queries.CreateSchema).ConfigureAwait(false);
-            }
+            await this.UpdateIndex(Queries.CreateSchema).ConfigureAwait(false);
         }
 
         public async Task RemoveIndexedPath(string path)
         {
-            using (var conn = await this.GetConnection().ConfigureAwait(false))
-            {
-                await conn.ExecuteAsync(Queries.RemoveIndexedPath, new { Path = path }).ConfigureAwait(false);
-            }
+            await this.UpdateIndex(Queries.RemoveIndexedPath, new { Path = path }).ConfigureAwait(false);
         }
 
         public async Task Rescan(IProgress<RescanProgress> progress = null)
@@ -139,9 +132,12 @@ namespace MediaLibrary.Storage
             return (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList();
         }
 
-        private async Task RescanFile(string path)
+        private async Task<string> RescanFile(string path)
         {
+            var modifiedTime = File.GetLastWriteTimeUtc(path);
             var hash = await HashFileAsync(path).ConfigureAwait(false);
+            await this.UpdateIndex(Queries.AddFilePath, new { Path = path, LastHash = hash, LastModifiedTime = modifiedTime.Ticks }).ConfigureAwait(false);
+            return hash;
         }
 
         private async Task RescanIndexedPath(string path, IProgress<RescanProgress> progress = null)
@@ -216,6 +212,15 @@ namespace MediaLibrary.Storage
             ReportProgress();
         }
 
+        private async Task UpdateIndex(string query, object param = null)
+        {
+            using (await this.writeLock.LockAsync().ConfigureAwait(false))
+            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            {
+                await conn.ExecuteAsync(query, param).ConfigureAwait(false);
+            }
+        }
+
         public class RescanProgress
         {
             public RescanProgress(
@@ -264,6 +269,10 @@ namespace MediaLibrary.Storage
 
         private static class Queries
         {
+            public static readonly string AddFilePath = @"
+                INSERT OR REPLACE INTO Paths (Path, LastHash, LastModifiedTime) VALUES (@Path, @LastHash, @LastModifiedTime)
+            ";
+
             public static readonly string AddIndexedPath = @"
                 INSERT INTO IndexedPaths (Path) VALUES (@Path)
             ";
@@ -271,12 +280,48 @@ namespace MediaLibrary.Storage
             public static readonly string CreateSchema = @"
                 CREATE TABLE IF NOT EXISTS IndexedPaths
                 (
-                    Path text PRIMARY KEY
-                )
+                    Path text NOT NULL,
+                    PRIMARY KEY (Path)
+                );
+
+                CREATE TABLE IF NOT EXISTS Paths
+                (
+                    Path text NOT NULL,
+                    LastHash text NOT NULL,
+                    LastModifiedTime INTEGER NOT NULL,
+                    PRIMARY KEY (Path)
+                );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_Paths_Path ON Paths (Path);
+                CREATE INDEX IF NOT EXISTS IX_Paths_LastHash ON Paths (LastHash, Path);
+            ";
+
+            public static readonly string GetFilePathByPath = @"
+                SELECT
+                    Path,
+                    LastHash,
+                    LastModifiedTime
+                FROM Paths
+                WHERE Path = @Path
+            ";
+
+            public static readonly string GetFilePathsByHash = @"
+                SELECT
+                    Path,
+                    LastHash,
+                    LastModifiedTime
+                FROM Paths
+                WHERE LastHash = @Hash
             ";
 
             public static readonly string GetIndexedPaths = @"
-                SELECT Path FROM IndexedPaths
+                SELECT
+                    Path
+                FROM IndexedPaths
+            ";
+
+            public static readonly string RemoveFilePath = @"
+                DELETE FROM Paths WHERE Path = @Path
             ";
 
             public static readonly string RemoveIndexedPath = @"

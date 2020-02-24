@@ -13,12 +13,11 @@ namespace MediaLibrary
     public partial class MainForm : Form
     {
         private readonly MediaIndex index;
-        private Task rescanTask;
 
         public MainForm(MediaIndex index)
         {
             this.index = index;
-            this.rescanTask = this.index.Initialize().ContinueWith(task => this.TrackTaskProgress(progress => index.Rescan(progress)));
+            this.index.Initialize().ContinueWith(task => this.TrackTaskProgress(progress => index.Rescan(progress)));
             this.InitializeComponent();
         }
 
