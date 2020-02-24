@@ -60,9 +60,9 @@ namespace MediaLibrary
                 : DragDropEffects.None;
         }
 
-        private void TrackTaskProgress(Func<IProgress<MediaIndex.RescanProgress>, Task> getTask)
+        private void TrackTaskProgress(Func<IProgress<RescanProgress>, Task> getTask)
         {
-            var task = getTask(OnProgress.Do<MediaIndex.RescanProgress>(progress =>
+            var task = getTask(OnProgress.Do<RescanProgress>(progress =>
             {
                 Debug.WriteLine($"{progress.Estimate:P0} ({progress.PathsProcessed}/{progress.PathsDiscovered}{(progress.DiscoveryComplete ? string.Empty : "?")})");
             }));
