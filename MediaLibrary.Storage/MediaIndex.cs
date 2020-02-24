@@ -126,6 +126,22 @@ namespace MediaLibrary.Storage
             return sb.ToString();
         }
 
+        private async Task<FilePath> GetFilePath(string path)
+        {
+            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            {
+                return (await conn.QueryAsync<FilePath>(Queries.GetFilePathByPath, new { Path = path }).ConfigureAwait(false)).SingleOrDefault();
+            }
+        }
+
+        private async Task<FilePath> GetFilePaths(string hash)
+        {
+            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            {
+                return (await conn.QueryAsync<FilePath>(Queries.GetFilePathsByHash, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault();
+            }
+        }
+
         private async Task<List<string>> GetIndexedPaths()
         {
             using (var conn = await this.GetConnection().ConfigureAwait(false))
@@ -136,10 +152,15 @@ namespace MediaLibrary.Storage
 
         private async Task<string> RescanFile(string path)
         {
-            var modifiedTime = File.GetLastWriteTimeUtc(path);
-            var hash = await HashFileAsync(path).ConfigureAwait(false);
-            await this.UpdateIndex(Queries.AddFilePath, new { Path = path, LastHash = hash, LastModifiedTime = modifiedTime.Ticks }).ConfigureAwait(false);
-            return hash;
+            var filePath = await this.GetFilePath(path).ConfigureAwait(false);
+            var modifiedTime = File.GetLastWriteTimeUtc(path).Ticks;
+            if (filePath == null || filePath.LastModifiedTime != modifiedTime)
+            {
+                var hash = await HashFileAsync(path).ConfigureAwait(false);
+                await this.UpdateIndex(Queries.AddFilePath, filePath = new FilePath(path, hash, modifiedTime)).ConfigureAwait(false);
+            }
+
+            return filePath.LastHash;
         }
 
         private async Task RescanIndexedPath(string path, IProgress<RescanProgress> progress = null)
