@@ -98,8 +98,9 @@ namespace MediaLibrary.Storage
             }
         }
 
-        private static async Task<string> HashFileAsync(string path)
+        private static async Task<HashInfo> HashFileAsync(string path)
         {
+            var fileSize = 0L;
             byte[] hash;
             using (var hashAlgorithm = new SHA256Managed())
             using (var file = File.OpenRead(path))
@@ -117,6 +118,7 @@ namespace MediaLibrary.Storage
                     else
                     {
                         hashAlgorithm.TransformBlock(buffer, 0, count, buffer, 0);
+                        fileSize += count;
                     }
                 }
             }
@@ -128,7 +130,7 @@ namespace MediaLibrary.Storage
                 sb.Append(hash[i].ToString("x2", CultureInfo.InvariantCulture));
             }
 
-            return sb.ToString();
+            return new HashInfo(sb.ToString(), fileSize, "");
         }
 
         private Task<FilePath> GetFilePath(string path) =>
@@ -138,6 +140,10 @@ namespace MediaLibrary.Storage
         private Task<FilePath> GetFilePaths(string hash) =>
             this.QueryIndex(async conn =>
                 (await conn.QueryAsync<FilePath>(Queries.GetFilePathsByHash, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault());
+
+        private Task<HashInfo> GetHashInfo(string hash) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<HashInfo>(Queries.GetHashInfo, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault());
 
         private Task<List<string>> GetIndexedPaths() =>
             this.QueryIndex(async conn =>
@@ -156,13 +162,21 @@ namespace MediaLibrary.Storage
         {
             var filePath = await this.GetFilePath(path).ConfigureAwait(false);
             var modifiedTime = File.GetLastWriteTimeUtc(path).Ticks;
-            if (filePath == null || filePath.LastModifiedTime != modifiedTime)
+
+            HashInfo hashInfo = null;
+            if (filePath != null && filePath.LastModifiedTime == modifiedTime)
             {
-                var hash = await HashFileAsync(path).ConfigureAwait(false);
-                await this.UpdateIndex(Queries.AddFilePath, filePath = new FilePath(path, hash, modifiedTime)).ConfigureAwait(false);
+                hashInfo = await this.GetHashInfo(filePath.LastHash).ConfigureAwait(false);
             }
 
-            return filePath.LastHash;
+            if (hashInfo == null)
+            {
+                hashInfo = await HashFileAsync(path).ConfigureAwait(false);
+                await this.UpdateIndex(Queries.AddHashInfo, hashInfo).ConfigureAwait(false);
+                await this.UpdateIndex(Queries.AddFilePath, filePath = new FilePath(path, hashInfo.Hash, modifiedTime)).ConfigureAwait(false);
+            }
+
+            return hashInfo.Hash;
         }
 
         private async Task RescanIndexedPath(string path, IProgress<RescanProgress> progress = null)
@@ -252,6 +266,10 @@ namespace MediaLibrary.Storage
                 INSERT OR REPLACE INTO Paths (Path, LastHash, LastModifiedTime) VALUES (@Path, @LastHash, @LastModifiedTime)
             ";
 
+            public static readonly string AddHashInfo = @"
+                INSERT OR REPLACE INTO HashInfo (Hash, FileSize, FileType) VALUES (@Hash, @FileSize, @FileType)
+            ";
+
             public static readonly string AddIndexedPath = @"
                 INSERT INTO IndexedPaths (Path) VALUES (@Path)
             ";
@@ -273,6 +291,17 @@ namespace MediaLibrary.Storage
 
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_Paths_Path ON Paths (Path);
                 CREATE INDEX IF NOT EXISTS IX_Paths_LastHash ON Paths (LastHash, Path);
+
+                CREATE TABLE IF NOT EXISTS HashInfo
+                (
+                    Hash text NOT NULL,
+                    FileSize integer NOT NULL,
+                    FileType text NOT NULL,
+                    PRIMARY KEY (Hash)
+                );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_HashInfo_Hash ON HashInfo (Hash);
+                CREATE INDEX IF NOT EXISTS IX_HashInfo_FileType ON HashInfo (FileType);
             ";
 
             public static readonly string GetFilePathByPath = @"
@@ -291,6 +320,15 @@ namespace MediaLibrary.Storage
                     LastModifiedTime
                 FROM Paths
                 WHERE LastHash = @Hash
+            ";
+
+            public static readonly string GetHashInfo = @"
+                SELECT
+                    Hash,
+                    FileSize,
+                    FileType
+                FROM HashInfo
+                WHERE Hash = @Hash
             ";
 
             public static readonly string GetIndexedPaths = @"
