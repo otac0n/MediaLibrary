@@ -75,6 +75,11 @@ namespace MediaLibrary.Storage
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
 
             var progresses = new RescanProgress[indexedPaths.Count];
+            for (var i = 0; i < indexedPaths.Count; i++)
+            {
+                progresses[i] = new RescanProgress(0, 0, 0, false);
+            }
+
             var tasks = new Task[indexedPaths.Count];
 
             var progressSync = new object();
@@ -82,7 +87,6 @@ namespace MediaLibrary.Storage
             for (var i = 0; i < indexedPaths.Count; i++)
             {
                 var p = i; // Closure copy.
-                progresses[p] = new RescanProgress(0, 0, 0, false);
                 tasks[p] = this.RescanIndexedPath(indexedPaths[p], progress == null ? null : OnProgress.Do<RescanProgress>(prog =>
                 {
                     lock (progressSync)
@@ -191,7 +195,7 @@ namespace MediaLibrary.Storage
             {
                 try
                 {
-                    foreach (var file in Directory.EnumerateFiles(path))
+                    foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
                     {
                         Interlocked.Increment(ref discovered);
                         queue.Enqueue(file);
