@@ -71,27 +71,25 @@ namespace MediaLibrary.Storage
 
         public async Task Rescan(IProgress<RescanProgress> progress = null)
         {
-            using (var conn = await this.GetConnection().ConfigureAwait(false))
-            {
-                var indexedPaths = await this.GetIndexedPaths(conn).ConfigureAwait(false);
-                var progresses = new RescanProgress[indexedPaths.Count];
-                var tasks = new Task[indexedPaths.Count];
+            var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
 
-                var progressSync = new object();
-                var lastProgress = 0.0;
-                for (var i = 0; i < indexedPaths.Count; i++)
+            var progresses = new RescanProgress[indexedPaths.Count];
+            var tasks = new Task[indexedPaths.Count];
+
+            var progressSync = new object();
+            var lastProgress = 0.0;
+            for (var i = 0; i < indexedPaths.Count; i++)
+            {
+                var p = i; // Closure copy.
+                progresses[p] = new RescanProgress(0, 0, 0, false);
+                tasks[p] = this.RescanIndexedPath(indexedPaths[p], progress == null ? null : OnProgress.Do<RescanProgress>(prog =>
                 {
-                    var p = i; // Closure copy.
-                    progresses[p] = new RescanProgress(0, 0, 0, false);
-                    tasks[p] = this.RescanIndexedPath(indexedPaths[p], progress == null ? null : OnProgress.Do<RescanProgress>(prog =>
+                    lock (progressSync)
                     {
-                        lock (progressSync)
-                        {
-                            progresses[p] = prog;
-                            progress?.Report(RescanProgress.Aggregate(ref lastProgress, progresses));
-                        }
-                    }));
-                }
+                        progresses[p] = prog;
+                        progress?.Report(RescanProgress.Aggregate(ref lastProgress, progresses));
+                    }
+                }));
             }
         }
 
@@ -128,9 +126,12 @@ namespace MediaLibrary.Storage
             return sb.ToString();
         }
 
-        private async Task<List<string>> GetIndexedPaths(SQLiteConnection conn)
+        private async Task<List<string>> GetIndexedPaths()
         {
-            return (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList();
+            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            {
+                return (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList();
+            }
         }
 
         private async Task<string> RescanFile(string path)
