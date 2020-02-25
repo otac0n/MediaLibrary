@@ -67,6 +67,21 @@ namespace MediaLibrary
                 : DragDropEffects.None;
         }
 
+        private void SearchBookmark_Click(object sender, EventArgs e)
+        {
+            string tag = null;
+            if (sender is Control control)
+            {
+                tag = control.Tag as string;
+            }
+            else if (sender is ToolStripItem toolStripItem)
+            {
+                tag = toolStripItem.Tag as string;
+            }
+
+            this.searchBox.Text = tag ?? string.Empty;
+        }
+
         private void TrackTaskProgress(Func<IProgress<RescanProgress>, Task> getTask)
         {
             var task = new InProgressTask(getTask, this.UpdateProgress);
