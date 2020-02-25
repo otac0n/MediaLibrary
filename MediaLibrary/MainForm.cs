@@ -3,7 +3,7 @@
 namespace MediaLibrary
 {
     using System;
-    using System.Diagnostics;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
@@ -13,12 +13,19 @@ namespace MediaLibrary
     public partial class MainForm : Form
     {
         private readonly MediaIndex index;
+        private readonly List<InProgressTask> tasks = new List<InProgressTask>();
+        private double lastProgress;
+        private int taskVersion;
 
         public MainForm(MediaIndex index)
         {
             this.index = index;
-            this.index.Initialize().ContinueWith(task => this.TrackTaskProgress(progress => index.Rescan(progress)));
             this.InitializeComponent();
+            this.TrackTaskProgress(async progress =>
+            {
+                await this.index.Initialize().ConfigureAwait(false);
+                await index.Rescan(progress).ConfigureAwait(true);
+            });
         }
 
         private static bool CanDrop(DragEventArgs e) =>
@@ -62,10 +69,79 @@ namespace MediaLibrary
 
         private void TrackTaskProgress(Func<IProgress<RescanProgress>, Task> getTask)
         {
-            var task = getTask(OnProgress.Do<RescanProgress>(progress =>
+            var task = new InProgressTask(getTask, this.UpdateProgress);
+
+            lock (this.tasks)
             {
-                Debug.WriteLine($"{progress.Estimate:P0} ({progress.PathsProcessed}/{progress.PathsDiscovered}{(progress.DiscoveryComplete ? string.Empty : "?")})");
-            }));
+                this.lastProgress = 0;
+                this.tasks.Add(task);
+                this.taskVersion++;
+            }
+
+            this.UpdateProgress();
+
+            task.Task.ContinueWith(
+                _ =>
+                {
+                    lock (this.tasks)
+                    {
+                        this.tasks.Remove(task);
+                        this.taskVersion++;
+                    }
+
+                    this.UpdateProgress();
+                },
+                TaskScheduler.Current);
+        }
+
+        private void UpdateProgress()
+        {
+            RescanProgress progress;
+            int taskVersion;
+            lock (this.tasks)
+            {
+                taskVersion = this.taskVersion;
+                progress = RescanProgress.Aggregate(ref this.lastProgress, this.tasks.Select(t => t.Progress).ToArray());
+            }
+
+            this.InvokeIfRequired(() =>
+            {
+                lock (this.tasks)
+                {
+                    if (this.taskVersion != taskVersion)
+                    {
+                        return;
+                    }
+
+                    if (this.tasks.Count == 0)
+                    {
+                        this.mainProgressBar.Visible = false;
+                    }
+                    else
+                    {
+                        this.mainProgressBar.Visible = true;
+                        this.mainProgressBar.Value = (int)Math.Floor(progress.Estimate * this.mainProgressBar.Maximum);
+                        this.mainProgressBar.ToolTipText = $"{progress.Estimate:P0} ({progress.PathsProcessed}/{progress.PathsDiscovered}{(progress.DiscoveryComplete ? string.Empty : "?")})";
+                    }
+                }
+            });
+        }
+
+        private class InProgressTask
+        {
+            public InProgressTask(Func<IProgress<RescanProgress>, Task> getTask, Action updateProgress)
+            {
+                this.Progress = new RescanProgress(0, 0, 0, false);
+                this.Task = getTask(OnProgress.Do<RescanProgress>(progress =>
+                {
+                    this.Progress = progress;
+                    updateProgress();
+                }));
+            }
+
+            public RescanProgress Progress { get; private set; }
+
+            public Task Task { get; }
         }
     }
 }

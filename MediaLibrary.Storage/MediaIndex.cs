@@ -96,6 +96,8 @@ namespace MediaLibrary.Storage
                     }
                 }));
             }
+
+            await Task.WhenAll(tasks);
         }
 
         private static async Task<HashInfo> HashFileAsync(string path)
