@@ -1,0 +1,32 @@
+@namespace MediaLibrary.Search
+@classname SearchGrammar
+
+search <Term> = _ t:conjunction _ EOF { t };
+
+conjunction <Term> = d:disjunction<1,, WS> { d.Count == 1 ? d[0] : new ConjunctionTerm(d) };
+
+disjunction <Term> = u:unary<1,, WS "or"i WS> { u.Count == 1 ? u[0] : new DisjunctionTerm(u) };
+
+unary <Term>
+    = "-" p:primary { new NegationTerm(p) }
+    / primary;
+
+primary <Term>
+    = "(" _ t:conjunction _ (")" / EOF) { t }
+    / term;
+
+term <Term>
+    = field:"#" ":"? value:atom { new FieldTerm("tag", value) }
+    / field:"@" ":"? value:atom { new FieldTerm(field, value) }
+    / field:atom ":" value:(atom / EOF / &WS / &")") { new FieldTerm(field, value) }
+    / ":"? value:atom { new FieldTerm(null, value) };
+
+atom
+    = "" str:[^-" \t\r\n:()]+
+    / '"' str:([^"] / '"' t:'"' { t })+ ('"' / EOF) { string.Concat(str) };
+
+_ = "" WS?;
+
+WS = "" [ \t\r\n]+;
+
+EOF = !.;

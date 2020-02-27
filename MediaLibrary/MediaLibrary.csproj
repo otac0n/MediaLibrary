@@ -21,7 +21,9 @@
     <PackageReference Include="FixMe" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="GitVersionTask" Version="4.0.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8" PrivateAssets="All" />
+    <PackageReference Include="Pegasus" Version="4.1.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.7.0" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
   </ItemGroup>
   <ItemGroup>
@@ -37,6 +39,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <PegGrammar Include="Search\SearchGrammar.peg" />
     <AdditionalFiles Include="MediaLibrary.ruleset" />
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
