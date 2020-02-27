@@ -109,10 +109,12 @@ namespace MediaLibrary
             this.Controls.Add(this.folderLabel);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.finishButton);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "AddIndexedPathForm";
             this.ShowIcon = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Add Indexed Folder";
             ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).EndInit();
             this.ResumeLayout(false);

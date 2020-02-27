@@ -33,11 +33,19 @@ namespace MediaLibrary
             e.Data.GetDataPresent(DataFormats.FileDrop) &&
             ((string[])e.Data.GetData(DataFormats.FileDrop)).All(Directory.Exists);
 
+        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var aboutForm = new AboutForm())
+            {
+                aboutForm.ShowDialog(this);
+            }
+        }
+
         private void AddIndexedFolderToolStripMenuItem_Click(object sender, System.EventArgs e)
         {
             using (var addIndexedPathForm = new AddIndexedPathForm(this.index))
             {
-                if (addIndexedPathForm.ShowDialog() == DialogResult.OK)
+                if (addIndexedPathForm.ShowDialog(this) == DialogResult.OK)
                 {
                     this.AddIndexedPath(addIndexedPathForm.SelectedPath);
                 }
