@@ -1,4 +1,4 @@
-@namespace MediaLibrary.Search
+@namespace MediaLibrary.Storage.Search
 @classname SearchGrammar
 
 search <Term> = _ t:conjunction _ EOF { t };
