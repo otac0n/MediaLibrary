@@ -5,6 +5,7 @@ namespace MediaLibrary.Storage
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Data;
     using System.Data.SQLite;
     using System.Diagnostics;
     using System.Globalization;
@@ -15,6 +16,7 @@ namespace MediaLibrary.Storage
     using System.Threading;
     using System.Threading.Tasks;
     using Dapper;
+    using MediaLibrary.Storage.Search;
     using NeoSmart.AsyncLock;
 
     public class MediaIndex
@@ -98,6 +100,19 @@ namespace MediaLibrary.Storage
             }
 
             await Task.WhenAll(tasks);
+        }
+
+        public async Task<List<HashInfo>> SearchIndex(string query)
+        {
+            var term = new SearchGrammar().Parse(query);
+            var dialect = new SearchDialect();
+            var sqlQuery = dialect.Compile(term);
+
+            using (await this.dbLock.LockAsync().ConfigureAwait(false))
+            using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
+            {
+                return (await conn.QueryAsync<HashInfo>(sqlQuery).ConfigureAwait(false)).ToList();
+            }
         }
 
         private static async Task<HashInfo> HashFileAsync(string path)
@@ -307,6 +322,16 @@ namespace MediaLibrary.Storage
 
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_HashInfo_Hash ON HashInfo (Hash);
                 CREATE INDEX IF NOT EXISTS IX_HashInfo_FileType ON HashInfo (FileType);
+
+                CREATE TABLE IF NOT EXISTS HashTags
+                (
+                    Hash text NOT NULL,
+                    Tag text NOT NULL,
+                    PRIMARY KEY (Hash, Tag),
+                    FOREIGN KEY (Hash) REFERENCES HashInfo (Hash)
+                );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_HashTags_Hash_Tag ON HashTags (Hash, Tag);
             ";
 
             public static readonly string GetFilePathByPath = @"

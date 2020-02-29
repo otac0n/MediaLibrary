@@ -6,6 +6,7 @@ namespace MediaLibrary
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using MediaLibrary.Storage;
@@ -14,7 +15,9 @@ namespace MediaLibrary
     {
         private readonly MediaIndex index;
         private readonly List<InProgressTask> tasks = new List<InProgressTask>();
+        private bool columnsAutoSized = false;
         private double lastProgress;
+        private int searchVersion;
         private int taskVersion;
 
         public MainForm(MediaIndex index)
@@ -57,6 +60,39 @@ namespace MediaLibrary
             this.TrackTaskProgress(progress => this.index.AddIndexedPath(selectedPath, progress));
         }
 
+        private string GetImageKey(HashInfo item)
+        {
+            switch (item.FileType)
+            {
+                case "audio/midi": return "audio-file-midi";
+                case "audio/mpeg": return "audio-file-mp3";
+                case "audio/wav": return "audio-file-wav";
+                case "audio":
+                case string type when type.StartsWith("audio/", StringComparison.InvariantCulture):
+                    return "audio-file";
+
+                case "image/bmp": return "image-bmp";
+                case "image/gif": return "image-file-gif";
+                case "image/jpeg": return "image-file-jpg";
+                case "image/png": return "image-file-png";
+                case "image/tiff": return "image-file-tiff";
+                case "image":
+                case string type when type.StartsWith("image/", StringComparison.InvariantCulture):
+                    return "image-file";
+
+                case "video/mp4": return "video-file-mp4";
+                case "video/mpeg": return "video-file-mpg";
+                case "video/quicktime": return "video-file-qt";
+                case "video/webm": return "video-file-m4v";
+                case "video/x-msvideo": return "video-file-avi";
+                case "video":
+                case string type when type.StartsWith("video/", StringComparison.InvariantCulture):
+                    return "video-file";
+
+                default: return "common-file";
+            }
+        }
+
         private void MainForm_DragDrop(object sender, DragEventArgs e)
         {
             if (CanDrop(e))
@@ -88,6 +124,43 @@ namespace MediaLibrary
             }
 
             this.searchBox.Text = tag ?? string.Empty;
+        }
+
+        private async void SearchBox_TextChangedAsync(object sender, EventArgs e)
+        {
+            var searchVersion = Interlocked.Increment(ref this.searchVersion);
+            var data = await this.index.SearchIndex(this.searchBox.Text).ConfigureAwait(true);
+            if (this.searchVersion == searchVersion)
+            {
+                var existing = this.listView.Items.Cast<ListViewItem>().ToDictionary(i => (string)i.Tag);
+                var newHashes = new HashSet<string>(data.Select(i => i.Hash));
+
+                this.listView.BeginUpdate();
+
+                foreach (var kvp in existing)
+                {
+                    if (!newHashes.Contains(kvp.Key))
+                    {
+                        this.listView.Items.Remove(kvp.Value);
+                    }
+                }
+
+                foreach (var item in data)
+                {
+                    if (!existing.ContainsKey(item.Hash))
+                    {
+                        this.listView.Items.Add(new ListViewItem(new[] { item.Hash }, this.GetImageKey(item)) { Tag = item.Hash });
+                    }
+                }
+
+                if (!this.columnsAutoSized && data.Count > 0)
+                {
+                    this.listView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+                    this.columnsAutoSized = true;
+                }
+
+                this.listView.EndUpdate();
+            }
         }
 
         private void TrackTaskProgress(Func<IProgress<RescanProgress>, Task> getTask)
