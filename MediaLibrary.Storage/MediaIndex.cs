@@ -102,7 +102,7 @@ namespace MediaLibrary.Storage
             await Task.WhenAll(tasks);
         }
 
-        public async Task<List<HashInfo>> SearchIndex(string query)
+        public async Task<List<SearchResult>> SearchIndex(string query)
         {
             var term = new SearchGrammar().Parse(query);
             var dialect = new SearchDialect();
@@ -111,7 +111,23 @@ namespace MediaLibrary.Storage
             using (await this.dbLock.LockAsync().ConfigureAwait(false))
             using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
             {
-                return (await conn.QueryAsync<HashInfo>(sqlQuery).ConfigureAwait(false)).ToList();
+                var reader = await conn.QueryMultipleAsync(sqlQuery).ConfigureAwait(false);
+                var tags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
+                var fileNames = (await reader.ReadAsync<FilePath>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.LastHash);
+                var hashes = (await reader.ReadAsync<HashInfo>(buffered: false).ConfigureAwait(false)).ToList();
+
+                var results = new List<SearchResult>();
+                foreach (var hash in hashes)
+                {
+                    results.Add(new SearchResult(
+                        hash.Hash,
+                        hash.FileType,
+                        hash.FileSize,
+                        tags[hash.Hash].Select(t => t.Tag).ToArray(),
+                        fileNames[hash.Hash].Select(t => t.Path).ToArray()));
+                }
+
+                return results;
             }
         }
 

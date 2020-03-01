@@ -107,18 +107,51 @@ namespace MediaLibrary.Storage.Search
 
         private string FinalizeQuery(string filter)
         {
+            var fetchTags = true;
+            var fetchPaths = true;
+            var fetchAny = fetchTags || fetchPaths;
+
             var sb = new StringBuilder();
-            sb.AppendLine("SELECT DISTINCT h.*");
-            sb.AppendLine("FROM HashInfo h");
+
+            if (fetchAny)
+            {
+                sb
+                    .AppendLine("DROP TABLE IF EXISTS temp.SearchHashInfo;")
+                    .AppendLine("CREATE TEMP TABLE temp.SearchHashInfo (Hash text, FileSize integer, FileType text, PRIMARY KEY (Hash));")
+                    .AppendLine("INSERT INTO temp.SearchHashInfo (Hash, FileSize, FileType)");
+            }
+
+            sb
+                .AppendLine("SELECT DISTINCT h.Hash, h.FileSize, h.FileType")
+                .AppendLine("FROM HashInfo h");
 
             if (this.joinTags)
             {
                 sb.AppendLine("LEFT JOIN HashTags t ON h.Hash = t.Hash");
             }
 
-            sb.AppendLine("WHERE (");
-            sb.AppendLine(filter);
-            sb.AppendLine(")");
+            sb
+                .AppendLine("WHERE (")
+                .AppendLine(filter)
+                .AppendLine(");");
+
+            if (fetchTags)
+            {
+                sb.AppendLine("SELECT t.* FROM temp.SearchHashInfo h INNER JOIN HashTags t ON h.Hash = t.Hash;");
+            }
+
+            if (fetchPaths)
+            {
+                sb.AppendLine("SELECT p.* FROM temp.SearchHashInfo h INNER JOIN Paths p ON h.Hash = p.LastHash;");
+            }
+
+            if (fetchAny)
+            {
+                sb
+                    .AppendLine("SELECT * FROM temp.SearchHashInfo;")
+                    .AppendLine("DROP TABLE temp.SearchHashInfo;");
+            }
+
             return sb.ToString();
         }
     }

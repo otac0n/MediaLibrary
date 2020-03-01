@@ -60,9 +60,9 @@ namespace MediaLibrary
             this.TrackTaskProgress(progress => this.index.AddIndexedPath(selectedPath, progress));
         }
 
-        private string GetImageKey(HashInfo item)
+        private string GetImageKey(string fileType)
         {
-            switch (item.FileType)
+            switch (fileType)
             {
                 case "audio/midi": return "audio-file-midi";
                 case "audio/mpeg": return "audio-file-mp3";
@@ -149,7 +149,7 @@ namespace MediaLibrary
                 {
                     if (!existing.ContainsKey(item.Hash))
                     {
-                        this.listView.Items.Add(new ListViewItem(new[] { item.Hash }, this.GetImageKey(item)) { Tag = item.Hash });
+                        this.listView.Items.Add(new ListViewItem(new[] { item.Paths[0], item.Hash }, this.GetImageKey(item.FileType)) { Tag = item.Hash });
                     }
                 }
 
