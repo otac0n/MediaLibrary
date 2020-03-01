@@ -43,7 +43,7 @@ namespace MediaLibrary
             new ListViewItem(
                 new[]
                 {
-                    Path.GetFileNameWithoutExtension(searchResult.Paths[0]),
+                    searchResult.Paths.Length > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths[0]) : searchResult.Hash,
                     string.Join(" ", searchResult.Tags),
                 },
                 GetImageKey(searchResult.FileType))
@@ -87,7 +87,7 @@ namespace MediaLibrary
         private static void UpdateListItem(ListViewItem item, SearchResult searchResult)
         {
             item.Tag = searchResult;
-            item.SubItems[0].Text = Path.GetFileNameWithoutExtension(searchResult.Paths[0]);
+            item.SubItems[0].Text = searchResult.Paths.Length > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths[0]) : searchResult.Hash;
             item.SubItems[1].Text = string.Join(" ", searchResult.Tags);
             item.ImageKey = GetImageKey(searchResult.FileType);
         }
