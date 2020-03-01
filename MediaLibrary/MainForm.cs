@@ -107,6 +107,16 @@ namespace MediaLibrary
             this.TrackTaskProgress(progress => this.index.AddIndexedPath(selectedPath, progress));
         }
 
+        private void DetailsMenuItem_Click(object sender, EventArgs e)
+        {
+            this.thumbnailsMenuItem.Checked = !this.detailsMenuItem.Checked;
+
+            if (this.detailsMenuItem.Checked)
+            {
+                this.listView.View = View.Details;
+            }
+        }
+
         private void MainForm_DragDrop(object sender, DragEventArgs e)
         {
             if (CanDrop(e))
@@ -174,6 +184,16 @@ namespace MediaLibrary
                 }
 
                 this.listView.EndUpdate();
+            }
+        }
+
+        private void ThumbnailsMenuItem_Click(object sender, EventArgs e)
+        {
+            this.detailsMenuItem.Checked = !this.thumbnailsMenuItem.Checked;
+
+            if (this.thumbnailsMenuItem.Checked)
+            {
+                this.listView.View = View.LargeIcon;
             }
         }
 

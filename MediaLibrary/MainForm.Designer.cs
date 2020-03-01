@@ -41,12 +41,20 @@ namespace MediaLibrary
             this.playAllButton = new System.Windows.Forms.ToolStripButton();
             this.shuffleAllButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.favoriteFilesDropDown = new System.Windows.Forms.ToolStripSplitButton();
+            this.favoriteFilesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
+            this.favoriteAudioMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.favoriteImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.favoriteVideoMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.starredDropDown = new System.Windows.Forms.ToolStripSplitButton();
+            this.starredFilesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.starredAudioMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.starredImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.starredVideoMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.homeButton = new System.Windows.Forms.ToolStripButton();
-            this.searchBox = new System.Windows.Forms.ToolStripTextBox();
-            this.listView = new System.Windows.Forms.ListView();
-            this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
             this.audioDropDown = new System.Windows.Forms.ToolStripSplitButton();
             this.allAudioMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
@@ -62,18 +70,13 @@ namespace MediaLibrary
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.videoFavoritesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.videoStarsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.favoriteFilesDropDown = new System.Windows.Forms.ToolStripSplitButton();
-            this.favoriteFilesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
-            this.favoriteAudioMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.favoriteImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.favoriteVideoMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.starredDropDown = new System.Windows.Forms.ToolStripSplitButton();
-            this.starredFilesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.starredAudioMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.starredImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.starredVideoMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.searchBox = new System.Windows.Forms.ToolStripTextBox();
+            this.viewButton = new System.Windows.Forms.ToolStripDropDownButton();
+            this.detailsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.thumbnailsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.listView = new System.Windows.Forms.ListView();
+            this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
@@ -146,7 +149,8 @@ namespace MediaLibrary
             this.audioDropDown,
             this.imagesDropDown,
             this.videoDropDown,
-            this.searchBox});
+            this.searchBox,
+            this.viewButton});
             this.toolStrip.Location = new System.Drawing.Point(0, 24);
             this.toolStrip.Name = "toolStrip";
             this.toolStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
@@ -186,6 +190,122 @@ namespace MediaLibrary
             this.toolStripSeparator1.Name = "toolStripSeparator1";
             this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
+            // favoriteFilesDropDown
+            // 
+            this.favoriteFilesDropDown.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.favoriteFilesDropDown.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.favoriteFilesMenuItem,
+            this.toolStripSeparator4,
+            this.favoriteAudioMenuItem,
+            this.favoriteImagesMenuItem,
+            this.favoriteVideoMenuItem});
+            this.favoriteFilesDropDown.Image = global::MediaLibrary.Properties.Resources.love_it;
+            this.favoriteFilesDropDown.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.favoriteFilesDropDown.Name = "favoriteFilesDropDown";
+            this.favoriteFilesDropDown.Size = new System.Drawing.Size(32, 22);
+            this.favoriteFilesDropDown.Tag = "#favorite";
+            this.favoriteFilesDropDown.Text = "Favorites";
+            this.favoriteFilesDropDown.ButtonClick += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // favoriteFilesMenuItem
+            // 
+            this.favoriteFilesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_heart;
+            this.favoriteFilesMenuItem.Name = "favoriteFilesMenuItem";
+            this.favoriteFilesMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.favoriteFilesMenuItem.Tag = "#favorite";
+            this.favoriteFilesMenuItem.Text = "Files";
+            this.favoriteFilesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // toolStripSeparator4
+            // 
+            this.toolStripSeparator4.Name = "toolStripSeparator4";
+            this.toolStripSeparator4.Size = new System.Drawing.Size(109, 6);
+            // 
+            // favoriteAudioMenuItem
+            // 
+            this.favoriteAudioMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_heart;
+            this.favoriteAudioMenuItem.Name = "favoriteAudioMenuItem";
+            this.favoriteAudioMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.favoriteAudioMenuItem.Tag = "#favorite type:audio";
+            this.favoriteAudioMenuItem.Text = "Audio";
+            this.favoriteAudioMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // favoriteImagesMenuItem
+            // 
+            this.favoriteImagesMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_heart;
+            this.favoriteImagesMenuItem.Name = "favoriteImagesMenuItem";
+            this.favoriteImagesMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.favoriteImagesMenuItem.Tag = "#favorite type:image";
+            this.favoriteImagesMenuItem.Text = "Images";
+            this.favoriteImagesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // favoriteVideoMenuItem
+            // 
+            this.favoriteVideoMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_heart;
+            this.favoriteVideoMenuItem.Name = "favoriteVideoMenuItem";
+            this.favoriteVideoMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.favoriteVideoMenuItem.Tag = "#favorite type:video";
+            this.favoriteVideoMenuItem.Text = "Video";
+            this.favoriteVideoMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // starredDropDown
+            // 
+            this.starredDropDown.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.starredDropDown.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.starredFilesMenuItem,
+            this.toolStripSeparator3,
+            this.starredAudioMenuItem,
+            this.starredImagesMenuItem,
+            this.starredVideoMenuItem});
+            this.starredDropDown.Image = global::MediaLibrary.Properties.Resources.rating_star;
+            this.starredDropDown.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.starredDropDown.Name = "starredDropDown";
+            this.starredDropDown.Size = new System.Drawing.Size(32, 22);
+            this.starredDropDown.Tag = "stars:>=3";
+            this.starredDropDown.Text = "Starred";
+            this.starredDropDown.ButtonClick += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // starredFilesMenuItem
+            // 
+            this.starredFilesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_star;
+            this.starredFilesMenuItem.Name = "starredFilesMenuItem";
+            this.starredFilesMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.starredFilesMenuItem.Tag = "stars:>=3";
+            this.starredFilesMenuItem.Text = "Files";
+            this.starredFilesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(109, 6);
+            // 
+            // starredAudioMenuItem
+            // 
+            this.starredAudioMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_star;
+            this.starredAudioMenuItem.Name = "starredAudioMenuItem";
+            this.starredAudioMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.starredAudioMenuItem.Tag = "stars:>=3 type:audio";
+            this.starredAudioMenuItem.Text = "Audio";
+            this.starredAudioMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // starredImagesMenuItem
+            // 
+            this.starredImagesMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_star;
+            this.starredImagesMenuItem.Name = "starredImagesMenuItem";
+            this.starredImagesMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.starredImagesMenuItem.Tag = "stars:>=3 type:image";
+            this.starredImagesMenuItem.Text = "Images";
+            this.starredImagesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // starredVideoMenuItem
+            // 
+            this.starredVideoMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_star;
+            this.starredVideoMenuItem.Name = "starredVideoMenuItem";
+            this.starredVideoMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.starredVideoMenuItem.Tag = "stars:>=3 type:video";
+            this.starredVideoMenuItem.Text = "Video";
+            this.starredVideoMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
@@ -200,59 +320,6 @@ namespace MediaLibrary
             this.homeButton.Size = new System.Drawing.Size(23, 22);
             this.homeButton.Text = "Home";
             this.homeButton.Click += new System.EventHandler(this.SearchBookmark_Click);
-            // 
-            // searchBox
-            // 
-            this.searchBox.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.searchBox.Name = "searchBox";
-            this.searchBox.Size = new System.Drawing.Size(200, 25);
-            this.searchBox.TextChanged += new System.EventHandler(this.SearchBox_TextChangedAsync);
-            // 
-            // listView
-            // 
-            this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.nameColumn});
-            this.listView.HideSelection = false;
-            this.listView.Location = new System.Drawing.Point(0, 49);
-            this.listView.Margin = new System.Windows.Forms.Padding(0);
-            this.listView.Name = "listView";
-            this.listView.Size = new System.Drawing.Size(800, 379);
-            this.listView.SmallImageList = this.fileTypeImages;
-            this.listView.TabIndex = 3;
-            this.listView.UseCompatibleStateImageBehavior = false;
-            this.listView.View = System.Windows.Forms.View.Details;
-            // 
-            // nameColumn
-            // 
-            this.nameColumn.Text = "Name";
-            // 
-            // fileTypeImages
-            // 
-            this.fileTypeImages.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("fileTypeImages.ImageStream")));
-            this.fileTypeImages.TransparentColor = System.Drawing.Color.Transparent;
-            this.fileTypeImages.Images.SetKeyName(0, "common-file");
-            this.fileTypeImages.Images.SetKeyName(1, "audio-file");
-            this.fileTypeImages.Images.SetKeyName(2, "image-file");
-            this.fileTypeImages.Images.SetKeyName(3, "video-file");
-            this.fileTypeImages.Images.SetKeyName(4, "audio-file-aac");
-            this.fileTypeImages.Images.SetKeyName(5, "audio-file-aif");
-            this.fileTypeImages.Images.SetKeyName(6, "audio-file-mid");
-            this.fileTypeImages.Images.SetKeyName(7, "audio-file-mp3");
-            this.fileTypeImages.Images.SetKeyName(8, "audio-file-wav");
-            this.fileTypeImages.Images.SetKeyName(9, "image-file-bmp");
-            this.fileTypeImages.Images.SetKeyName(10, "image-file-eps");
-            this.fileTypeImages.Images.SetKeyName(11, "image-file-gif");
-            this.fileTypeImages.Images.SetKeyName(12, "image-file-jpg");
-            this.fileTypeImages.Images.SetKeyName(13, "image-file-png");
-            this.fileTypeImages.Images.SetKeyName(14, "image-file-svg");
-            this.fileTypeImages.Images.SetKeyName(15, "image-file-tiff");
-            this.fileTypeImages.Images.SetKeyName(16, "video-file-avi");
-            this.fileTypeImages.Images.SetKeyName(17, "video-file-flv");
-            this.fileTypeImages.Images.SetKeyName(18, "video-file-m4v");
-            this.fileTypeImages.Images.SetKeyName(19, "video-file-mov");
-            this.fileTypeImages.Images.SetKeyName(20, "video-file-mp4");
-            this.fileTypeImages.Images.SetKeyName(21, "video-file-mpg");
-            this.fileTypeImages.Images.SetKeyName(22, "video-file-qt");
             // 
             // audioDropDown
             // 
@@ -274,7 +341,7 @@ namespace MediaLibrary
             // 
             this.allAudioMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_home;
             this.allAudioMenuItem.Name = "allAudioMenuItem";
-            this.allAudioMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.allAudioMenuItem.Size = new System.Drawing.Size(151, 22);
             this.allAudioMenuItem.Tag = "type:audio";
             this.allAudioMenuItem.Text = "All Audio";
             this.allAudioMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -282,13 +349,13 @@ namespace MediaLibrary
             // toolStripSeparator5
             // 
             this.toolStripSeparator5.Name = "toolStripSeparator5";
-            this.toolStripSeparator5.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator5.Size = new System.Drawing.Size(148, 6);
             // 
             // audioFavoritesMenuItem
             // 
             this.audioFavoritesMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_heart;
             this.audioFavoritesMenuItem.Name = "audioFavoritesMenuItem";
-            this.audioFavoritesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.audioFavoritesMenuItem.Size = new System.Drawing.Size(151, 22);
             this.audioFavoritesMenuItem.Tag = "type:audio #favorite";
             this.audioFavoritesMenuItem.Text = "Favorite Audio";
             this.audioFavoritesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -297,7 +364,7 @@ namespace MediaLibrary
             // 
             this.audioStarsMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_star;
             this.audioStarsMenuItem.Name = "audioStarsMenuItem";
-            this.audioStarsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.audioStarsMenuItem.Size = new System.Drawing.Size(151, 22);
             this.audioStarsMenuItem.Tag = "type:audio stars:>=3";
             this.audioStarsMenuItem.Text = "Starred Audio";
             this.audioStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -370,7 +437,7 @@ namespace MediaLibrary
             // 
             this.allVideoMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_home;
             this.allVideoMenuItem.Name = "allVideoMenuItem";
-            this.allVideoMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.allVideoMenuItem.Size = new System.Drawing.Size(149, 22);
             this.allVideoMenuItem.Tag = "type:video";
             this.allVideoMenuItem.Text = "All Video";
             this.allVideoMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -378,13 +445,13 @@ namespace MediaLibrary
             // toolStripSeparator7
             // 
             this.toolStripSeparator7.Name = "toolStripSeparator7";
-            this.toolStripSeparator7.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator7.Size = new System.Drawing.Size(146, 6);
             // 
             // videoFavoritesMenuItem
             // 
             this.videoFavoritesMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_heart;
             this.videoFavoritesMenuItem.Name = "videoFavoritesMenuItem";
-            this.videoFavoritesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.videoFavoritesMenuItem.Size = new System.Drawing.Size(149, 22);
             this.videoFavoritesMenuItem.Tag = "type:video #favorite";
             this.videoFavoritesMenuItem.Text = "Favorite Video";
             this.videoFavoritesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -393,126 +460,95 @@ namespace MediaLibrary
             // 
             this.videoStarsMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_star;
             this.videoStarsMenuItem.Name = "videoStarsMenuItem";
-            this.videoStarsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.videoStarsMenuItem.Size = new System.Drawing.Size(149, 22);
             this.videoStarsMenuItem.Tag = "type:video stars:>=3";
             this.videoStarsMenuItem.Text = "Starred Video";
             this.videoStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
-            // favoriteFilesDropDown
+            // searchBox
             // 
-            this.favoriteFilesDropDown.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.favoriteFilesDropDown.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.favoriteFilesMenuItem,
-            this.toolStripSeparator4,
-            this.favoriteAudioMenuItem,
-            this.favoriteImagesMenuItem,
-            this.favoriteVideoMenuItem});
-            this.favoriteFilesDropDown.Image = global::MediaLibrary.Properties.Resources.love_it;
-            this.favoriteFilesDropDown.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.favoriteFilesDropDown.Name = "favoriteFilesDropDown";
-            this.favoriteFilesDropDown.Size = new System.Drawing.Size(32, 22);
-            this.favoriteFilesDropDown.Tag = "#favorite";
-            this.favoriteFilesDropDown.Text = "Favorites";
-            this.favoriteFilesDropDown.ButtonClick += new System.EventHandler(this.SearchBookmark_Click);
+            this.searchBox.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.searchBox.Name = "searchBox";
+            this.searchBox.Size = new System.Drawing.Size(200, 25);
+            this.searchBox.TextChanged += new System.EventHandler(this.SearchBox_TextChangedAsync);
             // 
-            // favoriteFilesMenuItem
+            // viewButton
             // 
-            this.favoriteFilesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_heart;
-            this.favoriteFilesMenuItem.Name = "favoriteFilesMenuItem";
-            this.favoriteFilesMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.favoriteFilesMenuItem.Tag = "#favorite";
-            this.favoriteFilesMenuItem.Text = "Files";
-            this.favoriteFilesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            this.viewButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.viewButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.detailsMenuItem,
+            this.thumbnailsMenuItem});
+            this.viewButton.Image = global::MediaLibrary.Properties.Resources.view_1;
+            this.viewButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.viewButton.Name = "viewButton";
+            this.viewButton.Size = new System.Drawing.Size(29, 22);
+            this.viewButton.Text = "toolStripDropDownButton1";
             // 
-            // toolStripSeparator4
+            // detailsMenuItem
             // 
-            this.toolStripSeparator4.Name = "toolStripSeparator4";
-            this.toolStripSeparator4.Size = new System.Drawing.Size(177, 6);
+            this.detailsMenuItem.Checked = true;
+            this.detailsMenuItem.CheckOnClick = true;
+            this.detailsMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.detailsMenuItem.Image = global::MediaLibrary.Properties.Resources.list_bullets_1;
+            this.detailsMenuItem.Name = "detailsMenuItem";
+            this.detailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.detailsMenuItem.Text = "Details";
+            this.detailsMenuItem.Click += new System.EventHandler(this.DetailsMenuItem_Click);
             // 
-            // favoriteAudioMenuItem
+            // thumbnailsMenuItem
             // 
-            this.favoriteAudioMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_heart;
-            this.favoriteAudioMenuItem.Name = "favoriteAudioMenuItem";
-            this.favoriteAudioMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.favoriteAudioMenuItem.Tag = "#favorite type:audio";
-            this.favoriteAudioMenuItem.Text = "Audio";
-            this.favoriteAudioMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            this.thumbnailsMenuItem.CheckOnClick = true;
+            this.thumbnailsMenuItem.Image = global::MediaLibrary.Properties.Resources.picture_landscape;
+            this.thumbnailsMenuItem.Name = "thumbnailsMenuItem";
+            this.thumbnailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.thumbnailsMenuItem.Text = "Thumbnails";
+            this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
             // 
-            // favoriteImagesMenuItem
+            // listView
             // 
-            this.favoriteImagesMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_heart;
-            this.favoriteImagesMenuItem.Name = "favoriteImagesMenuItem";
-            this.favoriteImagesMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.favoriteImagesMenuItem.Tag = "#favorite type:image";
-            this.favoriteImagesMenuItem.Text = "Images";
-            this.favoriteImagesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.nameColumn});
+            this.listView.HideSelection = false;
+            this.listView.Location = new System.Drawing.Point(0, 49);
+            this.listView.Margin = new System.Windows.Forms.Padding(0);
+            this.listView.Name = "listView";
+            this.listView.Size = new System.Drawing.Size(800, 379);
+            this.listView.SmallImageList = this.fileTypeImages;
+            this.listView.TabIndex = 3;
+            this.listView.UseCompatibleStateImageBehavior = false;
+            this.listView.View = System.Windows.Forms.View.Details;
             // 
-            // favoriteVideoMenuItem
+            // nameColumn
             // 
-            this.favoriteVideoMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_heart;
-            this.favoriteVideoMenuItem.Name = "favoriteVideoMenuItem";
-            this.favoriteVideoMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.favoriteVideoMenuItem.Tag = "#favorite type:video";
-            this.favoriteVideoMenuItem.Text = "Video";
-            this.favoriteVideoMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            this.nameColumn.Text = "Name";
             // 
-            // starredDropDown
+            // fileTypeImages
             // 
-            this.starredDropDown.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.starredDropDown.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.starredFilesMenuItem,
-            this.toolStripSeparator3,
-            this.starredAudioMenuItem,
-            this.starredImagesMenuItem,
-            this.starredVideoMenuItem});
-            this.starredDropDown.Image = global::MediaLibrary.Properties.Resources.rating_star;
-            this.starredDropDown.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.starredDropDown.Name = "starredDropDown";
-            this.starredDropDown.Size = new System.Drawing.Size(32, 22);
-            this.starredDropDown.Tag = "stars:>=3";
-            this.starredDropDown.Text = "Starred";
-            this.starredDropDown.ButtonClick += new System.EventHandler(this.SearchBookmark_Click);
-            // 
-            // starredFilesMenuItem
-            // 
-            this.starredFilesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_star;
-            this.starredFilesMenuItem.Name = "starredFilesMenuItem";
-            this.starredFilesMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.starredFilesMenuItem.Tag = "stars:>=3";
-            this.starredFilesMenuItem.Text = "Files";
-            this.starredFilesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
-            // 
-            // toolStripSeparator3
-            // 
-            this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(177, 6);
-            // 
-            // starredAudioMenuItem
-            // 
-            this.starredAudioMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_star;
-            this.starredAudioMenuItem.Name = "starredAudioMenuItem";
-            this.starredAudioMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.starredAudioMenuItem.Tag = "stars:>=3 type:audio";
-            this.starredAudioMenuItem.Text = "Audio";
-            this.starredAudioMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
-            // 
-            // starredImagesMenuItem
-            // 
-            this.starredImagesMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_star;
-            this.starredImagesMenuItem.Name = "starredImagesMenuItem";
-            this.starredImagesMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.starredImagesMenuItem.Tag = "stars:>=3 type:image";
-            this.starredImagesMenuItem.Text = "Images";
-            this.starredImagesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
-            // 
-            // starredVideoMenuItem
-            // 
-            this.starredVideoMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_star;
-            this.starredVideoMenuItem.Name = "starredVideoMenuItem";
-            this.starredVideoMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.starredVideoMenuItem.Tag = "stars:>=3 type:video";
-            this.starredVideoMenuItem.Text = "Video";
-            this.starredVideoMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
+            this.fileTypeImages.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("fileTypeImages.ImageStream")));
+            this.fileTypeImages.TransparentColor = System.Drawing.Color.Transparent;
+            this.fileTypeImages.Images.SetKeyName(0, "common-file");
+            this.fileTypeImages.Images.SetKeyName(1, "audio-file");
+            this.fileTypeImages.Images.SetKeyName(2, "image-file");
+            this.fileTypeImages.Images.SetKeyName(3, "video-file");
+            this.fileTypeImages.Images.SetKeyName(4, "audio-file-aac");
+            this.fileTypeImages.Images.SetKeyName(5, "audio-file-aif");
+            this.fileTypeImages.Images.SetKeyName(6, "audio-file-mid");
+            this.fileTypeImages.Images.SetKeyName(7, "audio-file-mp3");
+            this.fileTypeImages.Images.SetKeyName(8, "audio-file-wav");
+            this.fileTypeImages.Images.SetKeyName(9, "image-file-bmp");
+            this.fileTypeImages.Images.SetKeyName(10, "image-file-eps");
+            this.fileTypeImages.Images.SetKeyName(11, "image-file-gif");
+            this.fileTypeImages.Images.SetKeyName(12, "image-file-jpg");
+            this.fileTypeImages.Images.SetKeyName(13, "image-file-png");
+            this.fileTypeImages.Images.SetKeyName(14, "image-file-svg");
+            this.fileTypeImages.Images.SetKeyName(15, "image-file-tiff");
+            this.fileTypeImages.Images.SetKeyName(16, "video-file-avi");
+            this.fileTypeImages.Images.SetKeyName(17, "video-file-flv");
+            this.fileTypeImages.Images.SetKeyName(18, "video-file-m4v");
+            this.fileTypeImages.Images.SetKeyName(19, "video-file-mov");
+            this.fileTypeImages.Images.SetKeyName(20, "video-file-mp4");
+            this.fileTypeImages.Images.SetKeyName(21, "video-file-mpg");
+            this.fileTypeImages.Images.SetKeyName(22, "video-file-qt");
             // 
             // MainForm
             // 
@@ -586,5 +622,8 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator7;
         private System.Windows.Forms.ToolStripMenuItem videoFavoritesMenuItem;
         private System.Windows.Forms.ToolStripMenuItem videoStarsMenuItem;
+        private System.Windows.Forms.ToolStripDropDownButton viewButton;
+        private System.Windows.Forms.ToolStripMenuItem detailsMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem thumbnailsMenuItem;
     }
 }
