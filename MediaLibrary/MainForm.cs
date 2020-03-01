@@ -10,6 +10,7 @@ namespace MediaLibrary
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using MediaLibrary.Storage;
+    using MediaLibrary.Storage.Search;
 
     public partial class MainForm : Form
     {
@@ -36,31 +37,20 @@ namespace MediaLibrary
             e.Data.GetDataPresent(DataFormats.FileDrop) &&
             ((string[])e.Data.GetData(DataFormats.FileDrop)).All(Directory.Exists);
 
-        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            using (var aboutForm = new AboutForm())
-            {
-                aboutForm.ShowDialog(this);
-            }
-        }
-
-        private void AddIndexedFolderToolStripMenuItem_Click(object sender, System.EventArgs e)
-        {
-            using (var addIndexedPathForm = new AddIndexedPathForm(this.index))
-            {
-                if (addIndexedPathForm.ShowDialog(this) == DialogResult.OK)
+        private static ListViewItem CreateListItem(SearchResult item) =>
+            new ListViewItem(
+                new[]
                 {
-                    this.AddIndexedPath(addIndexedPathForm.SelectedPath);
-                }
-            }
-        }
+                    item.Paths[0],
+                    item.Hash,
+                    string.Join(" ", item.Tags),
+                },
+                GetImageKey(item.FileType))
+            {
+                Tag = item.Hash,
+            };
 
-        private void AddIndexedPath(string selectedPath)
-        {
-            this.TrackTaskProgress(progress => this.index.AddIndexedPath(selectedPath, progress));
-        }
-
-        private string GetImageKey(string fileType)
+        private static string GetImageKey(string fileType)
         {
             switch (fileType)
             {
@@ -91,6 +81,30 @@ namespace MediaLibrary
 
                 default: return "common-file";
             }
+        }
+
+        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var aboutForm = new AboutForm())
+            {
+                aboutForm.ShowDialog(this);
+            }
+        }
+
+        private void AddIndexedFolderToolStripMenuItem_Click(object sender, System.EventArgs e)
+        {
+            using (var addIndexedPathForm = new AddIndexedPathForm(this.index))
+            {
+                if (addIndexedPathForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    this.AddIndexedPath(addIndexedPathForm.SelectedPath);
+                }
+            }
+        }
+
+        private void AddIndexedPath(string selectedPath)
+        {
+            this.TrackTaskProgress(progress => this.index.AddIndexedPath(selectedPath, progress));
         }
 
         private void MainForm_DragDrop(object sender, DragEventArgs e)
@@ -149,7 +163,7 @@ namespace MediaLibrary
                 {
                     if (!existing.ContainsKey(item.Hash))
                     {
-                        this.listView.Items.Add(new ListViewItem(new[] { item.Paths[0], item.Hash }, this.GetImageKey(item.FileType)) { Tag = item.Hash });
+                        this.listView.Items.Add(CreateListItem(item));
                     }
                 }
 
