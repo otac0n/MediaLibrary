@@ -4,6 +4,7 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Threading;
@@ -46,7 +47,7 @@ namespace MediaLibrary
                 },
                 GetImageKey(item.FileType))
             {
-                Tag = item.Hash,
+                Tag = item,
             };
 
         private static string GetImageKey(string fileType)
@@ -116,6 +117,24 @@ namespace MediaLibrary
             }
         }
 
+        private async void ListView_DoubleClick(object sender, MouseEventArgs e)
+        {
+            if (this.listView.HitTest(e.X, e.Y).Item != null)
+            {
+                var items = this.listView.SelectedItems.Cast<ListViewItem>().ToList();
+                foreach (var item in items)
+                {
+                    foreach (var path in ((SearchResult)item.Tag).Paths)
+                    {
+                        if (File.Exists(path))
+                        {
+                            Process.Start(path);
+                        }
+                    }
+                }
+            }
+        }
+
         private void MainForm_DragDrop(object sender, DragEventArgs e)
         {
             if (CanDrop(e))
@@ -155,7 +174,7 @@ namespace MediaLibrary
             var data = await this.index.SearchIndex(this.searchBox.Text).ConfigureAwait(true);
             if (this.searchVersion == searchVersion)
             {
-                var existing = this.listView.Items.Cast<ListViewItem>().ToDictionary(i => (string)i.Tag);
+                var existing = this.listView.Items.Cast<ListViewItem>().ToDictionary(i => ((SearchResult)i.Tag).Hash);
                 var newHashes = new HashSet<string>(data.Select(i => i.Hash));
 
                 this.listView.BeginUpdate();
