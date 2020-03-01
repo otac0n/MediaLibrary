@@ -39,16 +39,16 @@ namespace MediaLibrary
             e.Data.GetDataPresent(DataFormats.FileDrop) &&
             ((string[])e.Data.GetData(DataFormats.FileDrop)).All(Directory.Exists);
 
-        private static ListViewItem CreateListItem(SearchResult item) =>
+        private static ListViewItem CreateListItem(SearchResult searchResult) =>
             new ListViewItem(
                 new[]
                 {
-                    Path.GetFileNameWithoutExtension(item.Paths[0]),
-                    string.Join(" ", item.Tags),
+                    Path.GetFileNameWithoutExtension(searchResult.Paths[0]),
+                    string.Join(" ", searchResult.Tags),
                 },
-                GetImageKey(item.FileType))
+                GetImageKey(searchResult.FileType))
             {
-                Tag = item,
+                Tag = searchResult,
             };
 
         private static string GetImageKey(string fileType)
@@ -82,6 +82,14 @@ namespace MediaLibrary
 
                 default: return "common-file";
             }
+        }
+
+        private static void UpdateListItem(ListViewItem item, SearchResult searchResult)
+        {
+            item.Tag = searchResult;
+            item.SubItems[0].Text = Path.GetFileNameWithoutExtension(searchResult.Paths[0]);
+            item.SubItems[1].Text = string.Join(" ", searchResult.Tags);
+            item.ImageKey = GetImageKey(searchResult.FileType);
         }
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -220,7 +228,11 @@ namespace MediaLibrary
 
                 foreach (var item in data)
                 {
-                    if (!existing.ContainsKey(item.Hash))
+                    if (existing.TryGetValue(item.Hash, out var existingItem))
+                    {
+                        UpdateListItem(existingItem, item);
+                    }
+                    else
                     {
                         this.listView.Items.Add(CreateListItem(item));
                     }
