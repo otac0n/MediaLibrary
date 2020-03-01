@@ -41,8 +41,7 @@ namespace MediaLibrary
             new ListViewItem(
                 new[]
                 {
-                    item.Paths[0],
-                    item.Hash,
+                    Path.GetFileNameWithoutExtension(item.Paths[0]),
                     string.Join(" ", item.Tags),
                 },
                 GetImageKey(item.FileType))

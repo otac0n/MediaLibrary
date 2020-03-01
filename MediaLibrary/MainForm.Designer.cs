@@ -77,6 +77,7 @@ namespace MediaLibrary
             this.listView = new System.Windows.Forms.ListView();
             this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
+            this.tags = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
@@ -389,7 +390,7 @@ namespace MediaLibrary
             // 
             this.allImagesMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_home;
             this.allImagesMenuItem.Name = "allImagesMenuItem";
-            this.allImagesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.allImagesMenuItem.Size = new System.Drawing.Size(157, 22);
             this.allImagesMenuItem.Tag = "type:image";
             this.allImagesMenuItem.Text = "All Images";
             this.allImagesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -397,13 +398,13 @@ namespace MediaLibrary
             // toolStripSeparator6
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
-            this.toolStripSeparator6.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator6.Size = new System.Drawing.Size(154, 6);
             // 
             // imageFavoritesMenuItem
             // 
             this.imageFavoritesMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_heart;
             this.imageFavoritesMenuItem.Name = "imageFavoritesMenuItem";
-            this.imageFavoritesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.imageFavoritesMenuItem.Size = new System.Drawing.Size(157, 22);
             this.imageFavoritesMenuItem.Tag = "type:image #favorite";
             this.imageFavoritesMenuItem.Text = "Favorite Images";
             this.imageFavoritesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -412,7 +413,7 @@ namespace MediaLibrary
             // 
             this.imageStarsMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_star;
             this.imageStarsMenuItem.Name = "imageStarsMenuItem";
-            this.imageStarsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.imageStarsMenuItem.Size = new System.Drawing.Size(157, 22);
             this.imageStarsMenuItem.Tag = "type:image stars:>=3";
             this.imageStarsMenuItem.Text = "Starred Images";
             this.imageStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -507,7 +508,8 @@ namespace MediaLibrary
             // listView
             // 
             this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.nameColumn});
+            this.nameColumn,
+            this.tags});
             this.listView.HideSelection = false;
             this.listView.Location = new System.Drawing.Point(0, 49);
             this.listView.Margin = new System.Windows.Forms.Padding(0);
@@ -549,6 +551,10 @@ namespace MediaLibrary
             this.fileTypeImages.Images.SetKeyName(20, "video-file-mp4");
             this.fileTypeImages.Images.SetKeyName(21, "video-file-mpg");
             this.fileTypeImages.Images.SetKeyName(22, "video-file-qt");
+            // 
+            // tags
+            // 
+            this.tags.Text = "Tags";
             // 
             // MainForm
             // 
@@ -625,5 +631,6 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripDropDownButton viewButton;
         private System.Windows.Forms.ToolStripMenuItem detailsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem thumbnailsMenuItem;
+        private System.Windows.Forms.ColumnHeader tags;
     }
 }
