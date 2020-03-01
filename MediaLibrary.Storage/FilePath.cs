@@ -16,5 +16,30 @@ namespace MediaLibrary.Storage
         public long LastModifiedTime { get; }
 
         public string Path { get; }
+
+        internal static class Queries
+        {
+            public static readonly string AddFilePath = @"
+                INSERT OR REPLACE INTO Paths (Path, LastHash, LastModifiedTime) VALUES (@Path, @LastHash, @LastModifiedTime)
+            ";
+
+            public static readonly string GetFilePathByPath = @"
+                SELECT
+                    Path,
+                    LastHash,
+                    LastModifiedTime
+                FROM Paths
+                WHERE Path = @Path
+            ";
+
+            public static readonly string GetFilePathsByHash = @"
+                SELECT
+                    Path,
+                    LastHash,
+                    LastModifiedTime
+                FROM Paths
+                WHERE LastHash = @Hash
+            ";
+        }
     }
 }

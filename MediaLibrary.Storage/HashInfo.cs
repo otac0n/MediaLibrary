@@ -16,5 +16,21 @@ namespace MediaLibrary.Storage
         public string FileType { get; }
 
         public string Hash { get; }
+
+        internal static class Queries
+        {
+            public static readonly string AddHashInfo = @"
+                INSERT OR REPLACE INTO HashInfo (Hash, FileSize, FileType) VALUES (@Hash, @FileSize, @FileType)
+            ";
+
+            public static readonly string GetHashInfo = @"
+                SELECT
+                    Hash,
+                    FileSize,
+                    FileType
+                FROM HashInfo
+                WHERE Hash = @Hash
+            ";
+        }
     }
 }
