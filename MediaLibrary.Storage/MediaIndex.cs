@@ -29,11 +29,20 @@ namespace MediaLibrary.Storage
             this.indexPath = indexPath;
         }
 
+        public async Task AddHashTag(HashTag hashTag)
+        {
+            await this.UpdateIndex(HashTag.Queries.AddHashTag, hashTag).ConfigureAwait(false);
+        }
+
         public async Task AddIndexedPath(string path, IProgress<RescanProgress> progress = null)
         {
             await this.UpdateIndex(Queries.AddIndexedPath, new { Path = path }).ConfigureAwait(false);
             await this.RescanIndexedPath(path, progress).ConfigureAwait(false);
         }
+
+        public Task<List<string>> GetAllTags() =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<string>(HashTag.Queries.GetAllTags).ConfigureAwait(false)).ToList());
 
         public async Task<SQLiteConnection> GetConnection(bool readOnly = false)
         {

@@ -17,19 +17,23 @@ namespace MediaLibrary.Storage
         internal static class Queries
         {
             public static readonly string AddHashTag = @"
-                INSERT OR REPLACE INTO HashTag (Hash, Tag) VALUES (@Hash, @Tag)
+                INSERT OR REPLACE INTO HashTags (Hash, Tag) VALUES (@Hash, @Tag)
+            ";
+
+            public static readonly string GetAllTags = @"
+                SELECT DISTINCT Tag FROM HashTags
             ";
 
             public static readonly string GetHashTag = @"
                 SELECT
                     Hash,
                     Tag
-                FROM HashTag
+                FROM HashTags
                 WHERE Hash = @Hash
             ";
 
             public static readonly string RemoveHashTag = @"
-                DELETE FROM HashTag WHERE Hash = @Hash AND Tag = @Tag
+                DELETE FROM HashTags WHERE Hash = @Hash AND Tag = @Tag
             ";
         }
     }

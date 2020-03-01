@@ -4,6 +4,7 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
@@ -107,6 +108,15 @@ namespace MediaLibrary
             this.TrackTaskProgress(progress => this.index.AddIndexedPath(selectedPath, progress));
         }
 
+        private void AddTagsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var searchResult = (SearchResult)this.itemContextMenu.Tag;
+            using (var addIndexedPathForm = new AddTagsForm(this.index, searchResult))
+            {
+                addIndexedPathForm.ShowDialog(this);
+            }
+        }
+
         private void DetailsMenuItem_Click(object sender, EventArgs e)
         {
             this.thumbnailsMenuItem.Checked = !this.detailsMenuItem.Checked;
@@ -115,6 +125,12 @@ namespace MediaLibrary
             {
                 this.listView.View = View.Details;
             }
+        }
+
+        private async void FavoriteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var searchResult = (SearchResult)this.itemContextMenu.Tag;
+            await this.index.AddHashTag(new HashTag(searchResult.Hash, "favorite")).ConfigureAwait(false);
         }
 
         private async void ListView_DoubleClick(object sender, MouseEventArgs e)
@@ -131,6 +147,21 @@ namespace MediaLibrary
                             Process.Start(path);
                         }
                     }
+                }
+            }
+        }
+
+        private void ListView_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right && e.Clicks == 1)
+            {
+                var item = this.listView.FocusedItem;
+                if (item.Bounds.Contains(e.Location))
+                {
+                    var searchResult = (SearchResult)item.Tag;
+                    this.favoriteToolStripMenuItem.Checked = searchResult.Tags.Contains("favorite");
+                    this.itemContextMenu.Tag = searchResult;
+                    this.itemContextMenu.Show(Cursor.Position);
                 }
             }
         }

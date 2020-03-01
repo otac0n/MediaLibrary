@@ -76,11 +76,15 @@ namespace MediaLibrary
             this.thumbnailsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.listView = new System.Windows.Forms.ListView();
             this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
             this.tags = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
+            this.itemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.favoriteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
+            this.itemContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // mainMenu
@@ -492,7 +496,7 @@ namespace MediaLibrary
             this.detailsMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.detailsMenuItem.Image = global::MediaLibrary.Properties.Resources.list_bullets_1;
             this.detailsMenuItem.Name = "detailsMenuItem";
-            this.detailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.detailsMenuItem.Size = new System.Drawing.Size(137, 22);
             this.detailsMenuItem.Text = "Details";
             this.detailsMenuItem.Click += new System.EventHandler(this.DetailsMenuItem_Click);
             // 
@@ -501,7 +505,7 @@ namespace MediaLibrary
             this.thumbnailsMenuItem.CheckOnClick = true;
             this.thumbnailsMenuItem.Image = global::MediaLibrary.Properties.Resources.picture_landscape;
             this.thumbnailsMenuItem.Name = "thumbnailsMenuItem";
-            this.thumbnailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.thumbnailsMenuItem.Size = new System.Drawing.Size(137, 22);
             this.thumbnailsMenuItem.Text = "Thumbnails";
             this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
             // 
@@ -519,11 +523,16 @@ namespace MediaLibrary
             this.listView.TabIndex = 3;
             this.listView.UseCompatibleStateImageBehavior = false;
             this.listView.View = System.Windows.Forms.View.Details;
+            this.listView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ListView_MouseClick);
             this.listView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListView_DoubleClick);
             // 
             // nameColumn
             // 
             this.nameColumn.Text = "Name";
+            // 
+            // tags
+            // 
+            this.tags.Text = "Tags";
             // 
             // fileTypeImages
             // 
@@ -553,9 +562,29 @@ namespace MediaLibrary
             this.fileTypeImages.Images.SetKeyName(21, "video-file-mpg");
             this.fileTypeImages.Images.SetKeyName(22, "video-file-qt");
             // 
-            // tags
+            // itemContextMenu
             // 
-            this.tags.Text = "Tags";
+            this.itemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.favoriteToolStripMenuItem,
+            this.addTagsToolStripMenuItem});
+            this.itemContextMenu.Name = "itemContextMenu";
+            this.itemContextMenu.Size = new System.Drawing.Size(181, 70);
+            // 
+            // favoriteToolStripMenuItem
+            // 
+            this.favoriteToolStripMenuItem.Image = global::MediaLibrary.Properties.Resources.love_it;
+            this.favoriteToolStripMenuItem.Name = "favoriteToolStripMenuItem";
+            this.favoriteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.favoriteToolStripMenuItem.Text = "&Favorite";
+            this.favoriteToolStripMenuItem.Click += new System.EventHandler(this.FavoriteToolStripMenuItem_Click);
+            // 
+            // addTagsToolStripMenuItem
+            // 
+            this.addTagsToolStripMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_add;
+            this.addTagsToolStripMenuItem.Name = "addTagsToolStripMenuItem";
+            this.addTagsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addTagsToolStripMenuItem.Text = "Add &Tags...";
+            this.addTagsToolStripMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
             // 
             // MainForm
             // 
@@ -578,6 +607,7 @@ namespace MediaLibrary
             this.statusStrip.PerformLayout();
             this.toolStrip.ResumeLayout(false);
             this.toolStrip.PerformLayout();
+            this.itemContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -633,5 +663,8 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem detailsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem thumbnailsMenuItem;
         private System.Windows.Forms.ColumnHeader tags;
+        private System.Windows.Forms.ContextMenuStrip itemContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem favoriteToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addTagsToolStripMenuItem;
     }
 }
