@@ -40,6 +40,10 @@ namespace MediaLibrary.Storage
                 FROM Paths
                 WHERE LastHash = @Hash
             ";
+
+            public static readonly string RemoveFilePathByPath = @"
+                DELETE FROM Paths WHERE Path = @Path
+            ";
         }
     }
 }

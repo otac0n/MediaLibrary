@@ -29,6 +29,44 @@ namespace MediaLibrary.Storage
             this.indexPath = indexPath;
         }
 
+        public static async Task<HashInfo> HashFileAsync(string path)
+        {
+            var fileSize = 0L;
+            var recognizerState = FileTypeRecognizer.Initialize();
+            byte[] hash;
+            using (var hashAlgorithm = new SHA256Managed())
+            using (var file = File.OpenRead(path))
+            {
+                var buffer = new byte[4096];
+                hashAlgorithm.Initialize();
+                while (true)
+                {
+                    var count = await file.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+                    if (count == 0)
+                    {
+                        hashAlgorithm.TransformFinalBlock(buffer, 0, 0);
+                        hash = hashAlgorithm.Hash;
+                        break;
+                    }
+                    else
+                    {
+                        hashAlgorithm.TransformBlock(buffer, 0, count, buffer, 0);
+                        FileTypeRecognizer.Advance(recognizerState, buffer, 0, count);
+                        fileSize += count;
+                    }
+                }
+            }
+
+            var sb = new StringBuilder(hash.Length * 2);
+
+            for (var i = 0; i < hash.Length; i++)
+            {
+                sb.Append(hash[i].ToString("x2", CultureInfo.InvariantCulture));
+            }
+
+            return new HashInfo(sb.ToString(), fileSize, FileTypeRecognizer.GetType(recognizerState));
+        }
+
         public async Task AddHashTag(HashTag hashTag)
         {
             await this.UpdateIndex(HashTag.Queries.AddHashTag, hashTag).ConfigureAwait(false);
@@ -75,6 +113,9 @@ namespace MediaLibrary.Storage
         {
             await this.UpdateIndex(Queries.CreateSchema).ConfigureAwait(false);
         }
+
+        public Task RemoveFilePath(string path) =>
+            this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path });
 
         public async Task RemoveIndexedPath(string path)
         {
@@ -138,44 +179,6 @@ namespace MediaLibrary.Storage
 
                 return results;
             }
-        }
-
-        private static async Task<HashInfo> HashFileAsync(string path)
-        {
-            var fileSize = 0L;
-            var recognizerState = FileTypeRecognizer.Initialize();
-            byte[] hash;
-            using (var hashAlgorithm = new SHA256Managed())
-            using (var file = File.OpenRead(path))
-            {
-                var buffer = new byte[4096];
-                hashAlgorithm.Initialize();
-                while (true)
-                {
-                    var count = await file.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
-                    if (count == 0)
-                    {
-                        hashAlgorithm.TransformFinalBlock(buffer, 0, 0);
-                        hash = hashAlgorithm.Hash;
-                        break;
-                    }
-                    else
-                    {
-                        hashAlgorithm.TransformBlock(buffer, 0, count, buffer, 0);
-                        FileTypeRecognizer.Advance(recognizerState, buffer, 0, count);
-                        fileSize += count;
-                    }
-                }
-            }
-
-            var sb = new StringBuilder(hash.Length * 2);
-
-            for (var i = 0; i < hash.Length; i++)
-            {
-                sb.Append(hash[i].ToString("x2", CultureInfo.InvariantCulture));
-            }
-
-            return new HashInfo(sb.ToString(), fileSize, FileTypeRecognizer.GetType(recognizerState));
         }
 
         private Task<FilePath> GetFilePath(string path) =>
