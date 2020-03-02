@@ -10,7 +10,6 @@ namespace MediaLibrary.Storage.Search
     {
         private int depth = 0;
         private bool joinCopies = false;
-        private bool joinTags = false;
 
         /// <inheritdoc/>
         public override string Compile(Term term)
@@ -21,7 +20,6 @@ namespace MediaLibrary.Storage.Search
             {
                 if (originalDepth == 0)
                 {
-                    this.joinTags = false;
                     this.joinCopies = false;
                     return this.FinalizeQuery(base.Compile(term));
                 }
@@ -64,8 +62,7 @@ namespace MediaLibrary.Storage.Search
                         throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
                     }
 
-                    this.joinTags = true;
-                    return $"Tag = {Literal(field.Value)}";
+                    return $"EXISTS (SELECT 1 FROM HashTags t WHERE h.Hash = t.Hash AND t.Tag = {Literal(field.Value)})";
 
                 case "copies":
                     this.joinCopies = true;
@@ -163,11 +160,6 @@ namespace MediaLibrary.Storage.Search
             sb
                 .AppendLine("SELECT DISTINCT h.Hash, h.FileSize, h.FileType")
                 .AppendLine("FROM HashInfo h");
-
-            if (this.joinTags)
-            {
-                sb.AppendLine("LEFT JOIN HashTags t ON h.Hash = t.Hash");
-            }
 
             if (this.joinCopies)
             {

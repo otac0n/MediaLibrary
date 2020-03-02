@@ -25,6 +25,11 @@ namespace MediaLibrary.Storage.Search
                 first = false;
             }
 
+            if (first)
+            {
+                sb.Append("1 = 1");
+            }
+
             return sb.Append(")").ToString();
         }
 
@@ -44,6 +49,11 @@ namespace MediaLibrary.Storage.Search
 
                 sb.Append(term);
                 first = false;
+            }
+
+            if (first)
+            {
+                sb.Append("1 = 1");
             }
 
             return sb.Append(")").ToString();

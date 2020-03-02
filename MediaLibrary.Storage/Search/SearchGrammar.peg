@@ -3,7 +3,7 @@
 
 search <Term> = _ t:conjunction _ EOF { t };
 
-conjunction <Term> = d:disjunction<1,, WS> { d.Count == 1 ? d[0] : new ConjunctionTerm(d) };
+conjunction <Term> = d:disjunction<0,, WS> { d.Count == 1 ? d[0] : new ConjunctionTerm(d) };
 
 disjunction <Term> = u:unary<1,, WS "or"i WS> { u.Count == 1 ? u[0] : new DisjunctionTerm(u) };
 
