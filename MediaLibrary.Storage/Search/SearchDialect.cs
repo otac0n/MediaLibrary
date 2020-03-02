@@ -9,6 +9,7 @@ namespace MediaLibrary.Storage.Search
     public class SearchDialect : AnsiSqlCompiler
     {
         private int depth = 0;
+        private bool joinCopies = false;
         private bool joinTags = false;
 
         /// <inheritdoc/>
@@ -21,6 +22,7 @@ namespace MediaLibrary.Storage.Search
                 if (originalDepth == 0)
                 {
                     this.joinTags = false;
+                    this.joinCopies = false;
                     return this.FinalizeQuery(base.Compile(term));
                 }
                 else
@@ -45,6 +47,11 @@ namespace MediaLibrary.Storage.Search
             switch (field.Field)
             {
                 case "type":
+                    if (field.Operator != FieldTerm.EqualsOperator)
+                    {
+                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                    }
+
                     var ix = field.Value.IndexOf('/');
                     return
                         ix < 0 ? $"FileType = {Literal(field.Value)} OR {StartsWith("FileType", field.Value + "/")}" :
@@ -52,11 +59,43 @@ namespace MediaLibrary.Storage.Search
                         $"FileType = {Literal(field.Value)}";
 
                 case "tag":
+                    if (field.Operator != FieldTerm.EqualsOperator)
+                    {
+                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                    }
+
                     this.joinTags = true;
                     return $"Tag = {Literal(field.Value)}";
 
+                case "copies":
+                    this.joinCopies = true;
+                    if (!int.TryParse(field.Value, out var copies))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return $"COALESCE(c.Copies, 0) {ConvertOperator(field.Operator)} {copies}";
+
                 default:
                     throw new NotSupportedException();
+            }
+        }
+
+        private static string ConvertOperator(string fieldOperator)
+        {
+            switch (fieldOperator)
+            {
+                case FieldTerm.EqualsOperator:
+                    return "=";
+
+                case FieldTerm.GreaterThanOperator:
+                case FieldTerm.GreaterThanOrEqualOperator:
+                case FieldTerm.LessThanOperator:
+                case FieldTerm.LessThanOrEqualOperator:
+                    return fieldOperator;
+
+                default:
+                    throw new NotSupportedException($"Unrecognized operator '{fieldOperator}'.");
             }
         }
 
@@ -128,6 +167,16 @@ namespace MediaLibrary.Storage.Search
             if (this.joinTags)
             {
                 sb.AppendLine("LEFT JOIN HashTags t ON h.Hash = t.Hash");
+            }
+
+            if (this.joinCopies)
+            {
+                sb
+                    .AppendLine("LEFT JOIN (")
+                    .AppendLine("    SELECT LastHash Hash, COUNT(*) Copies")
+                    .AppendLine("    FROM Paths")
+                    .AppendLine("    GROUP BY Hash")
+                    .AppendLine(") c ON h.Hash = c.Hash");
             }
 
             sb

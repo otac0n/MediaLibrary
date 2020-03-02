@@ -6,15 +6,28 @@ namespace MediaLibrary.Storage.Search
 
     public class FieldTerm : Term
     {
+        public const string EqualsOperator = ":";
+        public const string GreaterThanOperator = ">";
+        public const string GreaterThanOrEqualOperator = ">=";
+        public const string LessThanOperator = "<";
+        public const string LessThanOrEqualOperator = "<=";
         public static readonly int Precedence = 3;
 
-        public FieldTerm(string field, string value)
+        public FieldTerm(string field, string @operator, string value)
         {
             this.Field = field;
+            this.Operator = @operator;
             this.Value = value;
         }
 
+        public FieldTerm(string field, string value)
+            : this(field, ":", value)
+        {
+        }
+
         public string Field { get; }
+
+        public string Operator { get; }
 
         public string Value { get; }
 
@@ -22,20 +35,23 @@ namespace MediaLibrary.Storage.Search
         public override string ToString()
         {
             var valueEscaped = "\"" + this.Value.Replace("\"", "\"\"") + "\"";
-            switch (this.Field)
+
+            if (this.Operator == EqualsOperator)
             {
-                case null:
-                    return valueEscaped;
+                switch (this.Field)
+                {
+                    case null:
+                        return valueEscaped;
 
-                case "tag":
-                    return $"#{valueEscaped}";
+                    case "tag":
+                        return $"#{valueEscaped}";
 
-                case "@":
-                    return $"@{valueEscaped}";
-
-                default:
-                    return $"\"{this.Field.Replace("\"", "\"\"")}\":{valueEscaped}";
+                    case "@":
+                        return $"@{valueEscaped}";
+                }
             }
+
+            return $"\"{this.Field.Replace("\"", "\"\"")}\"{this.Operator}{valueEscaped}";
         }
     }
 }

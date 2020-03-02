@@ -328,7 +328,7 @@ namespace MediaLibrary.Storage
                 );
 
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_Paths_Path ON Paths (Path);
-                CREATE INDEX IF NOT EXISTS IX_Paths_LastHash ON Paths (LastHash, Path);
+                CREATE INDEX IF NOT EXISTS IX_Paths_LastHash ON Paths (LastHash);
 
                 CREATE TABLE IF NOT EXISTS HashInfo
                 (
