@@ -217,4 +217,19 @@
   <data name="tags_remove" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\Icons\streamline-icon-tags-remove@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="folder_add" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\Icons\streamline-icon-folder-add@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="folder_remove" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\Icons\streamline-icon-folder-remove@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="information_circle" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\Icons\streamline-icon-information-circle@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="logout_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\Icons\streamline-icon-logout-2@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="common_file_stack" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\Icons\streamline-icon-common-file-stack@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

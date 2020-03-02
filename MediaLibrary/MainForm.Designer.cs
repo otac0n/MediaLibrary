@@ -32,15 +32,22 @@ namespace MediaLibrary
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.mainMenu = new System.Windows.Forms.MenuStrip();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.addIndexedFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.findDuplicatesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.mainProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.toolStrip = new System.Windows.Forms.ToolStrip();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.searchBox = new System.Windows.Forms.ToolStripTextBox();
+            this.listView = new System.Windows.Forms.ListView();
+            this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.tags = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
+            this.itemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.playButton = new System.Windows.Forms.ToolStripButton();
             this.playAllButton = new System.Windows.Forms.ToolStripButton();
             this.shuffleAllButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.favoriteFilesDropDown = new System.Windows.Forms.ToolStripSplitButton();
             this.favoriteFilesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
@@ -53,7 +60,6 @@ namespace MediaLibrary
             this.starredAudioMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.starredImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.starredVideoMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.homeButton = new System.Windows.Forms.ToolStripButton();
             this.audioDropDown = new System.Windows.Forms.ToolStripSplitButton();
             this.allAudioMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -70,19 +76,13 @@ namespace MediaLibrary
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.videoFavoritesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.videoStarsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.searchBox = new System.Windows.Forms.ToolStripTextBox();
             this.viewButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.detailsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.thumbnailsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.listView = new System.Windows.Forms.ListView();
-            this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.tags = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
-            this.itemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.addIndexedFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.favoriteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.findDuplicatesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
@@ -110,19 +110,21 @@ namespace MediaLibrary
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.optionsToolStripMenuItem.Text = "&Options";
             // 
-            // addIndexedFolderToolStripMenuItem
+            // toolsMenuItem
             // 
-            this.addIndexedFolderToolStripMenuItem.Name = "addIndexedFolderToolStripMenuItem";
-            this.addIndexedFolderToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
-            this.addIndexedFolderToolStripMenuItem.Text = "Add &Indexed Folder...";
-            this.addIndexedFolderToolStripMenuItem.Click += new System.EventHandler(this.AddIndexedFolderToolStripMenuItem_Click);
+            this.toolsMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.findDuplicatesMenuItem});
+            this.toolsMenuItem.Name = "toolsMenuItem";
+            this.toolsMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.toolsMenuItem.Text = "Tools";
             // 
-            // aboutToolStripMenuItem
+            // findDuplicatesMenuItem
             // 
-            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
-            this.aboutToolStripMenuItem.Text = "Ab&out...";
-            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
+            this.findDuplicatesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_stack;
+            this.findDuplicatesMenuItem.Name = "findDuplicatesMenuItem";
+            this.findDuplicatesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.findDuplicatesMenuItem.Text = "Find &Duplicates...";
+            this.findDuplicatesMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
             // 
             // statusStrip
             // 
@@ -166,6 +168,87 @@ namespace MediaLibrary
             this.toolStrip.TabIndex = 2;
             this.toolStrip.Text = "toolStrip";
             // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            // 
+            // searchBox
+            // 
+            this.searchBox.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.searchBox.Name = "searchBox";
+            this.searchBox.Size = new System.Drawing.Size(200, 25);
+            this.searchBox.TextChanged += new System.EventHandler(this.SearchBox_TextChangedAsync);
+            // 
+            // listView
+            // 
+            this.listView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.nameColumn,
+            this.tags});
+            this.listView.HideSelection = false;
+            this.listView.Location = new System.Drawing.Point(0, 49);
+            this.listView.Margin = new System.Windows.Forms.Padding(0);
+            this.listView.Name = "listView";
+            this.listView.Size = new System.Drawing.Size(800, 379);
+            this.listView.SmallImageList = this.fileTypeImages;
+            this.listView.TabIndex = 3;
+            this.listView.UseCompatibleStateImageBehavior = false;
+            this.listView.View = System.Windows.Forms.View.Details;
+            this.listView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ListView_MouseClick);
+            this.listView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListView_DoubleClick);
+            // 
+            // nameColumn
+            // 
+            this.nameColumn.Text = "Name";
+            // 
+            // tags
+            // 
+            this.tags.Text = "Tags";
+            // 
+            // fileTypeImages
+            // 
+            this.fileTypeImages.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("fileTypeImages.ImageStream")));
+            this.fileTypeImages.TransparentColor = System.Drawing.Color.Transparent;
+            this.fileTypeImages.Images.SetKeyName(0, "common-file");
+            this.fileTypeImages.Images.SetKeyName(1, "audio-file");
+            this.fileTypeImages.Images.SetKeyName(2, "image-file");
+            this.fileTypeImages.Images.SetKeyName(3, "video-file");
+            this.fileTypeImages.Images.SetKeyName(4, "audio-file-aac");
+            this.fileTypeImages.Images.SetKeyName(5, "audio-file-aif");
+            this.fileTypeImages.Images.SetKeyName(6, "audio-file-mid");
+            this.fileTypeImages.Images.SetKeyName(7, "audio-file-mp3");
+            this.fileTypeImages.Images.SetKeyName(8, "audio-file-wav");
+            this.fileTypeImages.Images.SetKeyName(9, "image-file-bmp");
+            this.fileTypeImages.Images.SetKeyName(10, "image-file-eps");
+            this.fileTypeImages.Images.SetKeyName(11, "image-file-gif");
+            this.fileTypeImages.Images.SetKeyName(12, "image-file-jpg");
+            this.fileTypeImages.Images.SetKeyName(13, "image-file-png");
+            this.fileTypeImages.Images.SetKeyName(14, "image-file-svg");
+            this.fileTypeImages.Images.SetKeyName(15, "image-file-tiff");
+            this.fileTypeImages.Images.SetKeyName(16, "video-file-avi");
+            this.fileTypeImages.Images.SetKeyName(17, "video-file-flv");
+            this.fileTypeImages.Images.SetKeyName(18, "video-file-m4v");
+            this.fileTypeImages.Images.SetKeyName(19, "video-file-mov");
+            this.fileTypeImages.Images.SetKeyName(20, "video-file-mp4");
+            this.fileTypeImages.Images.SetKeyName(21, "video-file-mpg");
+            this.fileTypeImages.Images.SetKeyName(22, "video-file-qt");
+            // 
+            // itemContextMenu
+            // 
+            this.itemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.favoriteToolStripMenuItem,
+            this.addTagsToolStripMenuItem});
+            this.itemContextMenu.Name = "itemContextMenu";
+            this.itemContextMenu.Size = new System.Drawing.Size(133, 48);
+            // 
             // playButton
             // 
             this.playButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
@@ -192,11 +275,6 @@ namespace MediaLibrary
             this.shuffleAllButton.Name = "shuffleAllButton";
             this.shuffleAllButton.Size = new System.Drawing.Size(23, 22);
             this.shuffleAllButton.Text = "Shuffle all";
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // favoriteFilesDropDown
             // 
@@ -313,11 +391,6 @@ namespace MediaLibrary
             this.starredVideoMenuItem.Tag = "stars:>=3 type:video";
             this.starredVideoMenuItem.Text = "Video";
             this.starredVideoMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
             // homeButton
             // 
@@ -473,13 +546,6 @@ namespace MediaLibrary
             this.videoStarsMenuItem.Text = "Starred Video";
             this.videoStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
-            // searchBox
-            // 
-            this.searchBox.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.searchBox.Name = "searchBox";
-            this.searchBox.Size = new System.Drawing.Size(200, 25);
-            this.searchBox.TextChanged += new System.EventHandler(this.SearchBox_TextChangedAsync);
-            // 
             // viewButton
             // 
             this.viewButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
@@ -512,66 +578,21 @@ namespace MediaLibrary
             this.thumbnailsMenuItem.Text = "Thumbnails";
             this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
             // 
-            // listView
+            // addIndexedFolderToolStripMenuItem
             // 
-            this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.nameColumn,
-            this.tags});
-            this.listView.HideSelection = false;
-            this.listView.Location = new System.Drawing.Point(0, 49);
-            this.listView.Margin = new System.Windows.Forms.Padding(0);
-            this.listView.Name = "listView";
-            this.listView.Size = new System.Drawing.Size(800, 379);
-            this.listView.SmallImageList = this.fileTypeImages;
-            this.listView.TabIndex = 3;
-            this.listView.UseCompatibleStateImageBehavior = false;
-            this.listView.View = System.Windows.Forms.View.Details;
-            this.listView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ListView_MouseClick);
-            this.listView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListView_DoubleClick);
+            this.addIndexedFolderToolStripMenuItem.Image = global::MediaLibrary.Properties.Resources.folder_add;
+            this.addIndexedFolderToolStripMenuItem.Name = "addIndexedFolderToolStripMenuItem";
+            this.addIndexedFolderToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.addIndexedFolderToolStripMenuItem.Text = "Add &Indexed Folder...";
+            this.addIndexedFolderToolStripMenuItem.Click += new System.EventHandler(this.AddIndexedFolderToolStripMenuItem_Click);
             // 
-            // nameColumn
+            // aboutToolStripMenuItem
             // 
-            this.nameColumn.Text = "Name";
-            // 
-            // tags
-            // 
-            this.tags.Text = "Tags";
-            // 
-            // fileTypeImages
-            // 
-            this.fileTypeImages.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("fileTypeImages.ImageStream")));
-            this.fileTypeImages.TransparentColor = System.Drawing.Color.Transparent;
-            this.fileTypeImages.Images.SetKeyName(0, "common-file");
-            this.fileTypeImages.Images.SetKeyName(1, "audio-file");
-            this.fileTypeImages.Images.SetKeyName(2, "image-file");
-            this.fileTypeImages.Images.SetKeyName(3, "video-file");
-            this.fileTypeImages.Images.SetKeyName(4, "audio-file-aac");
-            this.fileTypeImages.Images.SetKeyName(5, "audio-file-aif");
-            this.fileTypeImages.Images.SetKeyName(6, "audio-file-mid");
-            this.fileTypeImages.Images.SetKeyName(7, "audio-file-mp3");
-            this.fileTypeImages.Images.SetKeyName(8, "audio-file-wav");
-            this.fileTypeImages.Images.SetKeyName(9, "image-file-bmp");
-            this.fileTypeImages.Images.SetKeyName(10, "image-file-eps");
-            this.fileTypeImages.Images.SetKeyName(11, "image-file-gif");
-            this.fileTypeImages.Images.SetKeyName(12, "image-file-jpg");
-            this.fileTypeImages.Images.SetKeyName(13, "image-file-png");
-            this.fileTypeImages.Images.SetKeyName(14, "image-file-svg");
-            this.fileTypeImages.Images.SetKeyName(15, "image-file-tiff");
-            this.fileTypeImages.Images.SetKeyName(16, "video-file-avi");
-            this.fileTypeImages.Images.SetKeyName(17, "video-file-flv");
-            this.fileTypeImages.Images.SetKeyName(18, "video-file-m4v");
-            this.fileTypeImages.Images.SetKeyName(19, "video-file-mov");
-            this.fileTypeImages.Images.SetKeyName(20, "video-file-mp4");
-            this.fileTypeImages.Images.SetKeyName(21, "video-file-mpg");
-            this.fileTypeImages.Images.SetKeyName(22, "video-file-qt");
-            // 
-            // itemContextMenu
-            // 
-            this.itemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.favoriteToolStripMenuItem,
-            this.addTagsToolStripMenuItem});
-            this.itemContextMenu.Name = "itemContextMenu";
-            this.itemContextMenu.Size = new System.Drawing.Size(133, 48);
+            this.aboutToolStripMenuItem.Image = global::MediaLibrary.Properties.Resources.information_circle;
+            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.aboutToolStripMenuItem.Text = "Ab&out...";
+            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
             // 
             // favoriteToolStripMenuItem
             // 
@@ -588,21 +609,6 @@ namespace MediaLibrary
             this.addTagsToolStripMenuItem.Size = new System.Drawing.Size(132, 22);
             this.addTagsToolStripMenuItem.Text = "Add &Tags...";
             this.addTagsToolStripMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
-            // 
-            // toolsMenuItem
-            // 
-            this.toolsMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.findDuplicatesMenuItem});
-            this.toolsMenuItem.Name = "toolsMenuItem";
-            this.toolsMenuItem.Size = new System.Drawing.Size(47, 20);
-            this.toolsMenuItem.Text = "Tools";
-            // 
-            // findDuplicatesMenuItem
-            // 
-            this.findDuplicatesMenuItem.Name = "findDuplicatesMenuItem";
-            this.findDuplicatesMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.findDuplicatesMenuItem.Text = "Find &Duplicates...";
-            this.findDuplicatesMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
             // 
             // MainForm
             // 

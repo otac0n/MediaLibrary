@@ -222,7 +222,16 @@ namespace MediaLibrary
         private async void SearchBox_TextChangedAsync(object sender, EventArgs e)
         {
             var searchVersion = Interlocked.Increment(ref this.searchVersion);
-            var data = await this.index.SearchIndex(this.searchBox.Text).ConfigureAwait(true);
+            IList<SearchResult> data;
+            try
+            {
+                data = await this.index.SearchIndex(this.searchBox.Text).ConfigureAwait(true);
+            }
+            catch
+            {
+                data = Array.Empty<SearchResult>();
+            }
+
             if (this.searchVersion == searchVersion)
             {
                 var existing = this.listView.Items.Cast<ListViewItem>().ToDictionary(i => ((SearchResult)i.Tag).Hash);

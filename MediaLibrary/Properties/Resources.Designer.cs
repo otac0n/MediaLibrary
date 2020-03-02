@@ -123,6 +123,16 @@ namespace MediaLibrary.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap common_file_stack {
+            get {
+                object obj = ResourceManager.GetObject("common_file_stack", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap common_file_star {
             get {
                 object obj = ResourceManager.GetObject("common_file_star", resourceCulture);
@@ -203,6 +213,26 @@ namespace MediaLibrary.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap folder_add {
+            get {
+                object obj = ResourceManager.GetObject("folder_add", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap folder_remove {
+            get {
+                object obj = ResourceManager.GetObject("folder_remove", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap house_2 {
             get {
                 object obj = ResourceManager.GetObject("house_2", resourceCulture);
@@ -243,9 +273,29 @@ namespace MediaLibrary.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap information_circle {
+            get {
+                object obj = ResourceManager.GetObject("information_circle", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap list_bullets_1 {
             get {
                 object obj = ResourceManager.GetObject("list_bullets_1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap logout_2 {
+            get {
+                object obj = ResourceManager.GetObject("logout_2", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

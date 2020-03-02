@@ -92,6 +92,7 @@ namespace MediaLibrary
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(601, 23);
             this.progressBar.TabIndex = 3;
+            this.progressBar.Visible = false;
             // 
             // instructionsLabel
             // 
