@@ -11,6 +11,7 @@ namespace MediaLibrary
     using System.Threading;
     using System.Threading.Tasks;
     using System.Windows.Forms;
+    using ByteSizeLib;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
 
@@ -45,6 +46,7 @@ namespace MediaLibrary
                 {
                     searchResult.Paths.Length > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths[0]) : searchResult.Hash,
                     string.Join(" ", searchResult.Tags),
+                    new ByteSize(searchResult.FileSize).ToString(),
                 },
                 GetImageKey(searchResult.FileType))
             {
@@ -92,7 +94,6 @@ namespace MediaLibrary
             item.Tag = searchResult;
             item.SubItems[0].Text = searchResult.Paths.Length > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths[0]) : searchResult.Hash;
             item.SubItems[1].Text = string.Join(" ", searchResult.Tags);
-            item.ImageKey = GetImageKey(searchResult.FileType);
         }
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)

@@ -42,7 +42,7 @@ namespace MediaLibrary
             this.searchBox = new System.Windows.Forms.ToolStripTextBox();
             this.listView = new System.Windows.Forms.ListView();
             this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.tags = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.tagsColumns = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
             this.itemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.playButton = new System.Windows.Forms.ToolStripButton();
@@ -83,6 +83,7 @@ namespace MediaLibrary
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.favoriteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fileSizeColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
@@ -192,7 +193,8 @@ namespace MediaLibrary
             | System.Windows.Forms.AnchorStyles.Right)));
             this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.nameColumn,
-            this.tags});
+            this.tagsColumns,
+            this.fileSizeColumn});
             this.listView.HideSelection = false;
             this.listView.Location = new System.Drawing.Point(0, 49);
             this.listView.Margin = new System.Windows.Forms.Padding(0);
@@ -209,9 +211,9 @@ namespace MediaLibrary
             // 
             this.nameColumn.Text = "Name";
             // 
-            // tags
+            // tagsColumns
             // 
-            this.tags.Text = "Tags";
+            this.tagsColumns.Text = "Tags";
             // 
             // fileTypeImages
             // 
@@ -610,6 +612,10 @@ namespace MediaLibrary
             this.addTagsToolStripMenuItem.Text = "Add &Tags...";
             this.addTagsToolStripMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
             // 
+            // fileSizeColumn
+            // 
+            this.fileSizeColumn.Text = "File Size";
+            // 
             // MainForm
             // 
             this.AllowDrop = true;
@@ -686,11 +692,12 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripDropDownButton viewButton;
         private System.Windows.Forms.ToolStripMenuItem detailsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem thumbnailsMenuItem;
-        private System.Windows.Forms.ColumnHeader tags;
+        private System.Windows.Forms.ColumnHeader tagsColumns;
         private System.Windows.Forms.ContextMenuStrip itemContextMenu;
         private System.Windows.Forms.ToolStripMenuItem favoriteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addTagsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findDuplicatesMenuItem;
+        private System.Windows.Forms.ColumnHeader fileSizeColumn;
     }
 }
