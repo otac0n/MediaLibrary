@@ -81,6 +81,8 @@ namespace MediaLibrary
             this.itemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.favoriteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.findDuplicatesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
@@ -90,7 +92,8 @@ namespace MediaLibrary
             // mainMenu
             // 
             this.mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.optionsToolStripMenuItem});
+            this.optionsToolStripMenuItem,
+            this.toolsMenuItem});
             this.mainMenu.Location = new System.Drawing.Point(0, 0);
             this.mainMenu.Name = "mainMenu";
             this.mainMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
@@ -568,13 +571,13 @@ namespace MediaLibrary
             this.favoriteToolStripMenuItem,
             this.addTagsToolStripMenuItem});
             this.itemContextMenu.Name = "itemContextMenu";
-            this.itemContextMenu.Size = new System.Drawing.Size(181, 70);
+            this.itemContextMenu.Size = new System.Drawing.Size(133, 48);
             // 
             // favoriteToolStripMenuItem
             // 
             this.favoriteToolStripMenuItem.Image = global::MediaLibrary.Properties.Resources.love_it;
             this.favoriteToolStripMenuItem.Name = "favoriteToolStripMenuItem";
-            this.favoriteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.favoriteToolStripMenuItem.Size = new System.Drawing.Size(132, 22);
             this.favoriteToolStripMenuItem.Text = "&Favorite";
             this.favoriteToolStripMenuItem.Click += new System.EventHandler(this.FavoriteToolStripMenuItem_Click);
             // 
@@ -582,9 +585,24 @@ namespace MediaLibrary
             // 
             this.addTagsToolStripMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_add;
             this.addTagsToolStripMenuItem.Name = "addTagsToolStripMenuItem";
-            this.addTagsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addTagsToolStripMenuItem.Size = new System.Drawing.Size(132, 22);
             this.addTagsToolStripMenuItem.Text = "Add &Tags...";
             this.addTagsToolStripMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
+            // 
+            // toolsMenuItem
+            // 
+            this.toolsMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.findDuplicatesMenuItem});
+            this.toolsMenuItem.Name = "toolsMenuItem";
+            this.toolsMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.toolsMenuItem.Text = "Tools";
+            // 
+            // findDuplicatesMenuItem
+            // 
+            this.findDuplicatesMenuItem.Name = "findDuplicatesMenuItem";
+            this.findDuplicatesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.findDuplicatesMenuItem.Text = "Find &Duplicates...";
+            this.findDuplicatesMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
             // 
             // MainForm
             // 
@@ -666,5 +684,7 @@ namespace MediaLibrary
         private System.Windows.Forms.ContextMenuStrip itemContextMenu;
         private System.Windows.Forms.ToolStripMenuItem favoriteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addTagsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toolsMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem findDuplicatesMenuItem;
     }
 }

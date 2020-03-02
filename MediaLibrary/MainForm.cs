@@ -144,6 +144,14 @@ namespace MediaLibrary
             await this.index.AddHashTag(new HashTag(searchResult.Hash, "favorite")).ConfigureAwait(false);
         }
 
+        private void FindDuplicatesMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var findDuplicatesForm = new FindDuplicatesForm(this.index))
+            {
+                findDuplicatesForm.ShowDialog(this);
+            }
+        }
+
         private async void ListView_DoubleClick(object sender, MouseEventArgs e)
         {
             if (this.listView.HitTest(e.X, e.Y).Item != null)
