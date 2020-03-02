@@ -55,9 +55,11 @@ namespace MediaLibrary
         {
             switch (fileType)
             {
+                case "audio/aac": return "audio-file-aac";
                 case "audio/midi": return "audio-file-midi";
                 case "audio/mpeg": return "audio-file-mp3";
                 case "audio/wav": return "audio-file-wav";
+                case "audio/x-aiff": return "audio-file-aif";
                 case "audio":
                 case string type when type.StartsWith("audio/", StringComparison.InvariantCulture):
                     return "audio-file";
@@ -75,6 +77,7 @@ namespace MediaLibrary
                 case "video/mpeg": return "video-file-mpg";
                 case "video/quicktime": return "video-file-qt";
                 case "video/webm": return "video-file-m4v";
+                case "video/x-flv": return "video-file-flv";
                 case "video/x-msvideo": return "video-file-avi";
                 case "video":
                 case string type when type.StartsWith("video/", StringComparison.InvariantCulture):
