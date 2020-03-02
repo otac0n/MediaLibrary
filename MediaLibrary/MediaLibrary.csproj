@@ -17,6 +17,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="ByteSize" Version="2.0.0" />
     <PackageReference Include="CommandLineParser" Version="2.7.82" />
     <PackageReference Include="FixMe" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="GitVersionTask" Version="4.0.0" PrivateAssets="All" />

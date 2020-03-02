@@ -4,6 +4,7 @@ namespace MediaLibrary
 {
     using System.Linq;
     using System.Windows.Forms;
+    using ByteSizeLib;
     using MediaLibrary.Storage;
 
     public partial class FindDuplicatesForm : Form
@@ -24,7 +25,7 @@ namespace MediaLibrary
 
             foreach (var result in results.OrderByDescending(r => r.FileSize * (r.Paths.Length - 1)))
             {
-                var group = new ListViewGroup(result.Hash);
+                var group = new ListViewGroup($"{result.Hash} ({ByteSize.FromBytes(result.FileSize)} × {result.Paths.Length})");
                 this.duplicatesList.Groups.Add(group);
                 foreach (var path in result.Paths)
                 {
