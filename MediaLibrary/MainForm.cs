@@ -153,6 +153,7 @@ namespace MediaLibrary
                         if (File.Exists(path))
                         {
                             Process.Start(path);
+                            break;
                         }
                     }
                 }
