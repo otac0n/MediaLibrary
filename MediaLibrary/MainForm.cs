@@ -122,8 +122,8 @@ namespace MediaLibrary
 
         private void AddTagsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var searchResult = (SearchResult)this.itemContextMenu.Tag;
-            using (var addIndexedPathForm = new AddTagsForm(this.index, searchResult))
+            var searchResults = (IList<SearchResult>)this.itemContextMenu.Tag;
+            using (var addIndexedPathForm = new EditTagsForm(this.index, searchResults))
             {
                 addIndexedPathForm.ShowDialog(this);
             }
@@ -141,8 +141,21 @@ namespace MediaLibrary
 
         private async void FavoriteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var searchResult = (SearchResult)this.itemContextMenu.Tag;
-            await this.index.AddHashTag(new HashTag(searchResult.Hash, "favorite")).ConfigureAwait(false);
+            var searchResults = (IList<SearchResult>)this.itemContextMenu.Tag;
+            if (this.favoriteToolStripMenuItem.CheckState == CheckState.Checked)
+            {
+                foreach (var searchResult in searchResults)
+                {
+                    await this.index.RemoveHashTag(new HashTag(searchResult.Hash, "favorite")).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                foreach (var searchResult in searchResults)
+                {
+                    await this.index.AddHashTag(new HashTag(searchResult.Hash, "favorite")).ConfigureAwait(false);
+                }
+            }
         }
 
         private void FindDuplicatesMenuItem_Click(object sender, EventArgs e)
@@ -179,9 +192,9 @@ namespace MediaLibrary
                 var item = this.listView.FocusedItem;
                 if (item.Bounds.Contains(e.Location))
                 {
-                    var searchResult = (SearchResult)item.Tag;
-                    this.favoriteToolStripMenuItem.Checked = searchResult.Tags.Contains("favorite");
-                    this.itemContextMenu.Tag = searchResult;
+                    var searchResults = this.listView.SelectedItems.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
+                    this.favoriteToolStripMenuItem.CheckState = searchResults.All(r => r.Tags.Contains("favorite")) ? CheckState.Checked : CheckState.Unchecked;
+                    this.itemContextMenu.Tag = searchResults;
                     this.itemContextMenu.Show(Cursor.Position);
                 }
             }

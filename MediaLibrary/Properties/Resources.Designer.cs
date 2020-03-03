@@ -63,6 +63,16 @@ namespace MediaLibrary.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap add_circle {
+            get {
+                object obj = ResourceManager.GetObject("add_circle", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap audio_file_heart {
             get {
                 object obj = ResourceManager.GetObject("audio_file_heart", resourceCulture);
@@ -346,6 +356,16 @@ namespace MediaLibrary.Properties {
         internal static System.Drawing.Bitmap rating_star {
             get {
                 object obj = ResourceManager.GetObject("rating_star", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap remove_circle {
+            get {
+                object obj = ResourceManager.GetObject("remove_circle", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

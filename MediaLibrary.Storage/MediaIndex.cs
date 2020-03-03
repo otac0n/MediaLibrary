@@ -117,6 +117,9 @@ namespace MediaLibrary.Storage
         public Task RemoveFilePath(string path) =>
             this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path });
 
+        public Task RemoveHashTag(HashTag hashTag) =>
+            this.UpdateIndex(HashTag.Queries.RemoveHashTag, hashTag);
+
         public async Task RemoveIndexedPath(string path)
         {
             await this.UpdateIndex(Queries.RemoveIndexedPath, new { Path = path }).ConfigureAwait(false);

@@ -1,6 +1,6 @@
 namespace MediaLibrary
 {
-    partial class AddTagsForm
+    partial class EditTagsForm
     {
         /// <summary>
         /// Required designer variable.
@@ -30,6 +30,7 @@ namespace MediaLibrary
         {
             this.tagCombo = new System.Windows.Forms.ComboBox();
             this.addButton = new System.Windows.Forms.Button();
+            this.existingTags = new System.Windows.Forms.FlowLayoutPanel();
             this.SuspendLayout();
             // 
             // tagCombo
@@ -55,21 +56,32 @@ namespace MediaLibrary
             this.addButton.UseVisualStyleBackColor = true;
             this.addButton.Click += new System.EventHandler(this.AddButton_Click);
             // 
-            // AddTagsForm
+            // existingTags
+            // 
+            this.existingTags.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.existingTags.Location = new System.Drawing.Point(12, 41);
+            this.existingTags.Name = "existingTags";
+            this.existingTags.Size = new System.Drawing.Size(328, 66);
+            this.existingTags.TabIndex = 2;
+            // 
+            // EditTagsForm
             // 
             this.AcceptButton = this.addButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(352, 81);
+            this.ClientSize = new System.Drawing.Size(352, 119);
+            this.Controls.Add(this.existingTags);
             this.Controls.Add(this.addButton);
             this.Controls.Add(this.tagCombo);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.KeyPreview = true;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "AddTagsForm";
+            this.Name = "EditTagsForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Add Tags";
+            this.Text = "Edit Tags";
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.AddTagsForm_KeyDown);
             this.ResumeLayout(false);
 
@@ -79,5 +91,6 @@ namespace MediaLibrary
 
         private System.Windows.Forms.ComboBox tagCombo;
         private System.Windows.Forms.Button addButton;
+        private System.Windows.Forms.FlowLayoutPanel existingTags;
     }
 }
