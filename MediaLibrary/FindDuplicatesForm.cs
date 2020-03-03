@@ -86,7 +86,7 @@ namespace MediaLibrary
                 }
                 else
                 {
-                    node = new TreeNode(Path.GetFileName(key = group.Key)) { ImageKey = "none", SelectedImageKey = "none" };
+                    node = new TreeNode(Path.GetFileName(key = group.Key)) { ImageKey = "folder-empty", SelectedImageKey = "folder-empty" };
                     foreach (var item in items.OrderBy(i => i.Node.Nodes.Count == 0).ThenBy(i => i.Node.Text))
                     {
                         queue.Remove(item);
@@ -194,11 +194,17 @@ namespace MediaLibrary
                         var path = (string)removed.Tag;
                         var node = this.nodes[path].node;
                         this.nodes.Remove(path);
+
                         while (node != null && node.Nodes.Count == 0)
                         {
                             var parent = node.Parent;
                             node.Remove();
                             node = parent;
+                        }
+
+                        if (node != null)
+                        {
+                            this.UpdateFolderImage(node);
                         }
                     }
 
@@ -376,6 +382,30 @@ namespace MediaLibrary
             this.sizeChart.Series[0].Points.DataBindXY(labels, values);
         }
 
+        private void UpdateFolderImage(TreeNode parent)
+        {
+            var images = new HashSet<string>(parent.Nodes.Cast<TreeNode>().Select(c => c.ImageKey));
+            var none = images.Contains("none") || images.Contains("folder-none");
+            var save = images.Contains("save") || images.Contains("folder-save");
+            var delete = images.Contains("delete") || images.Contains("folder-delete");
+            var both = images.Contains("folder-both");
+
+            var originalKey = parent.ImageKey;
+            var nextKey =
+                both || (save && delete) ? "folder-both" :
+                save ? "folder-save" :
+                delete ? "folder-delete" :
+                "folder-none";
+            if (originalKey != nextKey)
+            {
+                parent.ImageKey = parent.SelectedImageKey = nextKey;
+                if (parent.Parent != null)
+                {
+                    this.UpdateFolderImage(parent.Parent);
+                }
+            }
+        }
+
         private void UpdateGroup(ListViewGroup group)
         {
             var noneChecked = !group.Items.Cast<ListViewItem>().Any(i => i.Checked);
@@ -386,6 +416,7 @@ namespace MediaLibrary
                     noneChecked ? "none" :
                     item.Checked ? "save" :
                     "delete";
+                this.UpdateFolderImage(treeNode.Parent);
             }
         }
 
