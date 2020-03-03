@@ -16,9 +16,12 @@ namespace MediaLibrary
 
     public partial class FindDuplicatesForm : Form
     {
+        private static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
         private readonly MediaIndex index;
         private CancellationTokenSource cancel = new CancellationTokenSource();
+        private Dictionary<string, (TreeNode node, ListViewItem item)> nodes = new Dictionary<string, (TreeNode, ListViewItem)>();
         private bool running;
+        private bool synchronizeTreeView;
 
         public FindDuplicatesForm(MediaIndex index)
         {
@@ -39,6 +42,8 @@ namespace MediaLibrary
 
         private void DuplicatesList_ItemChecked(object sender, ItemCheckedEventArgs e)
         {
+            this.nodes[(string)e.Item.Tag].node.Checked = e.Item.Checked;
+            this.UpdateGroup(e.Item.Group);
             this.UpdateChart();
         }
 
@@ -53,6 +58,55 @@ namespace MediaLibrary
 
             this.duplicatesList.ItemChecked -= this.DuplicatesList_ItemChecked;
             this.duplicatesList.BeginUpdate();
+
+            var nodes = results.SelectMany(r => r.Paths).ToDictionary(p => p, p => new TreeNode(Path.GetFileName(p)) { Tag = p, ImageKey = "none", SelectedImageKey = "none" });
+            var queue = nodes.Select(n => new { Key = Path.GetDirectoryName(n.Key), Node = n.Value }).ToList();
+            var roots = new List<TreeNode>();
+            while (queue.Count > 1)
+            {
+                var group = (from n in queue
+                             group n by n.Key into g
+                             group g by g.Key.Length into g2
+                             orderby g2.Key descending
+                             select g2)
+                            .First()
+                            .OrderBy(g => g.Key, PathComparer.Instance)
+                            .First();
+                var items = group.ToList();
+
+                string key;
+                TreeNode node;
+                if (items.Count == 1 && items[0].Node.Nodes.Count > 0)
+                {
+                    var item = items[0];
+                    queue.Remove(item);
+                    node = item.Node;
+                    key = item.Key;
+                    node.Text = Path.GetFileName(key) + Path.DirectorySeparatorChar + node.Text;
+                }
+                else
+                {
+                    node = new TreeNode(Path.GetFileName(key = group.Key)) { ImageKey = "none", SelectedImageKey = "none" };
+                    foreach (var item in items.OrderBy(i => i.Node.Nodes.Count == 0).ThenBy(i => i.Node.Text))
+                    {
+                        queue.Remove(item);
+                        node.Nodes.Add(item.Node);
+                    }
+                }
+
+                var ix = key.LastIndexOfAny(PathSeparators);
+                if (ix == -1)
+                {
+                    roots.Add(node);
+                }
+                else
+                {
+                    queue.Add(new { Key = key.Substring(0, ix), Node = node });
+                }
+            }
+
+            roots.AddRange(queue.Select(n => n.Node));
+            roots.ForEach(r => this.treeView.Nodes.Add(r));
 
             foreach (var result in results.OrderByDescending(r => r.FileSize * (r.Paths.Length - 1)))
             {
@@ -69,6 +123,8 @@ namespace MediaLibrary
                         Checked = false,
                         Tag = path,
                     };
+
+                    this.nodes[path] = (nodes[path], item);
                     this.duplicatesList.Items.Add(item);
                 }
             }
@@ -78,7 +134,7 @@ namespace MediaLibrary
                 this.duplicatesList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
             }
 
-            this.duplicatesList.Enabled = this.okButton.Enabled = true;
+            this.treeView.Enabled = this.duplicatesList.Enabled = this.okButton.Enabled = true;
             this.duplicatesList.EndUpdate();
             this.duplicatesList.ItemChecked += this.DuplicatesList_ItemChecked;
             this.UpdateChart();
@@ -133,8 +189,22 @@ namespace MediaLibrary
 
                 if (success)
                 {
+                    void RemoveTreeNode(ListViewItem removed)
+                    {
+                        var path = (string)removed.Tag;
+                        var node = this.nodes[path].node;
+                        this.nodes.Remove(path);
+                        while (node != null && node.Nodes.Count == 0)
+                        {
+                            var parent = node.Parent;
+                            node.Remove();
+                            node = parent;
+                        }
+                    }
+
                     foreach (var removed in items[false])
                     {
+                        RemoveTreeNode(removed);
                         this.duplicatesList.Items.Remove(removed);
                     }
 
@@ -142,6 +212,7 @@ namespace MediaLibrary
                     {
                         foreach (var removed in items[true])
                         {
+                            RemoveTreeNode(removed);
                             this.duplicatesList.Items.Remove(removed);
                         }
 
@@ -213,10 +284,55 @@ namespace MediaLibrary
             return true;
         }
 
-        private void SetRunning(bool running) => this.duplicatesList.Enabled = this.okButton.Enabled = !(this.progressBar.Visible = this.running = running);
+        private void SetRunning(bool running) => this.treeView.Enabled = this.duplicatesList.Enabled = this.okButton.Enabled = !(this.progressBar.Visible = this.running = running);
+
+        private void TreeView_AfterCheck(object sender, TreeViewEventArgs e)
+        {
+            void UpdateParent(TreeNode parent)
+            {
+                if (parent != null)
+                {
+                    var value = parent.Nodes.Cast<TreeNode>().All(n => n.Checked);
+                    if (parent.Checked != value)
+                    {
+                        parent.Checked = value;
+                        UpdateParent(parent.Parent);
+                    }
+                }
+            }
+
+            void UpdateChildren(TreeNode parent)
+            {
+                foreach (TreeNode child in parent.Nodes)
+                {
+                    child.Checked = parent.Checked;
+                    UpdateChildren(child);
+                }
+            }
+
+            var node = e.Node;
+            if (node.Tag is string path)
+            {
+                this.nodes[path].item.Checked = node.Checked;
+            }
+
+            if (!this.synchronizeTreeView)
+            {
+                this.synchronizeTreeView = true;
+                UpdateChildren(node);
+                UpdateParent(node.Parent);
+                this.synchronizeTreeView = false;
+                this.UpdateChart();
+            }
+        }
 
         private void UpdateChart()
         {
+            if (this.synchronizeTreeView)
+            {
+                return;
+            }
+
             if (this.duplicatesList.Groups.Count == 0)
             {
                 this.sizeChart.Series[0].Points.Clear();
@@ -260,10 +376,21 @@ namespace MediaLibrary
             this.sizeChart.Series[0].Points.DataBindXY(labels, values);
         }
 
+        private void UpdateGroup(ListViewGroup group)
+        {
+            var noneChecked = !group.Items.Cast<ListViewItem>().Any(i => i.Checked);
+            foreach (ListViewItem item in group.Items)
+            {
+                var treeNode = this.nodes[(string)item.Tag].node;
+                treeNode.ImageKey = treeNode.SelectedImageKey = item.ImageKey =
+                    noneChecked ? "none" :
+                    item.Checked ? "save" :
+                    "delete";
+            }
+        }
+
         private class PathComparer : IComparer<string>
         {
-            private static char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
-
             private PathComparer()
             {
             }
