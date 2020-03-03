@@ -45,7 +45,7 @@ namespace MediaLibrary
                 {
                     searchResult.Paths.Length > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths[0]) : searchResult.Hash,
                     string.Join(" ", searchResult.Tags),
-                    new ByteSize(searchResult.FileSize).ToString(),
+                    ByteSize.FromBytes(searchResult.FileSize).ToString(),
                 },
                 GetImageKey(searchResult.FileType))
             {

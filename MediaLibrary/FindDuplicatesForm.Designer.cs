@@ -28,6 +28,9 @@ namespace MediaLibrary
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.duplicatesList = new System.Windows.Forms.ListView();
             this.pathHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.cancelButton = new System.Windows.Forms.Button();
@@ -35,6 +38,8 @@ namespace MediaLibrary
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.instructionsLabel = new System.Windows.Forms.Label();
             this.titleLabel = new System.Windows.Forms.Label();
+            this.sizeChart = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            ((System.ComponentModel.ISupportInitialize)(this.sizeChart)).BeginInit();
             this.SuspendLayout();
             // 
             // duplicatesList
@@ -47,12 +52,13 @@ namespace MediaLibrary
             this.pathHeader});
             this.duplicatesList.Enabled = false;
             this.duplicatesList.HideSelection = false;
-            this.duplicatesList.Location = new System.Drawing.Point(12, 85);
+            this.duplicatesList.Location = new System.Drawing.Point(12, 105);
             this.duplicatesList.Name = "duplicatesList";
-            this.duplicatesList.Size = new System.Drawing.Size(776, 324);
+            this.duplicatesList.Size = new System.Drawing.Size(776, 304);
             this.duplicatesList.TabIndex = 0;
             this.duplicatesList.UseCompatibleStateImageBehavior = false;
             this.duplicatesList.View = System.Windows.Forms.View.Details;
+            this.duplicatesList.ItemChecked += new System.Windows.Forms.ItemCheckedEventHandler(this.DuplicatesList_ItemChecked);
             // 
             // pathHeader
             // 
@@ -114,6 +120,29 @@ namespace MediaLibrary
             this.titleLabel.TabIndex = 5;
             this.titleLabel.Text = "Find Duplicates";
             // 
+            // sizeChart
+            // 
+            this.sizeChart.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.sizeChart.BackColor = System.Drawing.Color.Transparent;
+            chartArea1.BackColor = System.Drawing.Color.Transparent;
+            chartArea1.Name = "pieArea";
+            this.sizeChart.ChartAreas.Add(chartArea1);
+            legend1.BackColor = System.Drawing.Color.Transparent;
+            legend1.MaximumAutoSize = 75F;
+            legend1.Name = "pieLegend";
+            this.sizeChart.Legends.Add(legend1);
+            this.sizeChart.Location = new System.Drawing.Point(433, 9);
+            this.sizeChart.Name = "sizeChart";
+            series1.ChartArea = "pieArea";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Doughnut;
+            series1.CustomProperties = "PieLabelStyle=Disabled";
+            series1.Legend = "pieLegend";
+            series1.Name = "pieSeries";
+            this.sizeChart.Series.Add(series1);
+            this.sizeChart.Size = new System.Drawing.Size(354, 90);
+            this.sizeChart.TabIndex = 6;
+            this.sizeChart.Text = "Size";
+            // 
             // FindDuplicatesForm
             // 
             this.AcceptButton = this.okButton;
@@ -121,6 +150,7 @@ namespace MediaLibrary
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.sizeChart);
             this.Controls.Add(this.titleLabel);
             this.Controls.Add(this.instructionsLabel);
             this.Controls.Add(this.progressBar);
@@ -135,6 +165,7 @@ namespace MediaLibrary
             this.Text = "Find Duplicates";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FindDuplicatesForm_FormClosing);
             this.Load += new System.EventHandler(this.FindDuplicatesForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.sizeChart)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -149,5 +180,6 @@ namespace MediaLibrary
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Label instructionsLabel;
         private System.Windows.Forms.Label titleLabel;
+        private System.Windows.Forms.DataVisualization.Charting.Chart sizeChart;
     }
 }

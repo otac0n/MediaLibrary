@@ -37,6 +37,11 @@ namespace MediaLibrary
             this.Hide();
         }
 
+        private void DuplicatesList_ItemChecked(object sender, ItemCheckedEventArgs e)
+        {
+            this.UpdateChart();
+        }
+
         private void FindDuplicatesForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             this.cancel.Cancel();
@@ -46,6 +51,7 @@ namespace MediaLibrary
         {
             var results = await this.index.SearchIndex("copies>1").ConfigureAwait(true);
 
+            this.duplicatesList.ItemChecked -= this.DuplicatesList_ItemChecked;
             this.duplicatesList.BeginUpdate();
 
             foreach (var result in results.OrderByDescending(r => r.FileSize * (r.Paths.Length - 1)))
@@ -67,9 +73,15 @@ namespace MediaLibrary
                 }
             }
 
-            this.duplicatesList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+            if (results.Count > 0)
+            {
+                this.duplicatesList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+            }
+
             this.duplicatesList.Enabled = this.okButton.Enabled = true;
             this.duplicatesList.EndUpdate();
+            this.duplicatesList.ItemChecked += this.DuplicatesList_ItemChecked;
+            this.UpdateChart();
         }
 
         private async void OKButton_Click(object sender, System.EventArgs e)
@@ -202,6 +214,51 @@ namespace MediaLibrary
         }
 
         private void SetRunning(bool running) => this.duplicatesList.Enabled = this.okButton.Enabled = !(this.progressBar.Visible = this.running = running);
+
+        private void UpdateChart()
+        {
+            if (this.duplicatesList.Groups.Count == 0)
+            {
+                this.sizeChart.Series[0].Points.Clear();
+                return;
+            }
+
+            var sizeNecessary = 0L;
+            var sizeKeepRedundant = 0L;
+            var sizeRedundantUnclassified = 0L;
+            var sizeToDelete = 0L;
+
+            foreach (ListViewGroup group in this.duplicatesList.Groups)
+            {
+                var result = (SearchResult)group.Tag;
+                var @checked = group.Items.Cast<ListViewItem>().Count(i => i.Checked);
+
+                sizeNecessary += result.FileSize;
+                if (@checked == 0)
+                {
+                    sizeRedundantUnclassified += (result.Paths.Length - 1) * result.FileSize;
+                }
+                else
+                {
+                    sizeKeepRedundant += (@checked - 1) * result.FileSize;
+                    sizeToDelete += (result.Paths.Length - @checked) * result.FileSize;
+                }
+            }
+
+            var labels = new List<string>();
+            var values = new List<long>();
+
+            labels.Add($"Necessary ({ByteSize.FromBytes(sizeNecessary)})");
+            values.Add(sizeNecessary);
+            labels.Add($"Extra Copies Kept ({ByteSize.FromBytes(sizeKeepRedundant)})");
+            values.Add(sizeKeepRedundant);
+            labels.Add($"To Delete ({ByteSize.FromBytes(sizeToDelete)})");
+            values.Add(sizeToDelete);
+            labels.Add($"Redundant Copies ({ByteSize.FromBytes(sizeRedundantUnclassified)})");
+            values.Add(sizeRedundantUnclassified);
+
+            this.sizeChart.Series[0].Points.DataBindXY(labels, values);
+        }
 
         private class PathComparer : IComparer<string>
         {
