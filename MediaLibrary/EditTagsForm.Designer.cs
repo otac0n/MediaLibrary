@@ -61,6 +61,7 @@ namespace MediaLibrary
             this.existingTags.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.existingTags.AutoScroll = true;
             this.existingTags.Location = new System.Drawing.Point(12, 41);
             this.existingTags.Name = "existingTags";
             this.existingTags.Size = new System.Drawing.Size(328, 66);

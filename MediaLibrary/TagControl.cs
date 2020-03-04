@@ -9,6 +9,8 @@ namespace MediaLibrary
 
     public partial class TagControl : UserControl
     {
+        private bool indeterminate;
+
         public TagControl()
         {
             this.InitializeComponent();
@@ -25,6 +27,31 @@ namespace MediaLibrary
         {
             get => this.deleteButton.Visible;
             set => this.deleteButton.Visible = value;
+        }
+
+        [DefaultValue(false)]
+        [SettingsBindable(true)]
+        [Browsable(true)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        public bool Indeterminate
+        {
+            get => this.indeterminate;
+
+            set
+            {
+                this.indeterminate = value;
+                if (this.indeterminate)
+                {
+                    this.BackColor = SystemColors.ControlLightLight;
+                    this.ForeColor = SystemColors.GrayText;
+                }
+                else
+                {
+                    this.BackColor = SystemColors.Info;
+                    this.ForeColor = SystemColors.InfoText;
+                }
+            }
         }
 
         /// <inheritdoc/>

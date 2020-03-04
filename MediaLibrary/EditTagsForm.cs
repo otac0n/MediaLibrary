@@ -13,6 +13,7 @@ namespace MediaLibrary
     {
         private readonly MediaIndex index;
         private readonly IList<SearchResult> searchResults;
+        private readonly Dictionary<string, TagControl> tagControls = new Dictionary<string, TagControl>();
 
         public EditTagsForm(MediaIndex index, IList<SearchResult> searchResults)
         {
@@ -29,14 +30,20 @@ namespace MediaLibrary
             this.tagCombo.Text = string.Empty;
             this.tagCombo.Focus();
 
-            if (this.existingTags.Controls.ContainsKey(tag))
+            if (string.IsNullOrWhiteSpace(tag))
             {
-                var tagControl = (TagControl)this.existingTags.Controls[tag];
-                // TODO: Make determinate.
+                return;
+            }
+
+            if (this.tagControls.TryGetValue(tag, out var tagControl))
+            {
+                tagControl.Indeterminate = false;
+                this.existingTags.ScrollControlIntoView(tagControl);
             }
             else
             {
-                this.AddTagControl(tag);
+                tagControl = this.AddTagControl(tag, indeterminate: false);
+                this.existingTags.ScrollControlIntoView(tagControl);
             }
 
             foreach (var searchResult in this.searchResults)
@@ -45,12 +52,12 @@ namespace MediaLibrary
             }
         }
 
-        private void AddTagControl(string tag)
+        private TagControl AddTagControl(string tag, bool indeterminate)
         {
-            // TODO: Indeterminate.
-            var tagControl = new TagControl { Text = tag, Tag = tag };
+            var tagControl = new TagControl { Text = tag, Tag = tag, Indeterminate = indeterminate };
             tagControl.DeleteClick += this.TagControl_DeleteClick;
-            this.existingTags.Controls.Add(tagControl);
+            this.existingTags.Controls.Add(this.tagControls[tag] = tagControl);
+            return tagControl;
         }
 
         private void AddTagsForm_KeyDown(object sender, KeyEventArgs e)
@@ -64,9 +71,15 @@ namespace MediaLibrary
 
         private void PopulateExistingTags()
         {
-            foreach (var tag in this.searchResults.SelectMany(r => r.Tags).Distinct())
+            var tagCounts = new Dictionary<string, int>();
+            foreach (var tag in this.searchResults.SelectMany(r => r.Tags))
             {
-                this.AddTagControl(tag);
+                tagCounts[tag] = tagCounts.TryGetValue(tag, out var count) ? count + 1 : 1;
+            }
+
+            foreach (var tag in tagCounts)
+            {
+                this.AddTagControl(tag.Key, tag.Value != this.searchResults.Count);
             }
         }
 

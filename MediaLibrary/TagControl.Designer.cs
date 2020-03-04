@@ -67,6 +67,7 @@ namespace MediaLibrary
             this.BackColor = System.Drawing.SystemColors.Info;
             this.Controls.Add(this.tagName);
             this.Controls.Add(this.deleteButton);
+            this.ForeColor = System.Drawing.SystemColors.InfoText;
             this.Name = "TagControl";
             this.Padding = new System.Windows.Forms.Padding(3);
             this.Size = new System.Drawing.Size(54, 19);
