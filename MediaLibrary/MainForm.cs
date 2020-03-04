@@ -184,6 +184,11 @@ namespace MediaLibrary
             }
         }
 
+        private void ListView_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            this.UpdatePreview();
+        }
+
         private void ListView_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right && e.Clicks == 1)
@@ -197,6 +202,11 @@ namespace MediaLibrary
                     this.itemContextMenu.Show(Cursor.Position);
                 }
             }
+        }
+
+        private void ListView_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            this.UpdatePreview();
         }
 
         private void MainForm_DragDrop(object sender, DragEventArgs e)
@@ -317,6 +327,13 @@ namespace MediaLibrary
                     this.UpdateProgress();
                 },
                 TaskScheduler.Current);
+        }
+
+        private void UpdatePreview()
+        {
+            this.preview.PreviewItem = this.listView.SelectedItems.Count == 1
+                ? (SearchResult)this.listView.SelectedItems.Cast<ListViewItem>().Single().Tag
+                : null;
         }
 
         private void UpdateProgress()

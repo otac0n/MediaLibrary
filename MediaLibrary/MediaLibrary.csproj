@@ -42,7 +42,23 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <COMReference Include="AxWMPLib.dll">
+      <Guid>6bf52a50-394a-11d3-b153-00c04f79faa6</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <WrapperTool>aximp</WrapperTool>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+    </COMReference>
     <AdditionalFiles Include="MediaLibrary.ruleset" />
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
+    <COMReference Include="WMPLib.dll">
+      <Guid>6bf52a50-394a-11d3-b153-00c04f79faa6</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>false</Isolated>
+    </COMReference>
   </ItemGroup>
 </Project>
