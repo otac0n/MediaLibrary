@@ -108,9 +108,9 @@ namespace MediaLibrary
             roots.AddRange(queue.Select(n => n.Node));
             roots.ForEach(r => this.treeView.Nodes.Add(r));
 
-            foreach (var result in results.OrderByDescending(r => r.FileSize * (r.Paths.Length - 1)))
+            foreach (var result in results.OrderByDescending(r => r.FileSize * (r.Paths.Count - 1)))
             {
-                var group = new ListViewGroup($"{result.Hash} ({ByteSize.FromBytes(result.FileSize)} × {result.Paths.Length})")
+                var group = new ListViewGroup($"{result.Hash} ({ByteSize.FromBytes(result.FileSize)} × {result.Paths.Count})")
                 {
                     Tag = result,
                 };
@@ -358,12 +358,12 @@ namespace MediaLibrary
                 sizeNecessary += result.FileSize;
                 if (@checked == 0)
                 {
-                    sizeRedundantUnclassified += (result.Paths.Length - 1) * result.FileSize;
+                    sizeRedundantUnclassified += (result.Paths.Count - 1) * result.FileSize;
                 }
                 else
                 {
                     sizeKeepRedundant += (@checked - 1) * result.FileSize;
-                    sizeToDelete += (result.Paths.Length - @checked) * result.FileSize;
+                    sizeToDelete += (result.Paths.Count - @checked) * result.FileSize;
                 }
             }
 

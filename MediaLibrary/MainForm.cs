@@ -17,6 +17,7 @@ namespace MediaLibrary
     public partial class MainForm : Form
     {
         private readonly MediaIndex index;
+        private readonly Dictionary<string, ListViewItem> items = new Dictionary<string, ListViewItem>();
         private readonly List<InProgressTask> tasks = new List<InProgressTask>();
         private bool columnsAutoSized = false;
         private double lastProgress;
@@ -25,8 +26,10 @@ namespace MediaLibrary
 
         public MainForm(MediaIndex index)
         {
-            this.index = index;
+            this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.InitializeComponent();
+            this.index.HashTagAdded += this.Index_HashTagAdded;
+            this.index.HashTagRemoved += this.Index_HashTagRemoved;
             this.TrackTaskProgress(async progress =>
             {
                 await this.index.Initialize().ConfigureAwait(false);
@@ -38,19 +41,6 @@ namespace MediaLibrary
             e.AllowedEffect.HasFlag(DragDropEffects.Link) &&
             e.Data.GetDataPresent(DataFormats.FileDrop) &&
             ((string[])e.Data.GetData(DataFormats.FileDrop)).All(Directory.Exists);
-
-        private static ListViewItem CreateListItem(SearchResult searchResult) =>
-            new ListViewItem(
-                new[]
-                {
-                    searchResult.Paths.Length > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths[0]) : searchResult.Hash,
-                    string.Join(" ", searchResult.Tags),
-                    ByteSize.FromBytes(searchResult.FileSize).ToString(),
-                },
-                GetImageKey(searchResult.FileType))
-            {
-                Tag = searchResult,
-            };
 
         private static string GetImageKey(string fileType)
         {
@@ -91,7 +81,7 @@ namespace MediaLibrary
         private static void UpdateListItem(ListViewItem item, SearchResult searchResult)
         {
             item.Tag = searchResult;
-            item.SubItems[0].Text = searchResult.Paths.Length > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths[0]) : searchResult.Hash;
+            item.SubItems[0].Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths.First()) : searchResult.Hash;
             item.SubItems[1].Text = string.Join(" ", searchResult.Tags);
         }
 
@@ -128,6 +118,19 @@ namespace MediaLibrary
             }
         }
 
+        private ListViewItem CreateListItem(SearchResult searchResult) =>
+            this.items[searchResult.Hash] = new ListViewItem(
+                new[]
+                {
+                    searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths.First()) : searchResult.Hash,
+                    string.Join(" ", searchResult.Tags),
+                    ByteSize.FromBytes(searchResult.FileSize).ToString(),
+                },
+                GetImageKey(searchResult.FileType))
+            {
+                Tag = searchResult,
+            };
+
         private void DetailsMenuItem_Click(object sender, EventArgs e)
         {
             this.thumbnailsMenuItem.Checked = !this.detailsMenuItem.Checked;
@@ -163,6 +166,16 @@ namespace MediaLibrary
             {
                 findDuplicatesForm.ShowDialog(this);
             }
+        }
+
+        private void Index_HashTagAdded(object sender, ItemAddedEventArgs<HashTag> e)
+        {
+            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags.Add(e.Item.Tag), r.Paths));
+        }
+
+        private void Index_HashTagRemoved(object sender, ItemRemovedEventArgs<HashTag> e)
+        {
+            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags.Remove(e.Item.Tag), r.Paths));
         }
 
         private async void ListView_DoubleClick(object sender, MouseEventArgs e)
@@ -227,6 +240,12 @@ namespace MediaLibrary
                 : DragDropEffects.None;
         }
 
+        private void RemoveListItem(ListViewItem value)
+        {
+            this.items.Remove(((SearchResult)value.Tag).Hash);
+            this.listView.Items.Remove(value);
+        }
+
         private void SearchBookmark_Click(object sender, EventArgs e)
         {
             string tag = null;
@@ -266,7 +285,7 @@ namespace MediaLibrary
                 {
                     if (!newHashes.Contains(kvp.Key))
                     {
-                        this.listView.Items.Remove(kvp.Value);
+                        RemoveListItem(kvp.Value);
                     }
                 }
 
@@ -278,7 +297,7 @@ namespace MediaLibrary
                     }
                     else
                     {
-                        this.listView.Items.Add(CreateListItem(item));
+                        this.listView.Items.Add(this.CreateListItem(item));
                     }
                 }
 
@@ -367,6 +386,19 @@ namespace MediaLibrary
                     }
                 }
             });
+        }
+
+        private void UpdateSearchResult(string hash, Func<SearchResult, SearchResult> updateSearchResult)
+        {
+            if (this.items.TryGetValue(hash, out var item))
+            {
+                var result = (SearchResult)item.Tag;
+                var updated = updateSearchResult(result);
+                if (!object.ReferenceEquals(result, updated))
+                {
+                    this.InvokeIfRequired(() => UpdateListItem(item, updated));
+                }
+            }
         }
 
         private class InProgressTask

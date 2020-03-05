@@ -5,6 +5,7 @@ namespace MediaLibrary.Storage
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Data;
     using System.Data.SQLite;
     using System.Diagnostics;
@@ -28,6 +29,12 @@ namespace MediaLibrary.Storage
         {
             this.indexPath = indexPath;
         }
+
+        public event EventHandler<HashInvalidatedEventArgs> HashInvalidated;
+
+        public event EventHandler<ItemAddedEventArgs<HashTag>> HashTagAdded;
+
+        public event EventHandler<ItemRemovedEventArgs<HashTag>> HashTagRemoved;
 
         public static async Task<HashInfo> HashFileAsync(string path)
         {
@@ -69,7 +76,14 @@ namespace MediaLibrary.Storage
 
         public async Task AddHashTag(HashTag hashTag)
         {
+            if (hashTag == null)
+            {
+                throw new ArgumentNullException(nameof(hashTag));
+            }
+
             await this.UpdateIndex(HashTag.Queries.AddHashTag, hashTag).ConfigureAwait(false);
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hashTag.Hash));
+            this.HashTagAdded?.Invoke(this, new ItemAddedEventArgs<HashTag>(hashTag));
         }
 
         public async Task AddIndexedPath(string path, IProgress<RescanProgress> progress = null)
@@ -117,8 +131,17 @@ namespace MediaLibrary.Storage
         public Task RemoveFilePath(string path) =>
             this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path });
 
-        public Task RemoveHashTag(HashTag hashTag) =>
-            this.UpdateIndex(HashTag.Queries.RemoveHashTag, hashTag);
+        public async Task RemoveHashTag(HashTag hashTag)
+        {
+            if (hashTag == null)
+            {
+                throw new ArgumentNullException(nameof(hashTag));
+            }
+
+            await this.UpdateIndex(HashTag.Queries.RemoveHashTag, hashTag).ConfigureAwait(false);
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hashTag.Hash));
+            this.HashTagRemoved?.Invoke(this, new ItemRemovedEventArgs<HashTag>(hashTag));
+        }
 
         public async Task RemoveIndexedPath(string path)
         {
@@ -176,8 +199,8 @@ namespace MediaLibrary.Storage
                         hash.Hash,
                         hash.FileType,
                         hash.FileSize,
-                        tags[hash.Hash].Select(t => t.Tag).ToArray(),
-                        fileNames[hash.Hash].Select(t => t.Path).ToArray()));
+                        tags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet(),
+                        fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet()));
                 }
 
                 return results;
