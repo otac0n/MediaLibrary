@@ -154,13 +154,14 @@ namespace MediaLibrary
             this.SetRunning(true);
 
             var allGroups = this.duplicatesList.Groups.Cast<ListViewGroup>().ToList();
-            foreach (var group in allGroups)
+            for (var g = 0; g < allGroups.Count; g++)
             {
                 if (this.cancel.IsCancellationRequested)
                 {
                     break;
                 }
 
+                var group = allGroups[g];
                 var result = (SearchResult)group.Tag;
                 var items = group.Items.Cast<ListViewItem>().ToLookup(i => i.Checked);
                 var toKeep = items[true].Select(i => (string)i.Tag).ToList();
@@ -184,7 +185,9 @@ namespace MediaLibrary
                 if (toKeep.Count > 0)
                 {
                     progressBytes += toRemove.Count * result.FileSize;
-                    this.progressBar.Value = (int)(progressBytes * this.progressBar.Maximum / totalBytes);
+                    this.progressBar.Value = totalBytes != 0
+                        ? (int)(progressBytes * this.progressBar.Maximum / totalBytes)
+                        : (int)((g + 1L) * this.progressBar.Maximum / allGroups.Count);
                 }
 
                 if (success)
