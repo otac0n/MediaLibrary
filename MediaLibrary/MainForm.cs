@@ -285,7 +285,7 @@ namespace MediaLibrary
                 {
                     if (!newHashes.Contains(kvp.Key))
                     {
-                        RemoveListItem(kvp.Value);
+                        this.RemoveListItem(kvp.Value);
                     }
                 }
 

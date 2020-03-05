@@ -20,10 +20,11 @@ namespace MediaLibrary.Storage
     using MediaLibrary.Storage.Search;
     using NeoSmart.AsyncLock;
 
-    public class MediaIndex
+    public class MediaIndex : IDisposable
     {
         private readonly string indexPath;
         private AsyncLock dbLock = new AsyncLock();
+        private Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
 
         public MediaIndex(string indexPath)
         {
@@ -90,6 +91,19 @@ namespace MediaLibrary.Storage
         {
             await this.UpdateIndex(Queries.AddIndexedPath, new { Path = path }).ConfigureAwait(false);
             await this.RescanIndexedPath(path, progress).ConfigureAwait(false);
+            this.AddFileSystemWatcher(path);
+        }
+
+        public void Dispose()
+        {
+            lock (this.fileSystemWatchers)
+            {
+                foreach (var watcher in this.fileSystemWatchers.Values)
+                {
+                    watcher.EnableRaisingEvents = false;
+                    watcher.Dispose();
+                }
+            }
         }
 
         public Task<List<string>> GetAllTags() =>
@@ -126,10 +140,21 @@ namespace MediaLibrary.Storage
         public async Task Initialize()
         {
             await this.UpdateIndex(Queries.CreateSchema).ConfigureAwait(false);
+            var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
+            lock (this.fileSystemWatchers)
+            {
+                foreach (var path in indexedPaths)
+                {
+                    this.AddFileSystemWatcher(path);
+                }
+            }
         }
 
-        public Task RemoveFilePath(string path) =>
-            this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path });
+        public async Task RemoveFilePath(string path)
+        {
+            this.RemoveFileSystemWatcher(path);
+            await this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path });
+        }
 
         public async Task RemoveHashTag(HashTag hashTag)
         {
@@ -207,6 +232,17 @@ namespace MediaLibrary.Storage
             }
         }
 
+        private void AddFileSystemWatcher(string path)
+        {
+            var watcher = new FileSystemWatcher(path);
+            this.fileSystemWatchers.Add(path, watcher);
+            watcher.Changed += this.Watcher_Changed;
+            watcher.Deleted += this.Watcher_Deleted;
+            watcher.Created += this.Watcher_Created;
+            watcher.Renamed += this.Watcher_Renamed;
+            watcher.EnableRaisingEvents = true;
+        }
+
         private Task<FilePath> GetFilePath(string path) =>
             this.QueryIndex(async conn =>
                 (await conn.QueryAsync<FilePath>(FilePath.Queries.GetFilePathByPath, new { Path = path }).ConfigureAwait(false)).SingleOrDefault());
@@ -229,6 +265,18 @@ namespace MediaLibrary.Storage
             using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
             {
                 return await query(conn).ConfigureAwait(false);
+            }
+        }
+
+        private void RemoveFileSystemWatcher(string path)
+        {
+            lock (this.fileSystemWatchers)
+            {
+                if (this.fileSystemWatchers.TryGetValue(path, out var watcher))
+                {
+                    this.fileSystemWatchers.Remove(path);
+                    watcher.Dispose();
+                }
             }
         }
 
@@ -333,6 +381,27 @@ namespace MediaLibrary.Storage
             {
                 await conn.ExecuteAsync(query, param).ConfigureAwait(false);
             }
+        }
+
+        private async void Watcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            await this.RescanFile(e.FullPath).ConfigureAwait(false);
+        }
+
+        private async void Watcher_Created(object sender, FileSystemEventArgs e)
+        {
+            await this.RescanFile(e.FullPath).ConfigureAwait(false);
+        }
+
+        private async void Watcher_Deleted(object sender, FileSystemEventArgs e)
+        {
+            await this.RemoveFilePath(e.FullPath).ConfigureAwait(false);
+        }
+
+        private async void Watcher_Renamed(object sender, RenamedEventArgs e)
+        {
+            await this.RemoveFilePath(e.OldFullPath).ConfigureAwait(false);
+            await this.RescanFile(e.OldFullPath).ConfigureAwait(false);
         }
 
         private static class Queries
