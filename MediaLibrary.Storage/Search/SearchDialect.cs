@@ -62,7 +62,7 @@ namespace MediaLibrary.Storage.Search
                         throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
                     }
 
-                    return $"EXISTS (SELECT 1 FROM HashTags t WHERE h.Hash = t.Hash AND t.Tag = {Literal(field.Value)})";
+                    return $"EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag = {Literal(field.Value)})";
 
                 case "copies":
                     this.joinCopies = true;
@@ -158,7 +158,7 @@ namespace MediaLibrary.Storage.Search
             }
 
             sb
-                .AppendLine("SELECT DISTINCT h.Hash, h.FileSize, h.FileType")
+                .AppendLine("SELECT h.Hash, h.FileSize, h.FileType")
                 .AppendLine("FROM HashInfo h");
 
             if (this.joinCopies)
@@ -178,7 +178,7 @@ namespace MediaLibrary.Storage.Search
 
             if (fetchTags)
             {
-                sb.AppendLine("SELECT t.* FROM temp.SearchHashInfo h INNER JOIN HashTags t ON h.Hash = t.Hash;");
+                sb.AppendLine("SELECT t.* FROM temp.SearchHashInfo h INNER JOIN HashTag t ON h.Hash = t.Hash;");
             }
 
             if (fetchPaths)

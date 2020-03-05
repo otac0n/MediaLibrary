@@ -439,15 +439,15 @@ namespace MediaLibrary.Storage
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_HashInfo_Hash ON HashInfo (Hash);
                 CREATE INDEX IF NOT EXISTS IX_HashInfo_FileType ON HashInfo (FileType);
 
-                CREATE TABLE IF NOT EXISTS HashTags
+                CREATE TABLE IF NOT EXISTS HashTag
                 (
                     Hash text NOT NULL,
                     Tag text NOT NULL,
                     PRIMARY KEY (Hash, Tag),
-                    FOREIGN KEY (Hash) REFERENCES HashInfo (Hash)
+                    FOREIGN KEY (Hash) REFERENCES HashInfo (Hash) ON DELETE CASCADE
                 );
 
-                CREATE UNIQUE INDEX IF NOT EXISTS IX_HashTags_Hash_Tag ON HashTags (Hash, Tag);
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_HashTag_Hash_Tag ON HashTag (Hash, Tag);
             ";
 
             public static readonly string GetIndexedPaths = @"
