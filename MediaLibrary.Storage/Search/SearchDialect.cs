@@ -44,6 +44,21 @@ namespace MediaLibrary.Storage.Search
 
             switch (field.Field)
             {
+                case "@":
+                    if (field.Operator != FieldTerm.EqualsOperator)
+                    {
+                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                    }
+
+                    if (int.TryParse(field.Value, out var personId))
+                    {
+                        return $"EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash AND p.PersonId = {personId})";
+                    }
+                    else
+                    {
+                        return $"EXISTS (SELECT 1 FROM HashPerson hp INNER JOIN Person p ON hp.PersonId = p.PersonId WHERE h.Hash = hp.Hash AND {Contains("p.Name", field.Value)})";
+                    }
+
                 case "type":
                     if (field.Operator != FieldTerm.EqualsOperator)
                     {
@@ -76,6 +91,24 @@ namespace MediaLibrary.Storage.Search
                 default:
                     throw new NotSupportedException();
             }
+        }
+
+        private static string Contains(string expr, string patternValue)
+        {
+            string literal;
+            char? escape;
+            if (patternValue.IndexOfAny(new[] { '%', '_' }) > -1)
+            {
+                literal = Literal('%' + Regex.Replace(patternValue, @"[%_\\]", @"\$0") + '%');
+                escape = '\\';
+            }
+            else
+            {
+                literal = Literal('%' + patternValue + '%');
+                escape = null;
+            }
+
+            return Like(expr, literal, escape);
         }
 
         private static string ConvertOperator(string fieldOperator)
@@ -145,7 +178,8 @@ namespace MediaLibrary.Storage.Search
         {
             var fetchTags = true;
             var fetchPaths = true;
-            var fetchAny = fetchTags || fetchPaths;
+            var fetchPeople = true;
+            var fetchAny = fetchTags || fetchPaths || fetchPeople;
 
             var sb = new StringBuilder();
 
@@ -184,6 +218,18 @@ namespace MediaLibrary.Storage.Search
             if (fetchPaths)
             {
                 sb.AppendLine("SELECT p.* FROM temp.SearchHashInfo h INNER JOIN Paths p ON h.Hash = p.LastHash;");
+            }
+
+            if (fetchPeople)
+            {
+                sb
+                    .AppendLine("DROP TABLE IF EXISTS temp.SearchHashPerson;")
+                    .AppendLine("CREATE TEMP TABLE temp.SearchHashPerson (Hash text, PersonId int, PRIMARY KEY (Hash, PersonId));")
+                    .AppendLine("INSERT INTO temp.SearchHashPerson (Hash, PersonId)")
+                    .AppendLine("SELECT hp.* FROM temp.SearchHashInfo h INNER JOIN HashPerson hp ON h.Hash = hp.Hash;")
+                    .AppendLine("SELECT DISTINCT p.* FROM temp.SearchHashPerson hp INNER JOIN Person p ON hp.PersonId = p.PersonId;")
+                    .AppendLine("SELECT * FROM temp.SearchHashPerson;")
+                    .AppendLine("DROP TABLE temp.SearchHashPerson;");
             }
 
             if (fetchAny)

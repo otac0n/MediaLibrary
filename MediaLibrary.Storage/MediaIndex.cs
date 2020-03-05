@@ -33,6 +33,10 @@ namespace MediaLibrary.Storage
 
         public event EventHandler<HashInvalidatedEventArgs> HashInvalidated;
 
+        public event EventHandler<ItemAddedEventArgs<Tuple<HashPerson, Person>>> HashPersonAdded;
+
+        public event EventHandler<ItemRemovedEventArgs<HashPerson>> HashPersonRemoved;
+
         public event EventHandler<ItemAddedEventArgs<HashTag>> HashTagAdded;
 
         public event EventHandler<ItemRemovedEventArgs<HashTag>> HashTagRemoved;
@@ -75,6 +79,18 @@ namespace MediaLibrary.Storage
             return new HashInfo(sb.ToString(), fileSize, FileTypeRecognizer.GetType(recognizerState));
         }
 
+        public async Task AddHashPerson(HashPerson hashPerson)
+        {
+            if (hashPerson == null)
+            {
+                throw new ArgumentNullException(nameof(hashPerson));
+            }
+
+            await this.UpdateIndex(HashPerson.Queries.AddHashPerson, hashPerson).ConfigureAwait(false);
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hashPerson.Hash));
+            this.HashPersonAdded?.Invoke(this, new ItemAddedEventArgs<Tuple<HashPerson, Person>>(Tuple.Create(hashPerson, await this.GetPerson(hashPerson.PersonId).ConfigureAwait(false))));
+        }
+
         public async Task AddHashTag(HashTag hashTag)
         {
             if (hashTag == null)
@@ -94,6 +110,10 @@ namespace MediaLibrary.Storage
             this.AddFileSystemWatcher(path);
         }
 
+        public Task<Person> AddPerson(string name) =>
+            this.QueryIndex(
+                async conn => (await conn.QueryAsync<Person>(Person.Queries.AddPerson, new { Name = name }).ConfigureAwait(false)).Single());
+
         public void Dispose()
         {
             lock (this.fileSystemWatchers)
@@ -105,6 +125,10 @@ namespace MediaLibrary.Storage
                 }
             }
         }
+
+        public Task<List<Person>> GetAllPeople() =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<Person>(Person.Queries.GetAllPeople).ConfigureAwait(false)).ToList());
 
         public Task<List<string>> GetAllTags() =>
             this.QueryIndex(async conn =>
@@ -154,6 +178,18 @@ namespace MediaLibrary.Storage
         {
             this.RemoveFileSystemWatcher(path);
             await this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path });
+        }
+
+        public async Task RemoveHashPerson(HashPerson hashPerson)
+        {
+            if (hashPerson == null)
+            {
+                throw new ArgumentNullException(nameof(hashPerson));
+            }
+
+            await this.UpdateIndex(HashPerson.Queries.RemoveHashPerson, hashPerson).ConfigureAwait(false);
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hashPerson.Hash));
+            this.HashPersonRemoved?.Invoke(this, new ItemRemovedEventArgs<HashPerson>(hashPerson));
         }
 
         public async Task RemoveHashTag(HashTag hashTag)
@@ -215,6 +251,8 @@ namespace MediaLibrary.Storage
                 var reader = await conn.QueryMultipleAsync(sqlQuery).ConfigureAwait(false);
                 var tags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
                 var fileNames = (await reader.ReadAsync<FilePath>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.LastHash);
+                var people = (await reader.ReadAsync<Person>(buffered: false).ConfigureAwait(false)).ToDictionary(f => f.PersonId);
+                var hashPeople = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
                 var hashes = (await reader.ReadAsync<HashInfo>(buffered: false).ConfigureAwait(false)).ToList();
 
                 var results = new List<SearchResult>();
@@ -225,7 +263,8 @@ namespace MediaLibrary.Storage
                         hash.FileType,
                         hash.FileSize,
                         tags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet(),
-                        fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet()));
+                        fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet(),
+                        hashPeople[hash.Hash].Select(p => people[p.PersonId]).ToImmutableList()));
                 }
 
                 return results;
@@ -258,6 +297,10 @@ namespace MediaLibrary.Storage
         private Task<List<string>> GetIndexedPaths() =>
             this.QueryIndex(async conn =>
                 (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList());
+
+        private Task<Person> GetPerson(int personId) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<Person>(Person.Queries.GetPersonById, new { PersonId = personId }).ConfigureAwait(false)).SingleOrDefault());
 
         private async Task<T> QueryIndex<T>(Func<SQLiteConnection, Task<T>> query)
         {
@@ -448,6 +491,22 @@ namespace MediaLibrary.Storage
                 );
 
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_HashTag_Hash_Tag ON HashTag (Hash, Tag);
+
+                CREATE TABLE IF NOT EXISTS Person
+                (
+                    PersonId integer NOT NULL,
+                    Name text NOT NULL,
+                    PRIMARY KEY (PersonId)
+                );
+
+                CREATE TABLE IF NOT EXISTS HashPerson
+                (
+                    Hash text NOT NULL,
+                    PersonId integer NOT NULL,
+                    PRIMARY KEY (Hash, PersonId),
+                    FOREIGN KEY (Hash) REFERENCES HashInfo (Hash) ON DELETE CASCADE,
+                    FOREIGN KEY (PersonId) REFERENCES Person (PersonId) ON DELETE CASCADE
+                );
             ";
 
             public static readonly string GetIndexedPaths = @"

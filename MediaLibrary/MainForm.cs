@@ -30,6 +30,8 @@ namespace MediaLibrary
             this.InitializeComponent();
             this.index.HashTagAdded += this.Index_HashTagAdded;
             this.index.HashTagRemoved += this.Index_HashTagRemoved;
+            this.index.HashPersonAdded += this.Index_HashPersonAdded;
+            this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
             this.TrackTaskProgress(async progress =>
             {
                 await this.index.Initialize().ConfigureAwait(false);
@@ -83,6 +85,7 @@ namespace MediaLibrary
             item.Tag = searchResult;
             item.SubItems[0].Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths.First()) : searchResult.Hash;
             item.SubItems[1].Text = string.Join(" ", searchResult.Tags);
+            item.SubItems[3].Text = string.Join("; ", searchResult.People.Select(p => p.Name));
         }
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -109,12 +112,21 @@ namespace MediaLibrary
             this.TrackTaskProgress(progress => this.index.AddIndexedPath(selectedPath, progress));
         }
 
+        private void AddPeopleMenuItem_Click(object sender, EventArgs e)
+        {
+            var searchResults = (IList<SearchResult>)this.itemContextMenu.Tag;
+            using (var addPeopleForm = new AddPeopleForm(this.index, searchResults))
+            {
+                addPeopleForm.ShowDialog(this);
+            }
+        }
+
         private void AddTagsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var searchResults = (IList<SearchResult>)this.itemContextMenu.Tag;
-            using (var addIndexedPathForm = new EditTagsForm(this.index, searchResults))
+            using (var editTagsForm = new EditTagsForm(this.index, searchResults))
             {
-                addIndexedPathForm.ShowDialog(this);
+                editTagsForm.ShowDialog(this);
             }
         }
 
@@ -125,6 +137,7 @@ namespace MediaLibrary
                     searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths.First()) : searchResult.Hash,
                     string.Join(" ", searchResult.Tags),
                     ByteSize.FromBytes(searchResult.FileSize).ToString(),
+                    string.Join("; ", searchResult.People.Select(p => p.Name)),
                 },
                 GetImageKey(searchResult.FileType))
             {
@@ -168,14 +181,24 @@ namespace MediaLibrary
             }
         }
 
+        private void Index_HashPersonAdded(object sender, ItemAddedEventArgs<Tuple<HashPerson, Person>> e)
+        {
+            this.UpdateSearchResult(e.Item.Item1.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags, r.Paths, r.People.Add(e.Item.Item2)));
+        }
+
+        private void Index_HashPersonRemoved(object sender, ItemRemovedEventArgs<HashPerson> e)
+        {
+            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags, r.Paths, r.People.RemoveAll(p => p.PersonId == e.Item.PersonId)));
+        }
+
         private void Index_HashTagAdded(object sender, ItemAddedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags.Add(e.Item.Tag), r.Paths));
+            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags.Add(e.Item.Tag), r.Paths, r.People));
         }
 
         private void Index_HashTagRemoved(object sender, ItemRemovedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags.Remove(e.Item.Tag), r.Paths));
+            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags.Remove(e.Item.Tag), r.Paths, r.People));
         }
 
         private async void ListView_DoubleClick(object sender, MouseEventArgs e)
