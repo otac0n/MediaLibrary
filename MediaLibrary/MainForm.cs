@@ -334,6 +334,11 @@ namespace MediaLibrary
             }
         }
 
+        private void ShowPreviewMenuItem_CheckedChanged(object sender, EventArgs e)
+        {
+            this.splitter1.Visible = this.preview.Visible = this.showPreviewMenuItem.Checked;
+        }
+
         private void ThumbnailsMenuItem_Click(object sender, EventArgs e)
         {
             this.detailsMenuItem.Checked = !this.thumbnailsMenuItem.Checked;
