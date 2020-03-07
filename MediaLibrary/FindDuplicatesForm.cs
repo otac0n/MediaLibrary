@@ -19,7 +19,6 @@ namespace MediaLibrary
 
     public partial class FindDuplicatesForm : Form
     {
-        private static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
         private readonly MediaIndex index;
         private CancellationTokenSource cancel = new CancellationTokenSource();
         private bool initialized;
@@ -196,7 +195,7 @@ namespace MediaLibrary
                     }
                 }
 
-                var ix = key.LastIndexOfAny(PathSeparators);
+                var ix = key.LastIndexOfAny(PathComparer.PathSeparators);
                 if (ix == -1)
                 {
                     roots.Add(node);
@@ -534,44 +533,6 @@ namespace MediaLibrary
                     item.Checked ? "save" :
                     "delete";
                 this.UpdateFolderImage(treeNode.Parent);
-            }
-        }
-
-        private class PathComparer : IComparer<string>
-        {
-            private PathComparer()
-            {
-            }
-
-            public static PathComparer Instance { get; } = new PathComparer();
-
-            public int Compare(string aPath, string bPath)
-            {
-                var aParts = aPath.ToUpperInvariant().Split(PathSeparators, StringSplitOptions.RemoveEmptyEntries);
-                var bParts = bPath.ToUpperInvariant().Split(PathSeparators, StringSplitOptions.RemoveEmptyEntries);
-
-                var num = 0;
-                for (var j = 0; j < aParts.Length && j < bParts.Length; j++)
-                {
-                    if (aParts.Length != bParts.Length)
-                    {
-                        if (j == aParts.Length - 1)
-                        {
-                            return 1;
-                        }
-                        else if (j == bParts.Length - 1)
-                        {
-                            return -1;
-                        }
-                    }
-
-                    if ((num = string.Compare(aParts[j], bParts[j], StringComparison.CurrentCultureIgnoreCase)) != 0)
-                    {
-                        return num;
-                    }
-                }
-
-                return 0;
             }
         }
     }

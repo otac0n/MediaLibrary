@@ -3,7 +3,9 @@
 namespace MediaLibrary
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
@@ -16,12 +18,18 @@ namespace MediaLibrary
 
     public partial class MainForm : Form
     {
+        private const int PathColumnIndex = 0;
+        private const int PeopleColumnIndex = 3;
+        private const int SizeColumnIndex = 2;
+        private const int TagsColumnIndex = 1;
+
         private readonly MediaIndex index;
         private readonly Dictionary<string, ListViewItem> items = new Dictionary<string, ListViewItem>();
         private readonly List<InProgressTask> tasks = new List<InProgressTask>();
         private bool columnsAutoSized = false;
         private double lastProgress;
         private int searchVersion;
+        private MainFormListSorter sorter;
         private int taskVersion;
 
         public MainForm(MediaIndex index)
@@ -32,6 +40,10 @@ namespace MediaLibrary
             this.index.HashTagRemoved += this.Index_HashTagRemoved;
             this.index.HashPersonAdded += this.Index_HashPersonAdded;
             this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
+            this.listView.ListViewItemSorter = this.sorter = new MainFormListSorter
+            {
+                SortColumn = PathColumnIndex,
+            };
             this.TrackTaskProgress(async progress =>
             {
                 await this.index.Initialize().ConfigureAwait(false);
@@ -83,9 +95,13 @@ namespace MediaLibrary
         private static void UpdateListItem(ListViewItem item, SearchResult searchResult)
         {
             item.Tag = searchResult;
-            item.SubItems[0].Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths.First()) : searchResult.Hash;
-            item.SubItems[1].Text = string.Join(" ", searchResult.Tags);
-            item.SubItems[3].Text = string.Join("; ", searchResult.People.Select(p => p.Name));
+            var firstPath = searchResult.Paths.First();
+            item.SubItems[PathColumnIndex].Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash;
+            item.SubItems[PathColumnIndex].Tag = firstPath;
+            item.SubItems[TagsColumnIndex].Text = string.Join(" ", searchResult.Tags);
+            item.SubItems[TagsColumnIndex].Tag = searchResult.Tags;
+            item.SubItems[PeopleColumnIndex].Text = string.Join("; ", searchResult.People.Select(p => p.Name));
+            item.SubItems[PeopleColumnIndex].Tag = searchResult.People;
         }
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -130,19 +146,39 @@ namespace MediaLibrary
             }
         }
 
-        private ListViewItem CreateListItem(SearchResult searchResult) =>
-            this.items[searchResult.Hash] = new ListViewItem(
-                new[]
-                {
-                    searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(searchResult.Paths.First()) : searchResult.Hash,
-                    string.Join(" ", searchResult.Tags),
-                    ByteSize.FromBytes(searchResult.FileSize).ToString(),
-                    string.Join("; ", searchResult.People.Select(p => p.Name)),
-                },
-                GetImageKey(searchResult.FileType))
+        private ListViewItem CreateListItem(SearchResult searchResult)
+        {
+            var firstPath = searchResult.Paths.FirstOrDefault();
+
+            var columns = new ListViewItem.ListViewSubItem[4];
+
+            columns[PathColumnIndex] = new ListViewItem.ListViewSubItem
+            {
+                Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash,
+                Tag = firstPath,
+            };
+
+            columns[TagsColumnIndex] = new ListViewItem.ListViewSubItem
+            {
+                Text = string.Join(" ", searchResult.Tags),
+                Tag = searchResult.Tags,
+            };
+            columns[SizeColumnIndex] = new ListViewItem.ListViewSubItem
+            {
+                Text = ByteSize.FromBytes(searchResult.FileSize).ToString(),
+                Tag = searchResult.FileSize,
+            };
+            columns[PeopleColumnIndex] = new ListViewItem.ListViewSubItem
+            {
+                Text = string.Join("; ", searchResult.People.Select(p => p.Name)),
+                Tag = searchResult.People,
+            };
+
+            return this.items[searchResult.Hash] = new ListViewItem(columns, GetImageKey(searchResult.FileType))
             {
                 Tag = searchResult,
             };
+        }
 
         private void DetailsMenuItem_Click(object sender, EventArgs e)
         {
@@ -199,6 +235,22 @@ namespace MediaLibrary
         private void Index_HashTagRemoved(object sender, ItemRemovedEventArgs<HashTag> e)
         {
             this.UpdateSearchResult(e.Item.Hash, r => r.With(tags: r.Tags.Remove(e.Item.Tag)));
+        }
+
+        private void ListView_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            var column = this.listView.Columns[e.Column];
+            if (this.sorter.SortColumn != column.Index)
+            {
+                this.sorter.SortColumn = column.Index;
+                this.sorter.Descending = false;
+            }
+            else
+            {
+                this.sorter.Descending = !this.sorter.Descending;
+            }
+
+            this.listView.Sort();
         }
 
         private async void ListView_DoubleClick(object sender, MouseEventArgs e)
@@ -303,6 +355,7 @@ namespace MediaLibrary
                 var newHashes = new HashSet<string>(data.Select(i => i.Hash));
 
                 this.listView.BeginUpdate();
+                this.listView.ListViewItemSorter = null;
 
                 foreach (var kvp in existing)
                 {
@@ -329,6 +382,9 @@ namespace MediaLibrary
                     this.listView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
                     this.columnsAutoSized = true;
                 }
+
+                this.listView.ListViewItemSorter = this.sorter;
+                this.listView.Sort();
 
                 this.listView.EndUpdate();
             }
@@ -444,6 +500,46 @@ namespace MediaLibrary
             public RescanProgress Progress { get; private set; }
 
             public Task Task { get; }
+        }
+
+        private class MainFormListSorter : IComparer<ListViewItem>, IComparer
+        {
+            public bool Descending { get; set; }
+
+            public int SortColumn { get; set; }
+
+            public int Compare(ListViewItem a, ListViewItem b)
+            {
+                int value;
+                switch (this.SortColumn)
+                {
+                    case PathColumnIndex:
+                        value = PathComparer.Instance.Compare((string)a.SubItems[PathColumnIndex].Tag, (string)b.SubItems[PathColumnIndex].Tag);
+                        break;
+
+                    case TagsColumnIndex:
+                        value = ((ImmutableHashSet<string>)a.SubItems[TagsColumnIndex].Tag).Count.CompareTo(((ImmutableHashSet<string>)b.SubItems[TagsColumnIndex].Tag).Count);
+                        break;
+
+                    case SizeColumnIndex:
+                        value = ((long)a.SubItems[SizeColumnIndex].Tag).CompareTo((long)b.SubItems[SizeColumnIndex].Tag);
+                        break;
+
+                    case PeopleColumnIndex:
+                        value = ((ImmutableList<Person>)a.SubItems[PeopleColumnIndex].Tag).Count.CompareTo(((ImmutableList<Person>)b.SubItems[PeopleColumnIndex].Tag).Count);
+                        break;
+
+                    default:
+                        value = 0;
+                        break;
+                }
+
+                return
+                    !this.Descending || value == 0 ? value :
+                    value > 0 ? -1 : 1;
+            }
+
+            public int Compare(object a, object b) => this.Compare(a as ListViewItem, b as ListViewItem);
         }
     }
 }
