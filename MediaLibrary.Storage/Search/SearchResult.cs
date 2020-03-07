@@ -27,5 +27,17 @@ namespace MediaLibrary.Storage.Search
         public ImmutableList<Person> People { get; }
 
         public ImmutableHashSet<string> Tags { get; }
+
+        public SearchResult With(
+            ImmutableHashSet<string> tags = null,
+            ImmutableHashSet<string> paths = null,
+            ImmutableList<Person> people = null) =>
+            new SearchResult(
+                this.Hash,
+                this.FileType,
+                this.FileSize,
+                tags ?? this.Tags,
+                paths ?? this.Paths,
+                people ?? this.People);
     }
 }

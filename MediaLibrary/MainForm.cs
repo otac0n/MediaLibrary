@@ -183,22 +183,22 @@ namespace MediaLibrary
 
         private void Index_HashPersonAdded(object sender, ItemAddedEventArgs<Tuple<HashPerson, Person>> e)
         {
-            this.UpdateSearchResult(e.Item.Item1.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags, r.Paths, r.People.Add(e.Item.Item2)));
+            this.UpdateSearchResult(e.Item.Item1.Hash, r => r.With(people: r.People.Add(e.Item.Item2)));
         }
 
         private void Index_HashPersonRemoved(object sender, ItemRemovedEventArgs<HashPerson> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags, r.Paths, r.People.RemoveAll(p => p.PersonId == e.Item.PersonId)));
+            this.UpdateSearchResult(e.Item.Hash, r => r.With(people: r.People.RemoveAll(p => p.PersonId == e.Item.PersonId)));
         }
 
         private void Index_HashTagAdded(object sender, ItemAddedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags.Add(e.Item.Tag), r.Paths, r.People));
+            this.UpdateSearchResult(e.Item.Hash, r => r.With(tags: r.Tags.Add(e.Item.Tag)));
         }
 
         private void Index_HashTagRemoved(object sender, ItemRemovedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => new SearchResult(r.Hash, r.FileType, r.FileSize, r.Tags.Remove(e.Item.Tag), r.Paths, r.People));
+            this.UpdateSearchResult(e.Item.Hash, r => r.With(tags: r.Tags.Remove(e.Item.Tag)));
         }
 
         private async void ListView_DoubleClick(object sender, MouseEventArgs e)
