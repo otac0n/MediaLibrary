@@ -4,8 +4,11 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Windows.Forms;
@@ -19,6 +22,7 @@ namespace MediaLibrary
         private static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
         private readonly MediaIndex index;
         private CancellationTokenSource cancel = new CancellationTokenSource();
+        private bool initialized;
         private Dictionary<string, (TreeNode node, ListViewItem item)> nodes = new Dictionary<string, (TreeNode, ListViewItem)>();
         private bool running;
         private bool synchronizeTreeView;
@@ -27,6 +31,104 @@ namespace MediaLibrary
         {
             this.index = index;
             this.InitializeComponent();
+        }
+
+        private static string FindBestPath(IEnumerable<string> paths)
+        {
+            string sharedDir = null;
+            string minFile = null;
+            var otherPaths = new List<string>();
+            foreach (var path in paths)
+            {
+                var dir = Path.GetDirectoryName(path);
+                if (sharedDir == null)
+                {
+                    sharedDir = dir;
+                    minFile = path;
+                }
+                else if (sharedDir == dir)
+                {
+                    if (path.Length < minFile.Length)
+                    {
+                        otherPaths.Add(minFile);
+                        minFile = path;
+                    }
+                    else
+                    {
+                        otherPaths.Add(path);
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            var minFileName = Path.GetFileName(minFile);
+            foreach (var path in otherPaths)
+            {
+                var fileName = Path.GetFileName(path);
+                if (!IsCopyFileName(minFileName, fileName))
+                {
+                    return null;
+                }
+            }
+
+            return minFile;
+        }
+
+        private static bool IsCopyFileName(string sourceName, string copyName)
+        {
+            var copyPrefixes = new Regex(@"\G(?:Copy of )");
+            var copySuffixes = new Regex(@"\G(?:\(Copy\)|\s|.temp|.tmp)");
+            var valueSuffix = new Regex(@"\G\((?<value>\d)\)");
+
+            bool IsCopyFileName(int sourceIndex = 0, int copyIndex = 0)
+            {
+                Debug.Assert(copyIndex <= copyName.Length);
+                if (copyIndex == copyName.Length)
+                {
+                    return sourceIndex == sourceName.Length;
+                }
+
+                if (sourceIndex < sourceName.Length && sourceName[sourceIndex] == copyName[copyIndex] &&
+                    IsCopyFileName(sourceIndex + 1, copyIndex + 1))
+                {
+                    return true;
+                }
+
+                var match = (sourceIndex == 0 ? copyPrefixes : copySuffixes).Match(copyName, copyIndex);
+                if (match.Success)
+                {
+                    if (IsCopyFileName(sourceIndex, copyIndex + match.Length))
+                    {
+                        return true;
+                    }
+                }
+
+                match = valueSuffix.Match(copyName, copyIndex);
+                if (match.Success)
+                {
+                    if (sourceIndex < sourceName.Length && long.TryParse(match.Groups["value"].Value, out var copyValue))
+                    {
+                        var sourceMatch = valueSuffix.Match(sourceName, sourceIndex);
+                        if (sourceMatch.Success && long.TryParse(sourceMatch.Groups["value"].Value, out var sourceValue) &&
+                            IsCopyFileName(sourceIndex + sourceMatch.Length, copyIndex + match.Length))
+                        {
+                            return true;
+                        }
+                    }
+
+                    if (IsCopyFileName(sourceIndex, copyIndex + match.Length))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            return IsCopyFileName();
         }
 
         private void CancelButton_Click(object sender, EventArgs e)
@@ -118,13 +220,14 @@ namespace MediaLibrary
 
                 foreach (var path in result.Paths.OrderBy(r => r, PathComparer.Instance))
                 {
+                    var node = nodes[path];
                     var item = new ListViewItem(path, group)
                     {
                         Checked = false,
                         Tag = path,
                     };
 
-                    this.nodes[path] = (nodes[path], item);
+                    this.nodes[path] = (node, item);
                     this.duplicatesList.Items.Add(item);
                 }
             }
@@ -137,6 +240,17 @@ namespace MediaLibrary
             this.treeView.Enabled = this.duplicatesList.Enabled = this.okButton.Enabled = true;
             this.duplicatesList.EndUpdate();
             this.duplicatesList.ItemChecked += this.DuplicatesList_ItemChecked;
+
+            foreach (var result in results)
+            {
+                var bestPath = FindBestPath(result.Paths);
+                if (bestPath != null)
+                {
+                    this.nodes[bestPath].item.Checked = true;
+                }
+            }
+
+            this.initialized = true;
             this.UpdateChart();
         }
 
@@ -337,7 +451,7 @@ namespace MediaLibrary
 
         private void UpdateChart()
         {
-            if (this.synchronizeTreeView)
+            if (!this.initialized || this.synchronizeTreeView)
             {
                 return;
             }
