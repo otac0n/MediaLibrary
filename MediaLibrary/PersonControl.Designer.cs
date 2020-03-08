@@ -38,7 +38,6 @@
             // personName
             // 
             this.personName.AutoSize = true;
-            this.personName.BackColor = System.Drawing.SystemColors.Info;
             this.personName.Dock = System.Windows.Forms.DockStyle.Fill;
             this.personName.ForeColor = System.Drawing.SystemColors.InfoText;
             this.personName.Location = new System.Drawing.Point(20, 0);
@@ -79,6 +78,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BackColor = System.Drawing.SystemColors.Info;
             this.Controls.Add(this.personName);
             this.Controls.Add(this.deleteButton);
             this.Controls.Add(this.pictureBox1);

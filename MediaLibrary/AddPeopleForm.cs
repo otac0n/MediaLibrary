@@ -26,14 +26,14 @@ namespace MediaLibrary
 
         private async void AddButton_Click(object sender, EventArgs e)
         {
+            var name = this.personCombo.Text.Trim();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+
             if (!(this.personCombo.SelectedItem is Person person))
             {
-                var name = this.personCombo.Text.Trim();
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    return;
-                }
-
                 this.personCombo.Text = string.Empty;
                 this.personCombo.Focus();
 
