@@ -36,6 +36,10 @@ namespace MediaLibrary
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findDuplicatesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.favoriteMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editTagsMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addPeopleMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.mainProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.toolStrip = new System.Windows.Forms.ToolStrip();
@@ -85,9 +89,9 @@ namespace MediaLibrary
             this.peopleColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
             this.itemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.favoriteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.editTagsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.addPeopleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.favoriteContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editTagsContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addPeopleContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitter1 = new System.Windows.Forms.Splitter();
             this.preview = new MediaLibrary.PreviewControl();
             this.mainMenu.SuspendLayout();
@@ -100,7 +104,8 @@ namespace MediaLibrary
             // 
             this.mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.optionsToolStripMenuItem,
-            this.toolsMenuItem});
+            this.toolsMenuItem,
+            this.editToolStripMenuItem});
             this.mainMenu.Location = new System.Drawing.Point(0, 0);
             this.mainMenu.Name = "mainMenu";
             this.mainMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
@@ -145,9 +150,47 @@ namespace MediaLibrary
             // 
             this.findDuplicatesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_stack;
             this.findDuplicatesMenuItem.Name = "findDuplicatesMenuItem";
-            this.findDuplicatesMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.findDuplicatesMenuItem.Size = new System.Drawing.Size(180, 22);
             this.findDuplicatesMenuItem.Text = "Find &Duplicates...";
             this.findDuplicatesMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
+            // 
+            // editToolStripMenuItem
+            // 
+            this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.favoriteMainMenuItem,
+            this.editTagsMainMenuItem,
+            this.addPeopleMainMenuItem});
+            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.editToolStripMenuItem.Text = "&Edit";
+            this.editToolStripMenuItem.DropDownOpened += new System.EventHandler(this.EditToolStripMenuItem_DropDownOpened);
+            // 
+            // favoriteMainMenuItem
+            // 
+            this.favoriteMainMenuItem.Image = global::MediaLibrary.Properties.Resources.love_it;
+            this.favoriteMainMenuItem.Name = "favoriteMainMenuItem";
+            this.favoriteMainMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F)));
+            this.favoriteMainMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.favoriteMainMenuItem.Text = "&Favorite";
+            this.favoriteMainMenuItem.Click += new System.EventHandler(this.FavoriteToolStripMenuItem_Click);
+            // 
+            // editTagsMainMenuItem
+            // 
+            this.editTagsMainMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_edit;
+            this.editTagsMainMenuItem.Name = "editTagsMainMenuItem";
+            this.editTagsMainMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.T)));
+            this.editTagsMainMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.editTagsMainMenuItem.Text = "Edit &Tags...";
+            this.editTagsMainMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
+            // 
+            // addPeopleMainMenuItem
+            // 
+            this.addPeopleMainMenuItem.Image = global::MediaLibrary.Properties.Resources.single_neutral;
+            this.addPeopleMainMenuItem.Name = "addPeopleMainMenuItem";
+            this.addPeopleMainMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.P)));
+            this.addPeopleMainMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.addPeopleMainMenuItem.Text = "Add &People...";
+            this.addPeopleMainMenuItem.Click += new System.EventHandler(this.AddPeopleMenuItem_Click);
             // 
             // statusStrip
             // 
@@ -526,14 +569,14 @@ namespace MediaLibrary
             this.showPreviewMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.showPreviewMenuItem.Image = global::MediaLibrary.Properties.Resources.view_square;
             this.showPreviewMenuItem.Name = "showPreviewMenuItem";
-            this.showPreviewMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.showPreviewMenuItem.Size = new System.Drawing.Size(147, 22);
             this.showPreviewMenuItem.Text = "Show Preview";
             this.showPreviewMenuItem.CheckedChanged += new System.EventHandler(this.ShowPreviewMenuItem_CheckedChanged);
             // 
             // toolStripSeparator8
             // 
             this.toolStripSeparator8.Name = "toolStripSeparator8";
-            this.toolStripSeparator8.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator8.Size = new System.Drawing.Size(144, 6);
             // 
             // detailsMenuItem
             // 
@@ -542,7 +585,7 @@ namespace MediaLibrary
             this.detailsMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.detailsMenuItem.Image = global::MediaLibrary.Properties.Resources.list_bullets_1;
             this.detailsMenuItem.Name = "detailsMenuItem";
-            this.detailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.detailsMenuItem.Size = new System.Drawing.Size(147, 22);
             this.detailsMenuItem.Text = "Details";
             this.detailsMenuItem.Click += new System.EventHandler(this.DetailsMenuItem_Click);
             // 
@@ -551,7 +594,7 @@ namespace MediaLibrary
             this.thumbnailsMenuItem.CheckOnClick = true;
             this.thumbnailsMenuItem.Image = global::MediaLibrary.Properties.Resources.picture_landscape;
             this.thumbnailsMenuItem.Name = "thumbnailsMenuItem";
-            this.thumbnailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.thumbnailsMenuItem.Size = new System.Drawing.Size(147, 22);
             this.thumbnailsMenuItem.Text = "Thumbnails";
             this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
             // 
@@ -627,35 +670,35 @@ namespace MediaLibrary
             // itemContextMenu
             // 
             this.itemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.favoriteToolStripMenuItem,
-            this.editTagsMenuItem,
-            this.addPeopleMenuItem});
+            this.favoriteContextMenuItem,
+            this.editTagsContextMenuItem,
+            this.addPeopleContextMenuItem});
             this.itemContextMenu.Name = "itemContextMenu";
             this.itemContextMenu.Size = new System.Drawing.Size(145, 70);
             // 
-            // favoriteToolStripMenuItem
+            // favoriteContextMenuItem
             // 
-            this.favoriteToolStripMenuItem.Image = global::MediaLibrary.Properties.Resources.love_it;
-            this.favoriteToolStripMenuItem.Name = "favoriteToolStripMenuItem";
-            this.favoriteToolStripMenuItem.Size = new System.Drawing.Size(144, 22);
-            this.favoriteToolStripMenuItem.Text = "&Favorite";
-            this.favoriteToolStripMenuItem.Click += new System.EventHandler(this.FavoriteToolStripMenuItem_Click);
+            this.favoriteContextMenuItem.Image = global::MediaLibrary.Properties.Resources.love_it;
+            this.favoriteContextMenuItem.Name = "favoriteContextMenuItem";
+            this.favoriteContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.favoriteContextMenuItem.Text = "&Favorite";
+            this.favoriteContextMenuItem.Click += new System.EventHandler(this.FavoriteToolStripMenuItem_Click);
             // 
-            // editTagsMenuItem
+            // editTagsContextMenuItem
             // 
-            this.editTagsMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_edit;
-            this.editTagsMenuItem.Name = "editTagsMenuItem";
-            this.editTagsMenuItem.Size = new System.Drawing.Size(144, 22);
-            this.editTagsMenuItem.Text = "Edit &Tags...";
-            this.editTagsMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
+            this.editTagsContextMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_edit;
+            this.editTagsContextMenuItem.Name = "editTagsContextMenuItem";
+            this.editTagsContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.editTagsContextMenuItem.Text = "Edit &Tags...";
+            this.editTagsContextMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
             // 
-            // addPeopleMenuItem
+            // addPeopleContextMenuItem
             // 
-            this.addPeopleMenuItem.Image = global::MediaLibrary.Properties.Resources.single_neutral;
-            this.addPeopleMenuItem.Name = "addPeopleMenuItem";
-            this.addPeopleMenuItem.Size = new System.Drawing.Size(144, 22);
-            this.addPeopleMenuItem.Text = "Add People...";
-            this.addPeopleMenuItem.Click += new System.EventHandler(this.AddPeopleMenuItem_Click);
+            this.addPeopleContextMenuItem.Image = global::MediaLibrary.Properties.Resources.single_neutral;
+            this.addPeopleContextMenuItem.Name = "addPeopleContextMenuItem";
+            this.addPeopleContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.addPeopleContextMenuItem.Text = "Add &People...";
+            this.addPeopleContextMenuItem.Click += new System.EventHandler(this.AddPeopleMenuItem_Click);
             // 
             // splitter1
             // 
@@ -755,16 +798,20 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem thumbnailsMenuItem;
         private System.Windows.Forms.ColumnHeader tagsColumns;
         private System.Windows.Forms.ContextMenuStrip itemContextMenu;
-        private System.Windows.Forms.ToolStripMenuItem favoriteToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem editTagsMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem favoriteContextMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editTagsContextMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findDuplicatesMenuItem;
         private System.Windows.Forms.ColumnHeader fileSizeColumn;
         private PreviewControl preview;
         private System.Windows.Forms.Splitter splitter1;
         private System.Windows.Forms.ColumnHeader peopleColumn;
-        private System.Windows.Forms.ToolStripMenuItem addPeopleMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addPeopleContextMenuItem;
         private System.Windows.Forms.ToolStripMenuItem showPreviewMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator8;
+        private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem favoriteMainMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editTagsMainMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addPeopleMainMenuItem;
     }
 }
