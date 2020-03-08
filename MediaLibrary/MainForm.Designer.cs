@@ -150,7 +150,7 @@ namespace MediaLibrary
             // 
             this.findDuplicatesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_stack;
             this.findDuplicatesMenuItem.Name = "findDuplicatesMenuItem";
-            this.findDuplicatesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.findDuplicatesMenuItem.Size = new System.Drawing.Size(164, 22);
             this.findDuplicatesMenuItem.Text = "Find &Duplicates...";
             this.findDuplicatesMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
             // 
@@ -242,6 +242,7 @@ namespace MediaLibrary
             this.playButton.Name = "playButton";
             this.playButton.Size = new System.Drawing.Size(23, 22);
             this.playButton.Text = "Play";
+            this.playButton.Click += new System.EventHandler(this.PlayButton_Click);
             // 
             // playAllButton
             // 
@@ -251,6 +252,7 @@ namespace MediaLibrary
             this.playAllButton.Name = "playAllButton";
             this.playAllButton.Size = new System.Drawing.Size(23, 22);
             this.playAllButton.Text = "Play all";
+            this.playAllButton.Click += new System.EventHandler(this.PlayAllButton_Click);
             // 
             // shuffleAllButton
             // 
@@ -260,6 +262,7 @@ namespace MediaLibrary
             this.shuffleAllButton.Name = "shuffleAllButton";
             this.shuffleAllButton.Size = new System.Drawing.Size(23, 22);
             this.shuffleAllButton.Text = "Shuffle all";
+            this.shuffleAllButton.Click += new System.EventHandler(this.ShuffleAllButton_Click);
             // 
             // toolStripSeparator1
             // 

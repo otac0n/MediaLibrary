@@ -2,6 +2,7 @@
 
 namespace MediaLibrary
 {
+    using System.ComponentModel;
     using System.IO;
     using System.Linq;
     using System.Windows.Forms;
@@ -16,6 +17,7 @@ namespace MediaLibrary
             this.InitializeComponent();
         }
 
+        [Category("Data")]
         public SearchResult PreviewItem
         {
             get => this.previewItem;
@@ -40,7 +42,13 @@ namespace MediaLibrary
                     this.thumbnail.ImageLocation = null;
                     this.thumbnail.Visible = false;
                     this.mediaPlayer.URL = url;
+                    var wasVisible = this.mediaPlayer.Visible;
                     this.mediaPlayer.Visible = url != null;
+                    if (this.mediaPlayer.Visible && !wasVisible)
+                    {
+                        this.mediaPlayer.Dock = DockStyle.None;
+                        this.mediaPlayer.Dock = DockStyle.Fill;
+                    }
                 }
             }
         }

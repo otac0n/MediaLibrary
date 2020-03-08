@@ -223,6 +223,16 @@ namespace MediaLibrary.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap expand_full {
+            get {
+                object obj = ResourceManager.GetObject("expand_full", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap floppy_disk {
             get {
                 object obj = ResourceManager.GetObject("floppy_disk", resourceCulture);
@@ -496,6 +506,16 @@ namespace MediaLibrary.Properties {
         internal static System.Drawing.Bitmap tags_remove {
             get {
                 object obj = ResourceManager.GetObject("tags_remove", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap transparent {
+            get {
+                object obj = ResourceManager.GetObject("transparent", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

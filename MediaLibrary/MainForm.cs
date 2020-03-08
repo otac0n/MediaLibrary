@@ -246,6 +246,8 @@ namespace MediaLibrary
 
         private List<SearchResult> GetSelectedSearchResults() => this.listView.SelectedItems.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
 
+        private List<SearchResult> GetVisibleSearchResults() => this.listView.Items.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
+
         private void Index_HashPersonAdded(object sender, ItemAddedEventArgs<Tuple<HashPerson, Person>> e)
         {
             this.UpdateSearchResult(e.Item.Item1.Hash, r => r.With(people: r.People.Add(e.Item.Item2)));
@@ -346,6 +348,24 @@ namespace MediaLibrary
                 : DragDropEffects.None;
         }
 
+        private void OpenSlideshow(bool shuffle = false, bool autoPlay = false)
+        {
+            var searchResults = this.listView.SelectedItems.Count > 0
+                ? this.GetSelectedSearchResults()
+                : this.GetVisibleSearchResults();
+            new SlideShowForm(this.index, searchResults, shuffle, autoPlay).Show(this);
+        }
+
+        private void PlayAllButton_Click(object sender, EventArgs e)
+        {
+            this.OpenSlideshow(autoPlay: true);
+        }
+
+        private void PlayButton_Click(object sender, EventArgs e)
+        {
+            this.OpenSlideshow();
+        }
+
         private void RemoveListItem(ListViewItem value)
         {
             this.items.Remove(((SearchResult)value.Tag).Hash);
@@ -424,6 +444,11 @@ namespace MediaLibrary
         private void ShowPreviewMenuItem_CheckedChanged(object sender, EventArgs e)
         {
             this.splitter1.Visible = this.preview.Visible = this.showPreviewMenuItem.Checked;
+        }
+
+        private void ShuffleAllButton_Click(object sender, EventArgs e)
+        {
+            this.OpenSlideshow(shuffle: true, autoPlay: true);
         }
 
         private void ThumbnailsMenuItem_Click(object sender, EventArgs e)
