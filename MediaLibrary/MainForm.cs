@@ -69,7 +69,7 @@ namespace MediaLibrary
                 case string type when type.StartsWith("audio/", StringComparison.InvariantCulture):
                     return "audio-file";
 
-                case "image/bmp": return "image-bmp";
+                case "image/bmp": return "image-file-bmp";
                 case "image/gif": return "image-file-gif";
                 case "image/jpeg": return "image-file-jpg";
                 case "image/png": return "image-file-png";
@@ -98,7 +98,7 @@ namespace MediaLibrary
             var firstPath = searchResult.Paths.First();
             item.SubItems[PathColumnIndex].Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash;
             item.SubItems[PathColumnIndex].Tag = firstPath;
-            item.SubItems[TagsColumnIndex].Text = string.Join(" ", searchResult.Tags);
+            item.SubItems[TagsColumnIndex].Text = string.Join("; ", searchResult.Tags);
             item.SubItems[TagsColumnIndex].Tag = searchResult.Tags;
             item.SubItems[PeopleColumnIndex].Text = string.Join("; ", searchResult.People.Select(p => p.Name));
             item.SubItems[PeopleColumnIndex].Tag = searchResult.People;
@@ -160,7 +160,7 @@ namespace MediaLibrary
 
             columns[TagsColumnIndex] = new ListViewItem.ListViewSubItem
             {
-                Text = string.Join(" ", searchResult.Tags),
+                Text = string.Join("; ", searchResult.Tags),
                 Tag = searchResult.Tags,
             };
             columns[SizeColumnIndex] = new ListViewItem.ListViewSubItem
