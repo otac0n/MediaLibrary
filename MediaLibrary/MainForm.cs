@@ -95,8 +95,8 @@ namespace MediaLibrary
         private static void UpdateListItem(ListViewItem item, SearchResult searchResult)
         {
             item.Tag = searchResult;
-            var firstPath = searchResult.Paths.First();
-            item.SubItems[PathColumnIndex].Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash;
+            var firstPath = searchResult.Paths.FirstOrDefault();
+            item.SubItems[PathColumnIndex].Text = firstPath != null ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash;
             item.SubItems[PathColumnIndex].Tag = firstPath;
             item.SubItems[TagsColumnIndex].Text = string.Join("; ", searchResult.Tags);
             item.SubItems[TagsColumnIndex].Tag = searchResult.Tags;

@@ -195,7 +195,7 @@ namespace MediaLibrary
                     }
                 }
 
-                var ix = key.LastIndexOfAny(PathComparer.PathSeparators);
+                var ix = key.LastIndexOfAny(MediaIndex.PathSeparators);
                 if (ix == -1)
                 {
                     roots.Add(node);

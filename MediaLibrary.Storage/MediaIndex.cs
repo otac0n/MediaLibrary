@@ -6,7 +6,6 @@ namespace MediaLibrary.Storage
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Data;
     using System.Data.SQLite;
     using System.Diagnostics;
     using System.Globalization;
@@ -22,6 +21,8 @@ namespace MediaLibrary.Storage
 
     public class MediaIndex : IDisposable
     {
+        public static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+
         private readonly string indexPath;
         private AsyncLock dbLock = new AsyncLock();
         private Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
@@ -290,6 +291,10 @@ namespace MediaLibrary.Storage
             this.QueryIndex(async conn =>
                 (await conn.QueryAsync<FilePath>(FilePath.Queries.GetFilePathsByHash, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault());
 
+        private Task<List<FilePath>> GetFilePathsUnder(string path) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<FilePath>(FilePath.Queries.GetFilePathsUnder, new { Path = QueryBuilder.EscapeLike(path) }).ConfigureAwait(false)).ToList());
+
         private Task<HashInfo> GetHashInfo(string hash) =>
             this.QueryIndex(async conn =>
                 (await conn.QueryAsync<HashInfo>(HashInfo.Queries.GetHashInfo, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault());
@@ -323,26 +328,55 @@ namespace MediaLibrary.Storage
             }
         }
 
-        private async Task<string> RescanFile(string path)
+        private async Task<string> RescanFile(string path, FilePath filePath = null)
         {
-            var filePath = await this.GetFilePath(path).ConfigureAwait(false);
-            var modifiedTime = File.GetLastWriteTimeUtc(path).Ticks;
+            filePath = filePath ?? await this.GetFilePath(path).ConfigureAwait(false);
 
-            HashInfo hashInfo = null;
-            if (filePath != null && filePath.LastModifiedTime == modifiedTime)
+            if (File.Exists(path))
             {
-                hashInfo = await this.GetHashInfo(filePath.LastHash).ConfigureAwait(false);
-            }
+                var modifiedTime = File.GetLastWriteTimeUtc(path).Ticks;
 
-            if (hashInfo == null)
+                HashInfo hashInfo = null;
+                if (filePath != null && filePath.LastModifiedTime == modifiedTime)
+                {
+                    hashInfo = await this.GetHashInfo(filePath.LastHash).ConfigureAwait(false);
+                }
+
+                if (hashInfo == null)
+                {
+                    hashInfo = await HashFileAsync(path).ConfigureAwait(false);
+                    await this.UpdateIndex(HashInfo.Queries.AddHashInfo, hashInfo).ConfigureAwait(false);
+                    filePath = new FilePath(path, hashInfo.Hash, modifiedTime, missingSince: null);
+                    await this.UpdateIndex(FilePath.Queries.AddFilePath, filePath).ConfigureAwait(false);
+                }
+                else if (filePath.MissingSince != null)
+                {
+                    filePath = filePath.With(missingSince: null);
+                    await this.UpdateIndex(FilePath.Queries.AddFilePath, filePath).ConfigureAwait(false);
+                }
+
+                return hashInfo.Hash;
+            }
+            else
             {
-                hashInfo = await HashFileAsync(path).ConfigureAwait(false);
-                await this.UpdateIndex(HashInfo.Queries.AddHashInfo, hashInfo).ConfigureAwait(false);
-                filePath = new FilePath(path, hashInfo.Hash, modifiedTime);
-                await this.UpdateIndex(FilePath.Queries.AddFilePath, filePath).ConfigureAwait(false);
-            }
+                if (filePath != null)
+                {
+                    var now = DateTime.UtcNow.Ticks;
+                    if (filePath.MissingSince < now)
+                    {
+                        if (TimeSpan.FromTicks(now - filePath.MissingSince.Value).TotalDays > 30)
+                        {
+                            await this.RemoveFilePath(path).ConfigureAwait(false);
+                        }
+                    }
+                    else
+                    {
+                        await this.UpdateIndex(FilePath.Queries.AddFilePath, filePath.With(missingSince: now)).ConfigureAwait(false);
+                    }
+                }
 
-            return hashInfo.Hash;
+                return null;
+            }
         }
 
         private async Task RescanIndexedPath(string path, IProgress<RescanProgress> progress = null)
@@ -352,7 +386,7 @@ namespace MediaLibrary.Storage
             var discoveryComplete = false;
             var discovered = 0;
             var processed = 0;
-            var queue = new ConcurrentQueue<string>();
+            var queue = new ConcurrentQueue<(string path, FilePath filePath)>();
             var pendingTasks = new List<Task>();
 
             var progressTimer = Stopwatch.StartNew();
@@ -368,15 +402,27 @@ namespace MediaLibrary.Storage
                 }
             }
 
-            var enumerateTask = Task.Run(() =>
+            var enumerateTask = Task.Run(async () =>
             {
                 try
                 {
+                    var seen = new HashSet<string>();
+                    foreach (var filePath in await this.GetFilePathsUnder(path).ConfigureAwait(false))
+                    {
+                        seen.Add(filePath.Path);
+                        Interlocked.Increment(ref discovered);
+                        queue.Enqueue((filePath.Path, filePath));
+                        ReportProgress();
+                    }
+
                     foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
                     {
-                        Interlocked.Increment(ref discovered);
-                        queue.Enqueue(file);
-                        ReportProgress();
+                        if (seen.Add(file))
+                        {
+                            Interlocked.Increment(ref discovered);
+                            queue.Enqueue((file, null));
+                            ReportProgress();
+                        }
                     }
                 }
                 finally
@@ -404,7 +450,7 @@ namespace MediaLibrary.Storage
                         }
                     }
 
-                    pendingTasks.Add(this.RescanFile(file).ContinueWith(result =>
+                    pendingTasks.Add(this.RescanFile(file.path, file.filePath).ContinueWith(result =>
                     {
                         Interlocked.Increment(ref processed);
                         ReportProgress();
@@ -465,6 +511,7 @@ namespace MediaLibrary.Storage
                     Path text NOT NULL,
                     LastHash text NOT NULL,
                     LastModifiedTime INTEGER NOT NULL,
+                    MissingSince INTEGER NULL,
                     PRIMARY KEY (Path)
                 );
 

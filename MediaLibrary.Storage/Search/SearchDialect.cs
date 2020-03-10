@@ -4,7 +4,7 @@ namespace MediaLibrary.Storage.Search
 {
     using System;
     using System.Text;
-    using System.Text.RegularExpressions;
+    using static QueryBuilder;
 
     public class SearchDialect : AnsiSqlCompiler
     {
@@ -99,7 +99,7 @@ namespace MediaLibrary.Storage.Search
             char? escape;
             if (patternValue.IndexOfAny(new[] { '%', '_' }) > -1)
             {
-                literal = Literal('%' + Regex.Replace(patternValue, @"[%_\\]", @"\$0") + '%');
+                literal = Literal('%' + EscapeLike(patternValue) + '%');
                 escape = '\\';
             }
             else
@@ -146,14 +146,6 @@ namespace MediaLibrary.Storage.Search
             return sb.ToString();
         }
 
-        private static string Literal(string value) => $"'{value.Replace("'", "''")}'";
-
-        private static string Literal(char value) => Literal(value.ToString());
-
-        private static string Literal(int value) => value.ToString();
-
-        private static string Literal(double value) => value.ToString();
-
         private static string StartsWith(string expr, string patternExpr, char? escape) => Like(expr, patternExpr, escape);
 
         private static string StartsWith(string expr, string patternValue)
@@ -162,7 +154,7 @@ namespace MediaLibrary.Storage.Search
             char? escape;
             if (patternValue.IndexOfAny(new[] { '%', '_' }) > -1)
             {
-                literal = Literal(Regex.Replace(patternValue, @"[%_\\]", @"\$0") + '%');
+                literal = Literal(EscapeLike(patternValue) + '%');
                 escape = '\\';
             }
             else
@@ -217,7 +209,7 @@ namespace MediaLibrary.Storage.Search
 
             if (fetchPaths)
             {
-                sb.AppendLine("SELECT p.* FROM temp.SearchHashInfo h INNER JOIN Paths p ON h.Hash = p.LastHash;");
+                sb.AppendLine("SELECT p.* FROM temp.SearchHashInfo h INNER JOIN Paths p ON h.Hash = p.LastHash WHERE p.MissingSince IS NULL;");
             }
 
             if (fetchPeople)

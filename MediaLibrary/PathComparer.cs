@@ -4,12 +4,10 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
+    using MediaLibrary.Storage;
 
     internal class PathComparer : IComparer<string>
     {
-        public static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
-
         private PathComparer()
         {
         }
@@ -18,8 +16,21 @@ namespace MediaLibrary
 
         public int Compare(string aPath, string bPath)
         {
-            var aParts = aPath.ToUpperInvariant().Split(PathSeparators, StringSplitOptions.RemoveEmptyEntries);
-            var bParts = bPath.ToUpperInvariant().Split(PathSeparators, StringSplitOptions.RemoveEmptyEntries);
+            if (aPath == bPath)
+            {
+                return 0;
+            }
+            else if (aPath == null)
+            {
+                return -1;
+            }
+            else if (bPath == null)
+            {
+                return 1;
+            }
+
+            var aParts = aPath.ToUpperInvariant().Split(MediaIndex.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
+            var bParts = bPath.ToUpperInvariant().Split(MediaIndex.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
 
             var num = 0;
             for (var j = 0; j < aParts.Length && j < bParts.Length; j++)
