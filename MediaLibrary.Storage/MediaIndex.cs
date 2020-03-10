@@ -475,14 +475,14 @@ namespace MediaLibrary.Storage
             }
         }
 
-        private async void Watcher_Changed(object sender, FileSystemEventArgs e)
+        private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            await this.RescanFile(e.FullPath).ConfigureAwait(false);
+            ////await this.RescanFile(e.FullPath).ConfigureAwait(false);
         }
 
-        private async void Watcher_Created(object sender, FileSystemEventArgs e)
+        private void Watcher_Created(object sender, FileSystemEventArgs e)
         {
-            await this.RescanFile(e.FullPath).ConfigureAwait(false);
+            ////await this.RescanFile(e.FullPath).ConfigureAwait(false);
         }
 
         private async void Watcher_Deleted(object sender, FileSystemEventArgs e)
@@ -493,7 +493,7 @@ namespace MediaLibrary.Storage
         private async void Watcher_Renamed(object sender, RenamedEventArgs e)
         {
             await this.RemoveFilePath(e.OldFullPath).ConfigureAwait(false);
-            await this.RescanFile(e.OldFullPath).ConfigureAwait(false);
+            ////await this.RescanFile(e.OldFullPath).ConfigureAwait(false);
         }
 
         private static class Queries
