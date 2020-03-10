@@ -193,6 +193,7 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine("LEFT JOIN (")
                     .AppendLine("    SELECT LastHash Hash, COUNT(*) Copies")
                     .AppendLine("    FROM Paths")
+                    .AppendLine("    WHERE MissingSince IS NULL")
                     .AppendLine("    GROUP BY Hash")
                     .AppendLine(") c ON h.Hash = c.Hash");
             }
