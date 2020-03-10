@@ -175,11 +175,8 @@ namespace MediaLibrary.Storage
             }
         }
 
-        public async Task RemoveFilePath(string path)
-        {
-            this.RemoveFileSystemWatcher(path);
+        public async Task RemoveFilePath(string path) =>
             await this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path });
-        }
 
         public async Task RemoveHashPerson(HashPerson hashPerson)
         {
@@ -207,6 +204,7 @@ namespace MediaLibrary.Storage
 
         public async Task RemoveIndexedPath(string path)
         {
+            this.RemoveFileSystemWatcher(path);
             await this.UpdateIndex(Queries.RemoveIndexedPath, new { Path = path }).ConfigureAwait(false);
         }
 
