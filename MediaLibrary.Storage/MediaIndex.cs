@@ -330,14 +330,19 @@ namespace MediaLibrary.Storage
         {
             filePath = filePath ?? await this.GetFilePath(path).ConfigureAwait(false);
 
-            if (File.Exists(path))
+            var fileInfo = new FileInfo(path);
+            if (fileInfo.Exists)
             {
-                var modifiedTime = File.GetLastWriteTimeUtc(path).Ticks;
+                var modifiedTime = fileInfo.LastWriteTimeUtc.Ticks;
 
                 HashInfo hashInfo = null;
                 if (filePath != null && filePath.LastModifiedTime == modifiedTime)
                 {
                     hashInfo = await this.GetHashInfo(filePath.LastHash).ConfigureAwait(false);
+                    if (hashInfo != null && hashInfo.FileSize != fileInfo.Length)
+                    {
+                        hashInfo = null;
+                    }
                 }
 
                 if (hashInfo == null)
