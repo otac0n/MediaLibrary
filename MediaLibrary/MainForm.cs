@@ -443,7 +443,7 @@ namespace MediaLibrary
 
         private void ShowPreviewMenuItem_CheckedChanged(object sender, EventArgs e)
         {
-            this.splitter1.Visible = this.preview.Visible = this.showPreviewMenuItem.Checked;
+            this.splitContainer.Panel2Collapsed = !(this.preview.Visible = this.showPreviewMenuItem.Checked);
         }
 
         private void ShuffleAllButton_Click(object sender, EventArgs e)

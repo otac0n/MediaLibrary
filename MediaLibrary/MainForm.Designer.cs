@@ -82,22 +82,26 @@ namespace MediaLibrary
             this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
             this.detailsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.thumbnailsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.listView = new System.Windows.Forms.ListView();
-            this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.tagsColumns = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.fileSizeColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.peopleColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
             this.itemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.favoriteContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editTagsContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addPeopleContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.splitter1 = new System.Windows.Forms.Splitter();
+            this.splitContainer = new System.Windows.Forms.SplitContainer();
+            this.listView = new System.Windows.Forms.ListView();
+            this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.tagsColumns = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.fileSizeColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.peopleColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.preview = new MediaLibrary.PreviewControl();
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
             this.itemContextMenu.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
+            this.splitContainer.Panel1.SuspendLayout();
+            this.splitContainer.Panel2.SuspendLayout();
+            this.splitContainer.SuspendLayout();
             this.SuspendLayout();
             // 
             // mainMenu
@@ -601,47 +605,6 @@ namespace MediaLibrary
             this.thumbnailsMenuItem.Text = "Thumbnails";
             this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
             // 
-            // listView
-            // 
-            this.listView.AllowColumnReorder = true;
-            this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.nameColumn,
-            this.tagsColumns,
-            this.fileSizeColumn,
-            this.peopleColumn});
-            this.listView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listView.FullRowSelect = true;
-            this.listView.HideSelection = false;
-            this.listView.Location = new System.Drawing.Point(0, 49);
-            this.listView.Margin = new System.Windows.Forms.Padding(0);
-            this.listView.Name = "listView";
-            this.listView.Size = new System.Drawing.Size(650, 379);
-            this.listView.SmallImageList = this.fileTypeImages;
-            this.listView.TabIndex = 3;
-            this.listView.UseCompatibleStateImageBehavior = false;
-            this.listView.View = System.Windows.Forms.View.Details;
-            this.listView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.ListView_ColumnClick);
-            this.listView.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.ListView_ItemSelectionChanged);
-            this.listView.SelectedIndexChanged += new System.EventHandler(this.ListView_SelectedIndexChanged);
-            this.listView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ListView_MouseClick);
-            this.listView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListView_DoubleClick);
-            // 
-            // nameColumn
-            // 
-            this.nameColumn.Text = "Name";
-            // 
-            // tagsColumns
-            // 
-            this.tagsColumns.Text = "Tags";
-            // 
-            // fileSizeColumn
-            // 
-            this.fileSizeColumn.Text = "File Size";
-            // 
-            // peopleColumn
-            // 
-            this.peopleColumn.Text = "People";
-            // 
             // fileTypeImages
             // 
             this.fileTypeImages.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("fileTypeImages.ImageStream")));
@@ -703,23 +666,72 @@ namespace MediaLibrary
             this.addPeopleContextMenuItem.Text = "Add &People...";
             this.addPeopleContextMenuItem.Click += new System.EventHandler(this.AddPeopleMenuItem_Click);
             // 
-            // splitter1
+            // splitContainer
             // 
-            this.splitter1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.splitter1.Location = new System.Drawing.Point(647, 49);
-            this.splitter1.Name = "splitter1";
-            this.splitter1.Size = new System.Drawing.Size(3, 379);
-            this.splitter1.TabIndex = 5;
-            this.splitter1.TabStop = false;
+            this.splitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer.Location = new System.Drawing.Point(0, 49);
+            this.splitContainer.Name = "splitContainer";
+            // 
+            // splitContainer.Panel1
+            // 
+            this.splitContainer.Panel1.Controls.Add(this.listView);
+            // 
+            // splitContainer.Panel2
+            // 
+            this.splitContainer.Panel2.Controls.Add(this.preview);
+            this.splitContainer.Size = new System.Drawing.Size(800, 379);
+            this.splitContainer.SplitterDistance = 462;
+            this.splitContainer.TabIndex = 6;
+            // 
+            // listView
+            // 
+            this.listView.AllowColumnReorder = true;
+            this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.nameColumn,
+            this.tagsColumns,
+            this.fileSizeColumn,
+            this.peopleColumn});
+            this.listView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.listView.FullRowSelect = true;
+            this.listView.HideSelection = false;
+            this.listView.Location = new System.Drawing.Point(0, 0);
+            this.listView.Margin = new System.Windows.Forms.Padding(0);
+            this.listView.Name = "listView";
+            this.listView.Size = new System.Drawing.Size(462, 379);
+            this.listView.SmallImageList = this.fileTypeImages;
+            this.listView.TabIndex = 4;
+            this.listView.UseCompatibleStateImageBehavior = false;
+            this.listView.View = System.Windows.Forms.View.Details;
+            this.listView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.ListView_ColumnClick);
+            this.listView.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.ListView_ItemSelectionChanged);
+            this.listView.SelectedIndexChanged += new System.EventHandler(this.ListView_SelectedIndexChanged);
+            this.listView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ListView_MouseClick);
+            this.listView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListView_DoubleClick);
+            // 
+            // nameColumn
+            // 
+            this.nameColumn.Text = "Name";
+            // 
+            // tagsColumns
+            // 
+            this.tagsColumns.Text = "Tags";
+            // 
+            // fileSizeColumn
+            // 
+            this.fileSizeColumn.Text = "File Size";
+            // 
+            // peopleColumn
+            // 
+            this.peopleColumn.Text = "People";
             // 
             // preview
             // 
-            this.preview.Dock = System.Windows.Forms.DockStyle.Right;
-            this.preview.Location = new System.Drawing.Point(650, 49);
+            this.preview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.preview.Location = new System.Drawing.Point(0, 0);
             this.preview.Name = "preview";
             this.preview.PreviewItem = null;
-            this.preview.Size = new System.Drawing.Size(150, 379);
-            this.preview.TabIndex = 4;
+            this.preview.Size = new System.Drawing.Size(334, 379);
+            this.preview.TabIndex = 5;
             // 
             // MainForm
             // 
@@ -727,9 +739,7 @@ namespace MediaLibrary
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.splitter1);
-            this.Controls.Add(this.listView);
-            this.Controls.Add(this.preview);
+            this.Controls.Add(this.splitContainer);
             this.Controls.Add(this.toolStrip);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.mainMenu);
@@ -745,6 +755,10 @@ namespace MediaLibrary
             this.toolStrip.ResumeLayout(false);
             this.toolStrip.PerformLayout();
             this.itemContextMenu.ResumeLayout(false);
+            this.splitContainer.Panel1.ResumeLayout(false);
+            this.splitContainer.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
+            this.splitContainer.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -766,9 +780,7 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripButton homeButton;
         private System.Windows.Forms.ToolStripTextBox searchBox;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
-        private System.Windows.Forms.ListView listView;
         private System.Windows.Forms.ImageList fileTypeImages;
-        private System.Windows.Forms.ColumnHeader nameColumn;
         private System.Windows.Forms.ToolStripSplitButton favoriteFilesDropDown;
         private System.Windows.Forms.ToolStripMenuItem favoriteFilesMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
@@ -799,16 +811,11 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripDropDownButton viewButton;
         private System.Windows.Forms.ToolStripMenuItem detailsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem thumbnailsMenuItem;
-        private System.Windows.Forms.ColumnHeader tagsColumns;
         private System.Windows.Forms.ContextMenuStrip itemContextMenu;
         private System.Windows.Forms.ToolStripMenuItem favoriteContextMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editTagsContextMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findDuplicatesMenuItem;
-        private System.Windows.Forms.ColumnHeader fileSizeColumn;
-        private PreviewControl preview;
-        private System.Windows.Forms.Splitter splitter1;
-        private System.Windows.Forms.ColumnHeader peopleColumn;
         private System.Windows.Forms.ToolStripMenuItem addPeopleContextMenuItem;
         private System.Windows.Forms.ToolStripMenuItem showPreviewMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator8;
@@ -816,5 +823,12 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem favoriteMainMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editTagsMainMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addPeopleMainMenuItem;
+        private System.Windows.Forms.SplitContainer splitContainer;
+        private System.Windows.Forms.ListView listView;
+        private System.Windows.Forms.ColumnHeader nameColumn;
+        private System.Windows.Forms.ColumnHeader tagsColumns;
+        private System.Windows.Forms.ColumnHeader fileSizeColumn;
+        private System.Windows.Forms.ColumnHeader peopleColumn;
+        private PreviewControl preview;
     }
 }
