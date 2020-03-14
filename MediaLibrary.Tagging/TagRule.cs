@@ -7,7 +7,7 @@ namespace MediaLibrary.Tagging
     /// <summary>
     /// A rule for using a <see cref="TagOperator"/> on a set of tags.
     /// </summary>
-    public class TagRule
+    public sealed class TagRule
     {
         /// <summary>
         /// Provides a lookup from <see cref="TagOperator"/> to <see cref="string"/>.
