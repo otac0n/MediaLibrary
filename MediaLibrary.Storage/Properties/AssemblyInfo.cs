@@ -5,4 +5,4 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("6cba6802-71c1-4ce9-844d-aa3b2e6c5a54")]
 [assembly: CLSCompliant(true)]
-[assembly: InternalsVisibleTo("MediaLibrary.Storage")]
+[assembly: InternalsVisibleTo("MediaLibrary.Tests")]
