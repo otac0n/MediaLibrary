@@ -10,6 +10,9 @@
     <Rule Id="CA2210" Action="None" />
     <Rule Id="CA2243" Action="None" />
   </Rules>
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp.Features" RuleNamespace="Microsoft.CodeAnalysis.CSharp.Features">
+    <Rule Id="IDE0065" Action="None" />
+  </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1115" Action="None" />
     <Rule Id="SA1116" Action="None" />
