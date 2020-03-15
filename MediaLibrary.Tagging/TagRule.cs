@@ -64,5 +64,8 @@ namespace MediaLibrary.Tagging
         public TagOperator Operator { get; }
 
         public ImmutableHashSet<string> Right { get; }
+
+        public override string ToString() =>
+            $"{string.Join(" & ", this.Left)} {OperatorToStringLookup[this.Operator]} {string.Join(" | ", this.Right)}";
     }
 }

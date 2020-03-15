@@ -10,94 +10,102 @@ namespace MediaLibrary.Tagging
 
     public sealed class TagRuleEngine
     {
-        private readonly List<TagRule> tagRules = new List<TagRule>();
+        private readonly Dictionary<string, string> renameMap = new Dictionary<string, string>();
+        private readonly Dictionary<string, ImmutableHashSet<string>> specializationChildMap = new Dictionary<string, ImmutableHashSet<string>>();
+        private readonly Dictionary<string, ImmutableHashSet<string>> specializationParentMap = new Dictionary<string, ImmutableHashSet<string>>();
+        private readonly ILookup<TagOperator, TagRule> tagRules;
 
         public TagRuleEngine(IEnumerable<TagRule> rules)
         {
+            if (rules == null)
+            {
+                throw new ArgumentNullException(nameof(rules));
+            }
+
+            var nonDefinitionRules = new List<TagRule>();
+            var reverseRenameMap = new Dictionary<string, List<string>>();
             foreach (var rule in rules)
             {
-                if ((rule.Operator == TagOperator.Definition || rule.Operator == TagOperator.Specialization) &&
-                    (rule.Left.Count > 1 || rule.Right.Count > 1))
+                if (rule.Operator == TagOperator.Definition || rule.Operator == TagOperator.Specialization)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(rules));
+                    if (rule.Left.Count > 1 || rule.Right.Count > 1)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(rules), $"The operator '{rule.Operator}' requires a single tag on both the left and right hand sides in rule '{rule}'");
+                    }
+
+                    if (rule.Operator == TagOperator.Definition)
+                    {
+                        var fromTag = rule.Left.Single();
+                        var toTag = rule.Right.Single();
+                        while (this.renameMap.TryGetValue(toTag, out var nextTag))
+                        {
+                            toTag = nextTag;
+                        }
+
+                        this.renameMap[fromTag] = toTag;
+
+                        if (!reverseRenameMap.TryGetValue(toTag, out var destinationReverse))
+                        {
+                            reverseRenameMap[toTag] = destinationReverse = new List<string>();
+                        }
+
+                        if (reverseRenameMap.TryGetValue(fromTag, out var connected))
+                        {
+                            foreach (var c in connected)
+                            {
+                                this.renameMap[c] = toTag;
+                            }
+
+                            destinationReverse.AddRange(connected);
+                            reverseRenameMap.Remove(fromTag);
+                        }
+
+                        destinationReverse.Add(fromTag);
+                        continue;
+                    }
                 }
-                else
-                {
-                    this.tagRules.Add(rule);
-                }
+
+                nonDefinitionRules.Add(rule);
+            }
+
+            this.tagRules = this.SimplifyRules(nonDefinitionRules).ToLookup(r => r.Operator);
+
+            foreach (var rule in this.tagRules[TagOperator.Specialization])
+            {
+                var fromTag = rule.Left.Single();
+                var toTag = rule.Right.Single();
+
+                AddParentToChildren(fromTag, toTag, this.specializationChildMap, this.specializationParentMap);
+                AddParentToChildren(toTag, fromTag, this.specializationParentMap, this.specializationChildMap);
             }
         }
 
         public AnalysisResult Analyze(IEnumerable<string> tags)
         {
-            var tagsSet = new HashSet<string>(tags.Select(t => t.TrimStart('#')));
-            if (tagsSet.Count == 0)
+            var normalizedTags = ImmutableHashSet.CreateRange(tags.Select(tag => this.Rename(tag.TrimStart('#'))));
+            if (normalizedTags.Count == 0)
             {
                 return AnalysisResult.Empty;
             }
 
-            var isDefinition = this.tagRules.ToLookup(r => r.Operator == TagOperator.Definition);
-            var renameMap = new Dictionary<string, string>();
-            var reverseMap = new Dictionary<string, List<string>>();
-            foreach (var rule in isDefinition[true])
-            {
-                var fromTag = rule.Left.Single();
-                var toTag = rule.Right.Single();
-                while (renameMap.TryGetValue(toTag, out var nextTag))
-                {
-                    toTag = nextTag;
-                }
+            var ruleLookup = this.tagRules;
 
-                renameMap[fromTag] = toTag;
-
-                if (!reverseMap.TryGetValue(toTag, out var destinationReverse))
-                {
-                    reverseMap[toTag] = destinationReverse = new List<string>();
-                }
-
-                if (reverseMap.TryGetValue(fromTag, out var connected))
-                {
-                    foreach (var c in connected)
-                    {
-                        renameMap[c] = toTag;
-                    }
-
-                    destinationReverse.AddRange(connected);
-                    reverseMap.Remove(fromTag);
-                }
-
-                destinationReverse.Add(fromTag);
-            }
-
-            var transformedRules = SimplifyRules(isDefinition[false], renameMap).ToLookup(r => r.Operator);
-
-            var normalizedTags = ImmutableHashSet.CreateRange(tagsSet.Select(tag => renameMap.TryGetValue(tag, out var renamed) ? renamed : tag));
             var effectiveTags = normalizedTags;
-            var changed = true;
-            while (changed)
+            foreach (var tag in effectiveTags)
             {
-                changed = false;
-                var groups = from rule in transformedRules[TagOperator.Specialization]
-                             where effectiveTags.IsSupersetOf(rule.Left)
-                             select rule;
-                foreach (var rule in groups)
+                if (this.specializationParentMap.TryGetValue(tag, out var specializes))
                 {
-                    var toAdd = rule.Right.Single();
-                    if (!effectiveTags.Contains(toAdd))
-                    {
-                        effectiveTags = effectiveTags.Add(toAdd);
-                        changed = true;
-                    }
+                    effectiveTags = effectiveTags.Union(specializes);
                 }
             }
 
             var missingTagSets = ImmutableList<ImmutableHashSet<string>>.Empty;
             var effectiveAndSingleMissingTags = new HashSet<string>(effectiveTags);
-            changed = true;
+            var changed = true;
             while (changed)
             {
                 changed = false;
-                var groups = from rule in transformedRules[TagOperator.Implication]
+                var groups = from rule in ruleLookup[TagOperator.Implication]
                              where effectiveAndSingleMissingTags.IsSupersetOf(rule.Left)
                              where !rule.Right.Overlaps(effectiveAndSingleMissingTags)
                              group rule by rule.Right.Count == 1 into g
@@ -111,8 +119,15 @@ namespace MediaLibrary.Tagging
                         missingTagSets = missingTagSets.Add(rule.Right);
                         if (rule.Right.Count == 1)
                         {
-                            if (changed |= effectiveAndSingleMissingTags.Add(rule.Right.Single()))
+                            var right = rule.Right.Single();
+                            if (effectiveAndSingleMissingTags.Add(right))
                             {
+                                if (this.specializationParentMap.TryGetValue(right, out var specializes))
+                                {
+                                    effectiveAndSingleMissingTags.UnionWith(specializes);
+                                }
+
+                                changed = true;
                                 break;
                             }
                         }
@@ -121,11 +136,20 @@ namespace MediaLibrary.Tagging
             }
 
             var suggestedTags = ImmutableHashSet.CreateRange(missingTagSets.SelectMany(s => s));
-            foreach (var rule in transformedRules[TagOperator.Suggestion])
+            foreach (var rule in ruleLookup[TagOperator.Suggestion])
             {
                 if (effectiveAndSingleMissingTags.IsSupersetOf(rule.Left) && !effectiveAndSingleMissingTags.Overlaps(rule.Right))
                 {
                     suggestedTags = suggestedTags.Union(rule.Right);
+                }
+            }
+
+            foreach (var tag in effectiveAndSingleMissingTags)
+            {
+                if (this.specializationChildMap.TryGetValue(tag, out var children) &&
+                    !effectiveAndSingleMissingTags.Overlaps(children))
+                {
+                    suggestedTags = suggestedTags.Union(children);
                 }
             }
 
@@ -136,19 +160,62 @@ namespace MediaLibrary.Tagging
                 suggestedTags);
         }
 
-        private static IEnumerable<TagRule> SimplifyRules(IEnumerable<TagRule> rules, Dictionary<string, string> renameMap)
+        private static void AddParentToChildren(string parent, string child, Dictionary<string, ImmutableHashSet<string>> parentMap, Dictionary<string, ImmutableHashSet<string>> childMap)
         {
-            string R(string tag) => renameMap.TryGetValue(tag, out var renamed) ? renamed : tag;
+            if (!parentMap.TryGetValue(child, out var parents))
+            {
+                parents = ImmutableHashSet<string>.Empty;
+            }
 
+            if (parentMap.TryGetValue(parent, out var grandparents))
+            {
+                parents = parents.Union(grandparents);
+            }
+
+            parents = parents.Add(parent);
+
+            var queue = new Queue<string>();
+            var seen = new HashSet<string>();
+            queue.Enqueue(child);
+            while (queue.Count > 0)
+            {
+                var currentChild = queue.Dequeue();
+                if (!seen.Add(currentChild))
+                {
+                    continue;
+                }
+
+                if (!parentMap.TryGetValue(currentChild, out var currentChildParents))
+                {
+                    currentChildParents = ImmutableHashSet<string>.Empty;
+                }
+
+                parentMap[currentChild] = currentChildParents.Union(parents.Remove(currentChild));
+
+                if (childMap.TryGetValue(currentChild, out var grandchildren))
+                {
+                    foreach (var grandchild in grandchildren)
+                    {
+                        queue.Enqueue(grandchild);
+                    }
+                }
+            }
+        }
+
+        private string Rename(string tag) =>
+            this.renameMap.TryGetValue(tag, out var renamed) ? renamed : tag;
+
+        private IEnumerable<TagRule> SimplifyRules(IEnumerable<TagRule> rules)
+        {
             foreach (var r in rules)
             {
                 TagRule rule;
-                if (r.Left.Any(renameMap.ContainsKey) || r.Right.Any(renameMap.ContainsKey))
+                if (r.Left.Any(this.renameMap.ContainsKey) || r.Right.Any(this.renameMap.ContainsKey))
                 {
                     rule = new TagRule(
-                        ImmutableHashSet.CreateRange(r.Left.Select(R)),
+                        ImmutableHashSet.CreateRange(r.Left.Select(this.Rename)),
                         r.Operator,
-                        ImmutableHashSet.CreateRange(r.Right.Select(R)));
+                        ImmutableHashSet.CreateRange(r.Right.Select(this.Rename)));
                 }
                 else
                 {
