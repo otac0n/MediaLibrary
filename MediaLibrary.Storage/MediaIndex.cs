@@ -34,7 +34,7 @@ namespace MediaLibrary.Storage
 
         public event EventHandler<HashInvalidatedEventArgs> HashInvalidated;
 
-        public event EventHandler<ItemAddedEventArgs<Tuple<HashPerson, Person>>> HashPersonAdded;
+        public event EventHandler<ItemAddedEventArgs<(HashPerson hash, Person person)>> HashPersonAdded;
 
         public event EventHandler<ItemRemovedEventArgs<HashPerson>> HashPersonRemoved;
 
@@ -89,7 +89,7 @@ namespace MediaLibrary.Storage
 
             await this.UpdateIndex(HashPerson.Queries.AddHashPerson, hashPerson).ConfigureAwait(false);
             this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hashPerson.Hash));
-            this.HashPersonAdded?.Invoke(this, new ItemAddedEventArgs<Tuple<HashPerson, Person>>(Tuple.Create(hashPerson, await this.GetPerson(hashPerson.PersonId).ConfigureAwait(false))));
+            this.HashPersonAdded?.Invoke(this, new ItemAddedEventArgs<(HashPerson, Person)>((hashPerson, await this.GetPerson(hashPerson.PersonId).ConfigureAwait(false))));
         }
 
         public async Task AddHashTag(HashTag hashTag)

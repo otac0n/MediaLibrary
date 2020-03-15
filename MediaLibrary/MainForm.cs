@@ -95,13 +95,28 @@ namespace MediaLibrary
         private static void UpdateListItem(ListViewItem item, SearchResult searchResult)
         {
             item.Tag = searchResult;
+            UpdateListItemPath(item, searchResult);
+            UpdateListItemPeople(item, searchResult);
+            UpdateListItemTags(item, searchResult);
+        }
+
+        private static void UpdateListItemPath(ListViewItem item, SearchResult searchResult)
+        {
             var firstPath = searchResult.Paths.FirstOrDefault();
             item.SubItems[PathColumnIndex].Text = firstPath != null ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash;
             item.SubItems[PathColumnIndex].Tag = firstPath;
-            item.SubItems[TagsColumnIndex].Text = string.Join("; ", searchResult.Tags);
-            item.SubItems[TagsColumnIndex].Tag = searchResult.Tags;
+        }
+
+        private static void UpdateListItemPeople(ListViewItem item, SearchResult searchResult)
+        {
             item.SubItems[PeopleColumnIndex].Text = string.Join("; ", searchResult.People.Select(p => p.Name));
             item.SubItems[PeopleColumnIndex].Tag = searchResult.People;
+        }
+
+        private static void UpdateListItemTags(ListViewItem item, SearchResult searchResult)
+        {
+            item.SubItems[TagsColumnIndex].Text = string.Join("; ", searchResult.Tags);
+            item.SubItems[TagsColumnIndex].Tag = searchResult.Tags;
         }
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -248,24 +263,36 @@ namespace MediaLibrary
 
         private List<SearchResult> GetVisibleSearchResults() => this.listView.Items.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
 
-        private void Index_HashPersonAdded(object sender, ItemAddedEventArgs<Tuple<HashPerson, Person>> e)
+        private void Index_HashPersonAdded(object sender, ItemAddedEventArgs<(HashPerson hash, Person person)> e)
         {
-            this.UpdateSearchResult(e.Item.Item1.Hash, r => r.With(people: r.People.Add(e.Item.Item2)));
+            this.UpdateSearchResult(
+                e.Item.hash.Hash,
+                r => r.People.Any(p => p.PersonId == e.Item.hash.PersonId) ? r : r.With(people: r.People.Add(e.Item.person)),
+                UpdateListItemPeople);
         }
 
         private void Index_HashPersonRemoved(object sender, ItemRemovedEventArgs<HashPerson> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => r.With(people: r.People.RemoveAll(p => p.PersonId == e.Item.PersonId)));
+            this.UpdateSearchResult(
+                e.Item.Hash,
+                r => r.People.Any(p => p.PersonId == e.Item.PersonId) ? r.With(people: r.People.RemoveAll(p => p.PersonId == e.Item.PersonId)) : r,
+                UpdateListItemPeople);
         }
 
         private void Index_HashTagAdded(object sender, ItemAddedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => r.With(tags: r.Tags.Add(e.Item.Tag)));
+            this.UpdateSearchResult(
+                e.Item.Hash,
+                r => r.With(tags: r.Tags.Add(e.Item.Tag)),
+                UpdateListItemTags);
         }
 
         private void Index_HashTagRemoved(object sender, ItemRemovedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => r.With(tags: r.Tags.Remove(e.Item.Tag)));
+            this.UpdateSearchResult(
+                e.Item.Hash,
+                r => r.With(tags: r.Tags.Remove(e.Item.Tag)),
+                UpdateListItemTags);
         }
 
         private void ListView_ColumnClick(object sender, ColumnClickEventArgs e)
@@ -528,7 +555,7 @@ namespace MediaLibrary
             });
         }
 
-        private void UpdateSearchResult(string hash, Func<SearchResult, SearchResult> updateSearchResult)
+        private void UpdateSearchResult(string hash, Func<SearchResult, SearchResult> updateSearchResult, Action<ListViewItem, SearchResult> updateListViewItem)
         {
             if (this.items.TryGetValue(hash, out var item))
             {
@@ -536,7 +563,8 @@ namespace MediaLibrary
                 var updated = updateSearchResult(result);
                 if (!object.ReferenceEquals(result, updated))
                 {
-                    this.InvokeIfRequired(() => UpdateListItem(item, updated));
+                    item.Tag = updated;
+                    this.InvokeIfRequired(() => updateListViewItem(item, updated));
                 }
             }
         }
