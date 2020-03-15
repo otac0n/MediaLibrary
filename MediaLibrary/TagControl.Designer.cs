@@ -43,6 +43,10 @@ namespace MediaLibrary
             this.tagName.Size = new System.Drawing.Size(28, 13);
             this.tagName.TabIndex = 0;
             this.tagName.Text = "tag1";
+            this.tagName.Click += new System.EventHandler(this.TagName_Click);
+            this.tagName.DoubleClick += new System.EventHandler(this.TagName_DoubleClick);
+            this.tagName.MouseClick += new System.Windows.Forms.MouseEventHandler(this.TagName_MouseClick);
+            this.tagName.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.TagName_MouseDoubleClick);
             // 
             // deleteButton
             // 

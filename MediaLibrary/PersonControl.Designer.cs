@@ -46,6 +46,10 @@
             this.personName.Size = new System.Drawing.Size(13, 13);
             this.personName.TabIndex = 1;
             this.personName.Text = "?";
+            this.personName.Click += new System.EventHandler(this.Person_Click);
+            this.personName.DoubleClick += new System.EventHandler(this.Person_DoubleClick);
+            this.personName.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Person_MouseClick);
+            this.personName.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.Person_MouseDoubleClick);
             // 
             // deleteButton
             // 
@@ -71,6 +75,10 @@
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
+            this.pictureBox1.Click += new System.EventHandler(this.Person_Click);
+            this.pictureBox1.DoubleClick += new System.EventHandler(this.Person_DoubleClick);
+            this.pictureBox1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Person_MouseClick);
+            this.pictureBox1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.Person_MouseDoubleClick);
             // 
             // PersonControl
             // 

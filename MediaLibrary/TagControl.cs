@@ -69,5 +69,25 @@ namespace MediaLibrary
         {
             this.DeleteClick?.Invoke(this, e);
         }
+
+        private void TagName_Click(object sender, EventArgs e)
+        {
+            this.OnClick(e);
+        }
+
+        private void TagName_DoubleClick(object sender, EventArgs e)
+        {
+            this.OnDoubleClick(e);
+        }
+
+        private void TagName_MouseClick(object sender, MouseEventArgs e)
+        {
+            this.OnMouseClick(e);
+        }
+
+        private void TagName_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            this.OnMouseDoubleClick(e);
+        }
     }
 }
