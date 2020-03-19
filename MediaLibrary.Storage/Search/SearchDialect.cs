@@ -56,7 +56,7 @@ namespace MediaLibrary.Storage.Search
                     }
                     else
                     {
-                        return $"EXISTS (SELECT 1 FROM HashPerson hp INNER JOIN Person p ON hp.PersonId = p.PersonId WHERE h.Hash = hp.Hash AND {Contains("p.Name", field.Value)})";
+                        return $"EXISTS (SELECT 1 FROM HashPerson hp INNER JOIN Names p ON hp.PersonId = p.PersonId WHERE h.Hash = hp.Hash AND {Contains("p.Name", field.Value)})";
                     }
 
                 case "type":

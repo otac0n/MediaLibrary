@@ -100,6 +100,10 @@ namespace MediaLibrary.Storage
                 ? searchResult.With(tags: searchResult.Tags.Remove(@event.Item.Tag))
                 : searchResult;
 
+        public Task<Alias> AddAlias(Alias alias) =>
+            this.QueryIndex(
+                async conn => (await conn.QueryAsync<Alias>(Alias.Queries.AddAlias, alias).ConfigureAwait(false)).Single());
+
         public async Task AddHashPerson(HashPerson hashPerson)
         {
             if (hashPerson == null)
@@ -147,8 +151,20 @@ namespace MediaLibrary.Storage
             }
         }
 
-        public Task<List<Person>> GetAllPeople() =>
+        public Task<List<Alias>> GetAliases(int personId) =>
             this.QueryIndex(async conn =>
+                (await conn.QueryAsync<Alias>(Alias.Queries.GetAliasesByPersonId, new { PersonId = personId }).ConfigureAwait(false)).ToList());
+
+        public Task<List<Alias>> GetAllAliasesForSite(string site, string name) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<Alias>(Alias.Queries.GetAliasesBySiteAndName, new { Name = name, Site = site }).ConfigureAwait(false)).ToList());
+
+        public Task<List<Alias>> GetAllAliasesForSite(string site) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<Alias>(Alias.Queries.GetAliasesBySite, new { Site = site }).ConfigureAwait(false)).ToList());
+
+        public Task<List<Person>> GetAllPeople() =>
+                    this.QueryIndex(async conn =>
                 (await conn.QueryAsync<Person>(Person.Queries.GetAllPeople).ConfigureAwait(false)).ToList());
 
         public Task<List<string>> GetAllTags() =>
@@ -194,6 +210,9 @@ namespace MediaLibrary.Storage
                 }
             }
         }
+
+        public async Task RemoveAlias(Alias alias) =>
+            await this.UpdateIndex(Alias.Queries.RemoveAlias, alias).ConfigureAwait(false);
 
         public async Task RemoveFilePath(string path) =>
             await this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path });
@@ -568,6 +587,19 @@ namespace MediaLibrary.Storage
                     Name text NOT NULL,
                     PRIMARY KEY (PersonId)
                 );
+
+                CREATE TABLE IF NOT EXISTS Alias
+                (
+                    PersonId integer NOT NULL,
+                    Name text NOT NULL,
+                    Site text NULL,
+                    FOREIGN KEY (PersonId) REFERENCES Person (PersonId) ON DELETE CASCADE
+                );
+
+                CREATE VIEW IF NOT EXISTS Names AS
+                SELECT PersonId, Name FROM Person
+                UNION ALL
+                SELECT Personid, Name FROM Alias;
 
                 CREATE TABLE IF NOT EXISTS HashPerson
                 (
