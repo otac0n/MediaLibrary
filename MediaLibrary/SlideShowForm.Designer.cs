@@ -32,11 +32,12 @@
             this.previousButton = new System.Windows.Forms.ToolStripButton();
             this.playPauseButton = new System.Windows.Forms.ToolStripButton();
             this.nextButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.shuffleButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
+            this.favoriteButton = new System.Windows.Forms.ToolStripButton();
             this.preview = new MediaLibrary.PreviewControl();
-            this.shuffleButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -49,7 +50,8 @@
             this.toolStripSeparator2,
             this.shuffleButton,
             this.toolStripSeparator1,
-            this.toolStripButton6});
+            this.toolStripButton6,
+            this.favoriteButton});
             this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
             this.toolStrip.Size = new System.Drawing.Size(800, 25);
@@ -86,6 +88,22 @@
             this.nextButton.Text = "Next";
             this.nextButton.Click += new System.EventHandler(this.NextButton_Click);
             // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            // 
+            // shuffleButton
+            // 
+            this.shuffleButton.CheckOnClick = true;
+            this.shuffleButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.shuffleButton.Image = global::MediaLibrary.Properties.Resources.button_shuffle;
+            this.shuffleButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.shuffleButton.Name = "shuffleButton";
+            this.shuffleButton.Size = new System.Drawing.Size(23, 22);
+            this.shuffleButton.Text = "Shuffle";
+            this.shuffleButton.CheckedChanged += new System.EventHandler(this.ShuffleButton_CheckedChanged);
+            // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
@@ -100,6 +118,17 @@
             this.toolStripButton6.Size = new System.Drawing.Size(23, 22);
             this.toolStripButton6.Text = "toolStripButton6";
             // 
+            // favoriteButton
+            // 
+            this.favoriteButton.CheckOnClick = true;
+            this.favoriteButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.favoriteButton.Image = global::MediaLibrary.Properties.Resources.love_it;
+            this.favoriteButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.favoriteButton.Name = "favoriteButton";
+            this.favoriteButton.Size = new System.Drawing.Size(23, 22);
+            this.favoriteButton.Text = "favoriteButton";
+            this.favoriteButton.Click += new System.EventHandler(this.FavoriteButton_Click);
+            // 
             // preview
             // 
             this.preview.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -108,22 +137,6 @@
             this.preview.PreviewItem = null;
             this.preview.Size = new System.Drawing.Size(800, 425);
             this.preview.TabIndex = 0;
-            // 
-            // shuffleButton
-            // 
-            this.shuffleButton.CheckOnClick = true;
-            this.shuffleButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.shuffleButton.Image = global::MediaLibrary.Properties.Resources.button_shuffle;
-            this.shuffleButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.shuffleButton.Name = "shuffleButton";
-            this.shuffleButton.Size = new System.Drawing.Size(23, 22);
-            this.shuffleButton.Text = "Shuffle";
-            this.shuffleButton.CheckedChanged += new System.EventHandler(this.ShuffleButton_CheckedChanged);
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
             // SlideShowForm
             // 
@@ -157,5 +170,6 @@
         private System.Windows.Forms.ToolStripButton toolStripButton6;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripButton shuffleButton;
+        private System.Windows.Forms.ToolStripButton favoriteButton;
     }
 }

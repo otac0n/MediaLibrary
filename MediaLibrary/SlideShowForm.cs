@@ -4,6 +4,7 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Windows.Forms;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
@@ -11,19 +12,74 @@ namespace MediaLibrary
     public partial class SlideShowForm : Form
     {
         private readonly MediaIndex index;
-        private PlaylistManager<SearchResult> playlistManager;
+        private readonly PlaylistManager<string> playlistManager;
+        private readonly Dictionary<string, SearchResult> searchResults;
 
         public SlideShowForm(MediaIndex index, IEnumerable<SearchResult> searchResults, bool shuffle = false, bool autoPlay = false)
         {
-            this.playlistManager = PlaylistManager.Create(searchResults);
+            this.index = index ?? throw new ArgumentNullException(nameof(index));
+            var searchResultsList = searchResults.ToList();
+            this.searchResults = searchResultsList.ToDictionary(r => r.Hash);
+            this.playlistManager = PlaylistManager.Create(searchResultsList.Select(r => r.Hash));
             this.InitializeComponent();
             this.shuffleButton.Checked = shuffle;
-            this.preview.PreviewItem = this.playlistManager.Current;
-            this.index = index;
+
+            this.UpdatePreview();
+            this.index.HashPersonAdded += this.Index_HashPersonAdded;
+            this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
+            this.index.HashTagAdded += this.Index_HashTagAdded;
+            this.index.HashTagRemoved += this.Index_HashTagRemoved;
+        }
+
+        public SearchResult Current
+        {
+            get
+            {
+                var current = this.playlistManager.Current;
+                return current != null && this.searchResults.TryGetValue(current, out var searchResult) ? searchResult : null;
+            }
         }
 
         protected override void OnClosed(EventArgs e)
         {
+            this.index.HashPersonAdded -= this.Index_HashPersonAdded;
+            this.index.HashPersonRemoved -= this.Index_HashPersonRemoved;
+            this.index.HashTagAdded -= this.Index_HashTagAdded;
+            this.index.HashTagRemoved -= this.Index_HashTagRemoved;
+        }
+
+        private async void FavoriteButton_Click(object sender, EventArgs e)
+        {
+            var hash = this.playlistManager.Current;
+            var senderButton = (ToolStripButton)sender;
+            if (senderButton.Checked)
+            {
+                await this.index.AddHashTag(new HashTag(hash, "favorite")).ConfigureAwait(false);
+            }
+            else
+            {
+                await this.index.RemoveHashTag(new HashTag(hash, "favorite")).ConfigureAwait(false);
+            }
+        }
+
+        private void Index_HashPersonAdded(object sender, ItemAddedEventArgs<(HashPerson hash, Person person)> e)
+        {
+            this.UpdateSearchResult(e.Item.hash.Hash, r => MediaIndex.UpdateSearchResult(r, e));
+        }
+
+        private void Index_HashPersonRemoved(object sender, ItemRemovedEventArgs<HashPerson> e)
+        {
+            this.UpdateSearchResult(e.Item.Hash, r => MediaIndex.UpdateSearchResult(r, e));
+        }
+
+        private void Index_HashTagAdded(object sender, ItemAddedEventArgs<HashTag> e)
+        {
+            this.UpdateSearchResult(e.Item.Hash, r => MediaIndex.UpdateSearchResult(r, e));
+        }
+
+        private void Index_HashTagRemoved(object sender, ItemRemovedEventArgs<HashTag> e)
+        {
+            this.UpdateSearchResult(e.Item.Hash, r => MediaIndex.UpdateSearchResult(r, e));
         }
 
         private void NextButton_Click(object sender, EventArgs e)
@@ -75,7 +131,25 @@ namespace MediaLibrary
 
         private void UpdatePreview()
         {
-            this.preview.PreviewItem = this.playlistManager.Current;
+            this.preview.PreviewItem = this.Current;
+            this.favoriteButton.Enabled = this.Current != null;
+            this.favoriteButton.Checked = this.Current?.Tags?.Contains("favorite") ?? false;
+        }
+
+        private void UpdateSearchResult(string hash, Func<SearchResult, SearchResult> updateSearchResult)
+        {
+            if (this.searchResults.TryGetValue(hash, out var original))
+            {
+                var result = updateSearchResult(original);
+                if (!object.ReferenceEquals(original, result))
+                {
+                    this.searchResults[hash] = result;
+                    if (hash == this.playlistManager.Current)
+                    {
+                        this.InvokeIfRequired(() => this.UpdatePreview());
+                    }
+                }
+            }
         }
     }
 }

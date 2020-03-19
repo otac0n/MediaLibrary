@@ -267,7 +267,7 @@ namespace MediaLibrary
         {
             this.UpdateSearchResult(
                 e.Item.hash.Hash,
-                r => r.People.Any(p => p.PersonId == e.Item.hash.PersonId) ? r : r.With(people: r.People.Add(e.Item.person)),
+                r => MediaIndex.UpdateSearchResult(r, e),
                 UpdateListItemPeople);
         }
 
@@ -275,7 +275,7 @@ namespace MediaLibrary
         {
             this.UpdateSearchResult(
                 e.Item.Hash,
-                r => r.People.Any(p => p.PersonId == e.Item.PersonId) ? r.With(people: r.People.RemoveAll(p => p.PersonId == e.Item.PersonId)) : r,
+                r => MediaIndex.UpdateSearchResult(r, e),
                 UpdateListItemPeople);
         }
 
@@ -283,7 +283,7 @@ namespace MediaLibrary
         {
             this.UpdateSearchResult(
                 e.Item.Hash,
-                r => r.With(tags: r.Tags.Add(e.Item.Tag)),
+                r => MediaIndex.UpdateSearchResult(r, e),
                 UpdateListItemTags);
         }
 
@@ -291,7 +291,7 @@ namespace MediaLibrary
         {
             this.UpdateSearchResult(
                 e.Item.Hash,
-                r => r.With(tags: r.Tags.Remove(e.Item.Tag)),
+                r => MediaIndex.UpdateSearchResult(r, e),
                 UpdateListItemTags);
         }
 
@@ -559,12 +559,12 @@ namespace MediaLibrary
         {
             if (this.items.TryGetValue(hash, out var item))
             {
-                var result = (SearchResult)item.Tag;
-                var updated = updateSearchResult(result);
-                if (!object.ReferenceEquals(result, updated))
+                var original = (SearchResult)item.Tag;
+                var result = updateSearchResult(original);
+                if (!object.ReferenceEquals(original, result))
                 {
-                    item.Tag = updated;
-                    this.InvokeIfRequired(() => updateListViewItem(item, updated));
+                    item.Tag = result;
+                    this.InvokeIfRequired(() => updateListViewItem(item, result));
                 }
             }
         }

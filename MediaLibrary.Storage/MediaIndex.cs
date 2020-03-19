@@ -80,6 +80,26 @@ namespace MediaLibrary.Storage
             return new HashInfo(sb.ToString(), fileSize, FileTypeRecognizer.GetType(recognizerState));
         }
 
+        public static SearchResult UpdateSearchResult(SearchResult searchResult, ItemAddedEventArgs<(HashPerson hash, Person person)> @event) =>
+            searchResult.People.Any(p => p.PersonId == @event.Item.hash.PersonId)
+                ? searchResult
+                : searchResult.With(people: searchResult.People.Add(@event.Item.person));
+
+        public static SearchResult UpdateSearchResult(SearchResult searchResult, ItemRemovedEventArgs<HashPerson> @event) =>
+            searchResult.People.Any(p => p.PersonId == @event.Item.PersonId)
+                ? searchResult.With(people: searchResult.People.RemoveAll(p => p.PersonId == @event.Item.PersonId))
+                : searchResult;
+
+        public static SearchResult UpdateSearchResult(SearchResult searchResult, ItemAddedEventArgs<HashTag> @event) =>
+            searchResult.Tags.Contains(@event.Item.Tag)
+                ? searchResult
+                : searchResult.With(tags: searchResult.Tags.Add(@event.Item.Tag));
+
+        public static SearchResult UpdateSearchResult(SearchResult searchResult, ItemRemovedEventArgs<HashTag> @event) =>
+            searchResult.Tags.Contains(@event.Item.Tag)
+                ? searchResult.With(tags: searchResult.Tags.Remove(@event.Item.Tag))
+                : searchResult;
+
         public async Task AddHashPerson(HashPerson hashPerson)
         {
             if (hashPerson == null)
