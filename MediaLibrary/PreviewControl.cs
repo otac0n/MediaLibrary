@@ -16,6 +16,7 @@ namespace MediaLibrary
         public PreviewControl()
         {
             this.InitializeComponent();
+            this.ResetMediaPlayer();
         }
 
         public event EventHandler Finished;
@@ -61,9 +62,17 @@ namespace MediaLibrary
                     {
                         this.mediaPlayer.Dock = DockStyle.None;
                         this.mediaPlayer.Dock = DockStyle.Fill;
+                        this.ResetMediaPlayer();
                     }
                 }
             }
+        }
+
+        private void ResetMediaPlayer()
+        {
+            this.mediaPlayer.uiMode = "mini";
+            this.mediaPlayer.enableContextMenu = false;
+            this.mediaPlayer.stretchToFit = true;
         }
 
         private void MediaPlayer_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)

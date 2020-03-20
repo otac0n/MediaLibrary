@@ -5,6 +5,8 @@ namespace MediaLibrary
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
     using System.Windows.Forms;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
@@ -14,6 +16,8 @@ namespace MediaLibrary
         private readonly MediaIndex index;
         private readonly PlaylistManager<string> playlistManager;
         private readonly Dictionary<string, SearchResult> searchResults;
+        private bool advanceOnNextStop;
+        private CancellationTokenSource playPauseCancel = new CancellationTokenSource();
 
         public SlideShowForm(MediaIndex index, IEnumerable<SearchResult> searchResults, bool shuffle = false, bool autoPlay = false)
         {
@@ -22,13 +26,22 @@ namespace MediaLibrary
             this.searchResults = searchResultsList.ToDictionary(r => r.Hash);
             this.playlistManager = PlaylistManager.Create(searchResultsList.Select(r => r.Hash));
             this.InitializeComponent();
-            this.shuffleButton.Checked = shuffle;
 
-            this.UpdatePreview();
             this.index.HashPersonAdded += this.Index_HashPersonAdded;
             this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
             this.index.HashTagAdded += this.Index_HashTagAdded;
             this.index.HashTagRemoved += this.Index_HashTagRemoved;
+
+            this.shuffleButton.Checked = shuffle;
+            this.playPauseButton.Checked = !autoPlay;
+            if (autoPlay)
+            {
+                this.PlayPauseButton_Click(this, new EventArgs());
+            }
+            else
+            {
+                this.playPauseCancel.Cancel();
+            }
         }
 
         public SearchResult Current
@@ -92,15 +105,67 @@ namespace MediaLibrary
 
         private void PlayPauseButton_Click(object sender, EventArgs e)
         {
+            if (this.playPauseButton.Checked)
+            {
+                this.playPauseCancel.Cancel();
+            }
+            else
+            {
+                this.Resume();
+            }
+        }
+
+        private void Preview_Finished(object sender, EventArgs e)
+        {
+            if (!this.playPauseCancel.IsCancellationRequested)
+            {
+                this.advanceOnNextStop = true;
+            }
+        }
+
+        private void Preview_PausedOrScannedBackward(object sender, EventArgs e)
+        {
+            this.advanceOnNextStop = false;
+            this.playPauseCancel.Cancel();
+            this.playPauseButton.Checked = true;
+        }
+
+        private async void Preview_Stopped(object sender, EventArgs e)
+        {
+            if (this.advanceOnNextStop)
+            {
+                this.advanceOnNextStop = false;
+                await Task.Delay(100).ConfigureAwait(true);
+                this.NextButton_Click(this.nextButton, new EventArgs());
+            }
+            else
+            {
+                this.Preview_PausedOrScannedBackward(sender, e);
+            }
         }
 
         private void PreviousButton_Click(object sender, EventArgs e)
         {
-            // TODO: Pause?
-
+            this.playPauseButton.Checked = true;
             if (this.playlistManager.Previous())
             {
                 this.UpdatePreview();
+            }
+        }
+
+        private void Resume()
+        {
+            this.playPauseCancel.Cancel();
+            this.playPauseCancel = new CancellationTokenSource();
+
+            var current = this.Current;
+            if (current == null)
+            {
+                this.NextButton_Click(this.nextButton, new EventArgs());
+            }
+            else
+            {
+                // TODO: Resume paused media or resume next if the current media is finished.
             }
         }
 
@@ -131,6 +196,7 @@ namespace MediaLibrary
 
         private void UpdatePreview()
         {
+            this.advanceOnNextStop = false;
             this.preview.PreviewItem = this.Current;
             this.favoriteButton.Enabled = this.Current != null;
             this.favoriteButton.Checked = this.Current?.Tags?.Contains("favorite") ?? false;

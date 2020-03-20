@@ -1,4 +1,4 @@
-﻿namespace MediaLibrary
+namespace MediaLibrary
 {
     partial class SlideShowForm
     {
@@ -70,8 +70,11 @@
             // 
             // playPauseButton
             // 
+            this.playPauseButton.Checked = true;
+            this.playPauseButton.CheckOnClick = true;
+            this.playPauseButton.CheckState = System.Windows.Forms.CheckState.Checked;
             this.playPauseButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.playPauseButton.Image = global::MediaLibrary.Properties.Resources.controls_play;
+            this.playPauseButton.Image = global::MediaLibrary.Properties.Resources.controls_pause;
             this.playPauseButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.playPauseButton.Name = "playPauseButton";
             this.playPauseButton.Size = new System.Drawing.Size(23, 22);
@@ -137,6 +140,10 @@
             this.preview.PreviewItem = null;
             this.preview.Size = new System.Drawing.Size(800, 425);
             this.preview.TabIndex = 0;
+            this.preview.Finished += new System.EventHandler(this.Preview_Finished);
+            this.preview.Paused += new System.EventHandler(this.Preview_PausedOrScannedBackward);
+            this.preview.ScannedBackward += new System.EventHandler(this.Preview_PausedOrScannedBackward);
+            this.preview.Stopped += new System.EventHandler(this.Preview_Stopped);
             // 
             // SlideShowForm
             // 
