@@ -2,6 +2,7 @@
 
 namespace MediaLibrary
 {
+    using System;
     using System.ComponentModel;
     using System.IO;
     using System.Linq;
@@ -16,6 +17,18 @@ namespace MediaLibrary
         {
             this.InitializeComponent();
         }
+
+        public event EventHandler Finished;
+
+        public event EventHandler Paused;
+
+        public event EventHandler Playing;
+
+        public event EventHandler ScannedBackward;
+
+        public event EventHandler ScannedForward;
+
+        public event EventHandler Stopped;
 
         [Category("Data")]
         public SearchResult PreviewItem
@@ -50,6 +63,36 @@ namespace MediaLibrary
                         this.mediaPlayer.Dock = DockStyle.Fill;
                     }
                 }
+            }
+        }
+
+        private void MediaPlayer_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
+        {
+            switch (this.mediaPlayer.playState)
+            {
+                case WMPLib.WMPPlayState.wmppsStopped:
+                    this.Stopped?.Invoke(this, new EventArgs());
+                    break;
+
+                case WMPLib.WMPPlayState.wmppsPaused:
+                    this.Paused?.Invoke(this, new EventArgs());
+                    break;
+
+                case WMPLib.WMPPlayState.wmppsPlaying:
+                    this.Playing?.Invoke(this, new EventArgs());
+                    break;
+
+                case WMPLib.WMPPlayState.wmppsScanForward:
+                    this.ScannedForward?.Invoke(this, new EventArgs());
+                    break;
+
+                case WMPLib.WMPPlayState.wmppsScanReverse:
+                    this.ScannedBackward?.Invoke(this, new EventArgs());
+                    break;
+
+                case WMPLib.WMPPlayState.wmppsMediaEnded:
+                    this.Finished?.Invoke(this, new EventArgs());
+                    break;
             }
         }
     }

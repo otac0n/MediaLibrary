@@ -1,4 +1,4 @@
-﻿namespace MediaLibrary
+namespace MediaLibrary
 {
     partial class PreviewControl
     {
@@ -55,6 +55,7 @@
             this.mediaPlayer.Size = new System.Drawing.Size(150, 150);
             this.mediaPlayer.TabIndex = 1;
             this.mediaPlayer.Visible = false;
+            this.mediaPlayer.PlayStateChange += new AxWMPLib._WMPOCXEvents_PlayStateChangeEventHandler(this.MediaPlayer_PlayStateChange);
             // 
             // PreviewControl
             // 
