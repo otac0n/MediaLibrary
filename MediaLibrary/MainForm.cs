@@ -211,6 +211,14 @@ namespace MediaLibrary
             }
         }
 
+        private void EditPeopleMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var editPeopleForm = new EditPeopleForm(this.index))
+            {
+                editPeopleForm.ShowDialog(this);
+            }
+        }
+
         private void EditToolStripMenuItem_DropDownOpened(object sender, EventArgs e)
         {
             var searchResults = this.GetSelectedSearchResults();

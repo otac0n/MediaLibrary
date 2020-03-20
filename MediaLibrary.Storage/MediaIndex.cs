@@ -198,6 +198,10 @@ namespace MediaLibrary.Storage
             }
         }
 
+        public Task<Person> GetPersonById(int personId) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<Person>(Person.Queries.GetPersonById, new { PersonId = personId }).ConfigureAwait(false)).SingleOrDefault());
+
         public async Task Initialize()
         {
             await this.UpdateIndex(Queries.CreateSchema).ConfigureAwait(false);
@@ -308,6 +312,9 @@ namespace MediaLibrary.Storage
                 return results;
             }
         }
+
+        public async Task UpdatePerson(Person person) =>
+            await this.UpdateIndex(Person.Queries.UpdatePerson, person).ConfigureAwait(false);
 
         private void AddFileSystemWatcher(string path)
         {

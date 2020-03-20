@@ -36,6 +36,7 @@ namespace MediaLibrary
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findDuplicatesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editPeopleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.favoriteMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editTagsMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -145,7 +146,8 @@ namespace MediaLibrary
             // toolsMenuItem
             // 
             this.toolsMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.findDuplicatesMenuItem});
+            this.findDuplicatesMenuItem,
+            this.editPeopleMenuItem});
             this.toolsMenuItem.Name = "toolsMenuItem";
             this.toolsMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsMenuItem.Text = "Tools";
@@ -157,6 +159,14 @@ namespace MediaLibrary
             this.findDuplicatesMenuItem.Size = new System.Drawing.Size(164, 22);
             this.findDuplicatesMenuItem.Text = "Find &Duplicates...";
             this.findDuplicatesMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
+            // 
+            // editPeopleMenuItem
+            // 
+            this.editPeopleMenuItem.Image = global::MediaLibrary.Properties.Resources.multiple_actions_edit_1;
+            this.editPeopleMenuItem.Name = "editPeopleMenuItem";
+            this.editPeopleMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.editPeopleMenuItem.Text = "Edit &People...";
+            this.editPeopleMenuItem.Click += new System.EventHandler(this.EditPeopleMenuItem_Click);
             // 
             // editToolStripMenuItem
             // 
@@ -714,14 +724,17 @@ namespace MediaLibrary
             // 
             // tagsColumns
             // 
+            this.tagsColumns.DisplayIndex = 2;
             this.tagsColumns.Text = "Tags";
             // 
             // fileSizeColumn
             // 
+            this.fileSizeColumn.DisplayIndex = 3;
             this.fileSizeColumn.Text = "File Size";
             // 
             // peopleColumn
             // 
+            this.peopleColumn.DisplayIndex = 1;
             this.peopleColumn.Text = "People";
             // 
             // preview
@@ -830,5 +843,6 @@ namespace MediaLibrary
         private System.Windows.Forms.ColumnHeader fileSizeColumn;
         private System.Windows.Forms.ColumnHeader peopleColumn;
         private PreviewControl preview;
+        private System.Windows.Forms.ToolStripMenuItem editPeopleMenuItem;
     }
 }

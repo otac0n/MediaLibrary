@@ -47,6 +47,11 @@ namespace MediaLibrary.Storage
             public static readonly string RemovePerson = @"
                 DELETE FROM Person WHERE PersonId = @PersonId
             ";
+
+            public static readonly string UpdatePerson = @"
+                UPDATE Person SET Name = @Name WHERE PersonId = @PersonId;
+                SELECT PersonId, Name FROM Person WHERE PersonId = @PersonId;
+            ";
         }
     }
 }
