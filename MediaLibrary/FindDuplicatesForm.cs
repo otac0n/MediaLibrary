@@ -34,6 +34,7 @@ namespace MediaLibrary
 
         private static string FindBestPath(IEnumerable<string> paths)
         {
+            // Get the shortest file, but only if all files are in the same folder.
             string sharedDir = null;
             string minFile = null;
             var otherPaths = new List<string>();
@@ -47,7 +48,8 @@ namespace MediaLibrary
                 }
                 else if (sharedDir == dir)
                 {
-                    if (path.Length < minFile.Length)
+                    if (path.Length < minFile.Length ||
+                        (path.Length == minFile.Length && StringComparer.OrdinalIgnoreCase.Compare(path, minFile) < 0))
                     {
                         otherPaths.Add(minFile);
                         minFile = path;
@@ -63,6 +65,7 @@ namespace MediaLibrary
                 }
             }
 
+            // For all files in the same foder,
             var minFileName = Path.GetFileName(minFile);
             foreach (var path in otherPaths)
             {
