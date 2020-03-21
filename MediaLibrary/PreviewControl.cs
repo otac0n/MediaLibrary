@@ -70,7 +70,7 @@ namespace MediaLibrary
 
         private void ResetMediaPlayer()
         {
-            this.mediaPlayer.uiMode = "mini";
+            this.mediaPlayer.uiMode = "full";
             this.mediaPlayer.enableContextMenu = false;
             this.mediaPlayer.stretchToFit = true;
         }
