@@ -157,6 +157,7 @@ namespace MediaLibrary
             this.Name = "SlideShowForm";
             this.ShowIcon = false;
             this.Text = "Slide Show";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SlideShowForm_FormClosing);
             this.Click += new System.EventHandler(this.PlayPauseButton_Click);
             this.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.SlideShowForm_PreviewKeyDown);
             this.toolStrip.ResumeLayout(false);

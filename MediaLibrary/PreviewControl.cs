@@ -40,11 +40,12 @@ namespace MediaLibrary
             {
                 this.previewItem = value;
 
-                var isImage = value == null || value.FileType == "image" || value.FileType.StartsWith("image/");
-                var url = value == null ? null : (from p in value.Paths
-                                                  where File.Exists(p)
-                                                  select p).FirstOrDefault();
-                if (isImage)
+                var url = value == null
+                    ? null
+                    : (from p in value.Paths
+                       where File.Exists(p)
+                       select p).FirstOrDefault();
+                if (value == null || IsImage(value))
                 {
                     this.mediaPlayer.URL = null;
                     this.mediaPlayer.Visible = false;
@@ -68,12 +69,8 @@ namespace MediaLibrary
             }
         }
 
-        private void ResetMediaPlayer()
-        {
-            this.mediaPlayer.uiMode = "full";
-            this.mediaPlayer.enableContextMenu = false;
-            this.mediaPlayer.stretchToFit = true;
-        }
+        public static bool IsImage(SearchResult searchResult) =>
+            searchResult != null && (searchResult.FileType == "image" || searchResult.FileType.StartsWith("image/", StringComparison.Ordinal));
 
         private void MediaPlayer_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
         {
@@ -103,6 +100,13 @@ namespace MediaLibrary
                     this.Finished?.Invoke(this, new EventArgs());
                     break;
             }
+        }
+
+        private void ResetMediaPlayer()
+        {
+            this.mediaPlayer.uiMode = "full";
+            this.mediaPlayer.enableContextMenu = false;
+            this.mediaPlayer.stretchToFit = true;
         }
     }
 }

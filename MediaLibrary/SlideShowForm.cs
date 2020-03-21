@@ -4,6 +4,7 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -26,6 +27,12 @@ namespace MediaLibrary
             this.searchResults = searchResultsList.ToDictionary(r => r.Hash);
             this.playlistManager = PlaylistManager.Create(searchResultsList.Select(r => r.Hash));
             this.InitializeComponent();
+
+            this.LastMouseMove = Stopwatch.StartNew();
+            var mouseMoveEvents = new MouseMoveEventFilter();
+            mouseMoveEvents.MouseMove += (sender, args) => this.LastMouseMove = Stopwatch.StartNew();
+            this.Shown += (sender, args) => Application.AddMessageFilter(mouseMoveEvents);
+            this.FormClosed += (sender, args) => Application.RemoveMessageFilter(mouseMoveEvents);
 
             this.index.HashPersonAdded += this.Index_HashPersonAdded;
             this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
@@ -53,12 +60,35 @@ namespace MediaLibrary
             }
         }
 
+        public TimeSpan ImagePreviewTime { get; set; } = TimeSpan.FromSeconds(8);
+
+        public Stopwatch LastMouseMove { get; private set; }
+
+        public TimeSpan MouseSettleTime { get; set; } = TimeSpan.FromSeconds(2);
+
         protected override void OnClosed(EventArgs e)
         {
             this.index.HashPersonAdded -= this.Index_HashPersonAdded;
             this.index.HashPersonRemoved -= this.Index_HashPersonRemoved;
             this.index.HashTagAdded -= this.Index_HashTagAdded;
             this.index.HashTagRemoved -= this.Index_HashTagRemoved;
+        }
+
+        private async void AdvanceOnMouseSettle(CancellationToken cancel)
+        {
+            while (!cancel.IsCancellationRequested)
+            {
+                var remainingSettleTime = this.MouseSettleTime - this.LastMouseMove.Elapsed;
+                if (remainingSettleTime <= TimeSpan.Zero)
+                {
+                    await this.Next().ConfigureAwait(true);
+                    return;
+                }
+                else
+                {
+                    await Task.Delay(remainingSettleTime).ConfigureAwait(true);
+                }
+            }
         }
 
         private async void FavoriteButton_Click(object sender, EventArgs e)
@@ -95,12 +125,38 @@ namespace MediaLibrary
             this.UpdateSearchResult(e.Item.Hash, r => MediaIndex.UpdateSearchResult(r, e));
         }
 
-        private void NextButton_Click(object sender, EventArgs e)
+        private async Task Next()
         {
             if (this.playlistManager.Next())
             {
+                var oldCancel = this.playPauseCancel;
+                var newCancel = oldCancel;
+                if (!oldCancel.IsCancellationRequested)
+                {
+                    newCancel = new CancellationTokenSource();
+                    oldCancel.Cancel();
+                    this.playPauseCancel = newCancel;
+                }
+
                 this.UpdatePreview();
+
+                if (!newCancel.IsCancellationRequested && PreviewControl.IsImage(this.Current))
+                {
+                    try
+                    {
+                        await Task.Delay(this.ImagePreviewTime, newCancel.Token).ConfigureAwait(true);
+                        this.AdvanceOnMouseSettle(newCancel.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
+                }
             }
+        }
+
+        private async void NextButton_Click(object sender, EventArgs e)
+        {
+            await this.Next().ConfigureAwait(false);
         }
 
         private void PlayPauseButton_Click(object sender, EventArgs e)
@@ -135,8 +191,15 @@ namespace MediaLibrary
             if (this.advanceOnNextStop)
             {
                 this.advanceOnNextStop = false;
-                await Task.Delay(100).ConfigureAwait(true);
-                this.NextButton_Click(this.nextButton, new EventArgs());
+                var cancel = this.playPauseCancel.Token;
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(100), cancel).ConfigureAwait(true);
+                    this.AdvanceOnMouseSettle(cancel);
+                }
+                catch (OperationCanceledException)
+                {
+                }
             }
             else
             {
@@ -153,25 +216,32 @@ namespace MediaLibrary
             }
         }
 
-        private void Resume()
+        private async void Resume()
         {
-            this.playPauseCancel.Cancel();
-            this.playPauseCancel = new CancellationTokenSource();
+            if (this.playPauseCancel.IsCancellationRequested)
+            {
+                this.playPauseCancel = new CancellationTokenSource();
+            }
 
             var current = this.Current;
-            if (current == null)
+            if (current != null && !PreviewControl.IsImage(current) && false /* TODO: Current media is assumed to be finished. */)
             {
-                this.NextButton_Click(this.nextButton, new EventArgs());
+                // TODO: Resume current media. Until then, user is expected to resume media or click next themselves.
             }
             else
             {
-                // TODO: Resume paused media or resume next if the current media is finished.
+                await this.Next().ConfigureAwait(true);
             }
         }
 
         private void ShuffleButton_CheckedChanged(object sender, EventArgs e)
         {
             this.playlistManager.Shuffle = this.shuffleButton.Checked;
+        }
+
+        private void SlideShowForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            this.playPauseCancel.Cancel();
         }
 
         private void SlideShowForm_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
@@ -215,6 +285,24 @@ namespace MediaLibrary
                         this.InvokeIfRequired(() => this.UpdatePreview());
                     }
                 }
+            }
+        }
+
+        public class MouseMoveEventFilter : IMessageFilter
+        {
+            private const int WM_MOUSEMOVE = 0x0200;
+            private const int WM_NCMOUSEMOVE = 0x00a0;
+
+            public event MouseEventHandler MouseMove;
+
+            public bool PreFilterMessage(ref Message m)
+            {
+                if (m.Msg == WM_MOUSEMOVE || m.Msg == WM_NCMOUSEMOVE)
+                {
+                    this.MouseMove?.Invoke(this, new MouseEventArgs(MouseButtons.None, 0, 0, 0, 0));
+                }
+
+                return false;
             }
         }
     }
