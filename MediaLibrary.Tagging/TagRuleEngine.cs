@@ -160,6 +160,12 @@ namespace MediaLibrary.Tagging
                 suggestedTags);
         }
 
+        public ImmutableHashSet<string> GetTagAncestors(string tag) =>
+            this.specializationParentMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
+
+        public ImmutableHashSet<string> GetTagDescendants(string tag) =>
+            this.specializationChildMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
+
         private static void AddParentToChildren(string parent, string child, Dictionary<string, ImmutableHashSet<string>> parentMap, Dictionary<string, ImmutableHashSet<string>> childMap)
         {
             if (!parentMap.TryGetValue(child, out var parents))
