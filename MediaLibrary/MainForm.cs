@@ -18,10 +18,11 @@ namespace MediaLibrary
 
     public partial class MainForm : Form
     {
-        private const int PathColumnIndex = 0;
-        private const int PeopleColumnIndex = 3;
-        private const int SizeColumnIndex = 2;
-        private const int TagsColumnIndex = 1;
+        private const int FileSizeColumnIndex = 4;
+        private const int NameColumnIndex = 0;
+        private const int PathColumnIndex = 1;
+        private const int PeopleColumnIndex = 2;
+        private const int TagsColumnIndex = 3;
 
         private readonly MediaIndex index;
         private readonly Dictionary<string, ListViewItem> items = new Dictionary<string, ListViewItem>();
@@ -36,14 +37,17 @@ namespace MediaLibrary
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.InitializeComponent();
+            this.nameColumn.Name = "Name";
+            this.pathColumn.Name = "Path";
+            this.peopleColumn.Name = "People";
+            this.tagsColumn.Name = "Tags";
+            this.fileSizeColumn.Name = "FileSize";
+            this.listView.ListViewItemSorter = this.sorter = new MainFormListSorter();
             this.index.HashTagAdded += this.Index_HashTagAdded;
             this.index.HashTagRemoved += this.Index_HashTagRemoved;
             this.index.HashPersonAdded += this.Index_HashPersonAdded;
             this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
-            this.listView.ListViewItemSorter = this.sorter = new MainFormListSorter
-            {
-                SortColumn = PathColumnIndex,
-            };
+            this.ApplySettings();
             this.TrackTaskProgress(async progress =>
             {
                 await this.index.Initialize().ConfigureAwait(false);
@@ -103,8 +107,10 @@ namespace MediaLibrary
         private static void UpdateListItemPath(ListViewItem item, SearchResult searchResult)
         {
             var firstPath = searchResult.Paths.FirstOrDefault();
-            item.SubItems[PathColumnIndex].Text = firstPath != null ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash;
+            item.SubItems[PathColumnIndex].Text = firstPath != null ? Path.GetDirectoryName(firstPath) : string.Empty;
             item.SubItems[PathColumnIndex].Tag = firstPath;
+            item.SubItems[NameColumnIndex].Text = firstPath != null ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash;
+            item.SubItems[NameColumnIndex].Tag = firstPath;
         }
 
         private static void UpdateListItemPeople(ListViewItem item, SearchResult searchResult)
@@ -167,15 +173,85 @@ namespace MediaLibrary
             }
         }
 
+        private void ApplySettings()
+        {
+            var settings = Properties.Settings.Default;
+            void Save()
+            {
+                // TODO: Throttle.
+                settings.Save();
+            }
+
+            this.showPreviewMenuItem.Checked = settings.ShowPreview;
+            this.showPreviewMenuItem.CheckedChanged += (sender, args) =>
+            {
+                settings.ShowPreview = this.showPreviewMenuItem.Checked;
+                Save();
+            };
+
+            var columnLookup = this.listView.Columns.Cast<ColumnHeader>().ToDictionary(c => c.Name);
+            var columnsDesc = settings.Columns.Split(",; ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+
+            if (columnLookup.TryGetValue(settings.SortColumn, out var sortColumnHeader))
+            {
+                this.sorter.SortColumn = sortColumnHeader.Index;
+                this.sorter.Descending = settings.SortDescending;
+            }
+
+            this.listView.BeginUpdate();
+            var displayIndex = 0;
+            foreach (var desc in columnsDesc)
+            {
+                var parts = desc.Split(new[] { ':' }, 2);
+                if (columnLookup.TryGetValue(parts[0], out var columnHeader))
+                {
+                    var width = parts.Length > 1 && int.TryParse(parts[1], out var widthVal) && widthVal > 0
+                        ? widthVal
+                        : default(int?);
+
+                    columnHeader.DisplayIndex = displayIndex++;
+                    if (width != null)
+                    {
+                        columnHeader.Width = width.Value;
+                        this.columnsAutoSized = true;
+                    }
+                }
+            }
+            this.listView.EndUpdate();
+
+            void ColumnsChanged(IEnumerable<ColumnHeader> headers)
+            {
+                settings.Columns = string.Join(",", headers.Select(h => h.Name + (this.columnsAutoSized ? $":{h.Width}" : string.Empty)));
+                Save();
+            }
+
+            var columnHeadersInOrder = this.listView.Columns.Cast<ColumnHeader>().OrderBy(c => c.DisplayIndex);
+            this.listView.ColumnWidthChanged += (sender, args) => ColumnsChanged(columnHeadersInOrder);
+            this.listView.ColumnReordered += (sender, args) =>
+            {
+                var list = columnHeadersInOrder.ToList();
+                var item = list[args.OldDisplayIndex];
+                list.RemoveAt(args.OldDisplayIndex);
+                list.Insert(args.NewDisplayIndex, item);
+                ColumnsChanged(list);
+            };
+        }
+
         private ListViewItem CreateListItem(SearchResult searchResult)
         {
             var firstPath = searchResult.Paths.FirstOrDefault();
 
-            var columns = new ListViewItem.ListViewSubItem[4];
+            var columns = new ListViewItem.ListViewSubItem[5];
+
+            columns[NameColumnIndex] = new ListViewItem.ListViewSubItem
+            {
+                Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash,
+                Tag = firstPath,
+            };
 
             columns[PathColumnIndex] = new ListViewItem.ListViewSubItem
             {
-                Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash,
+                Text = searchResult.Paths.Count > 0 ? Path.GetDirectoryName(firstPath) : string.Empty,
                 Tag = firstPath,
             };
 
@@ -184,7 +260,7 @@ namespace MediaLibrary
                 Text = string.Join("; ", searchResult.Tags),
                 Tag = searchResult.Tags,
             };
-            columns[SizeColumnIndex] = new ListViewItem.ListViewSubItem
+            columns[FileSizeColumnIndex] = new ListViewItem.ListViewSubItem
             {
                 Text = ByteSize.FromBytes(searchResult.FileSize).ToString(),
                 Tag = searchResult.FileSize,
@@ -316,6 +392,7 @@ namespace MediaLibrary
                 this.sorter.Descending = !this.sorter.Descending;
             }
 
+            // TODO: Raise sort changed event to notify settings to update.
             this.listView.Sort();
         }
 
@@ -605,16 +682,20 @@ namespace MediaLibrary
                 int value;
                 switch (this.SortColumn)
                 {
+                    case NameColumnIndex:
+                        value = StringComparer.CurrentCultureIgnoreCase.Compare(a.SubItems[NameColumnIndex].Text, b.SubItems[NameColumnIndex].Text);
+                        break;
+
                     case PathColumnIndex:
-                        value = PathComparer.Instance.Compare((string)a.SubItems[PathColumnIndex].Tag, (string)b.SubItems[PathColumnIndex].Tag);
+                        value = PathComparer.Instance.Compare((string)a.SubItems[NameColumnIndex].Tag, (string)b.SubItems[NameColumnIndex].Tag);
                         break;
 
                     case TagsColumnIndex:
                         value = ((ImmutableHashSet<string>)a.SubItems[TagsColumnIndex].Tag).Count.CompareTo(((ImmutableHashSet<string>)b.SubItems[TagsColumnIndex].Tag).Count);
                         break;
 
-                    case SizeColumnIndex:
-                        value = ((long)a.SubItems[SizeColumnIndex].Tag).CompareTo((long)b.SubItems[SizeColumnIndex].Tag);
+                    case FileSizeColumnIndex:
+                        value = ((long)a.SubItems[FileSizeColumnIndex].Tag).CompareTo((long)b.SubItems[FileSizeColumnIndex].Tag);
                         break;
 
                     case PeopleColumnIndex:

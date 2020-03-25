@@ -90,10 +90,11 @@ namespace MediaLibrary
             this.addPeopleContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.listView = new System.Windows.Forms.ListView();
+            this.pathColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.tagsColumns = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.fileSizeColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.peopleColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.tagsColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.fileSizeColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.preview = new MediaLibrary.PreviewControl();
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -698,9 +699,10 @@ namespace MediaLibrary
             this.listView.AllowColumnReorder = true;
             this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.nameColumn,
-            this.tagsColumns,
-            this.fileSizeColumn,
-            this.peopleColumn});
+            this.pathColumn,
+            this.peopleColumn,
+            this.tagsColumn,
+            this.fileSizeColumn});
             this.listView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listView.FullRowSelect = true;
             this.listView.HideSelection = false;
@@ -718,24 +720,25 @@ namespace MediaLibrary
             this.listView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ListView_MouseClick);
             this.listView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListView_DoubleClick);
             // 
+            // pathColumn
+            // 
+            this.pathColumn.Text = "Path";
+            // 
             // nameColumn
             // 
             this.nameColumn.Text = "Name";
             // 
-            // tagsColumns
+            // peopleColumn
             // 
-            this.tagsColumns.DisplayIndex = 2;
-            this.tagsColumns.Text = "Tags";
+            this.peopleColumn.Text = "People";
+            // 
+            // tagsColumn
+            // 
+            this.tagsColumn.Text = "Tags";
             // 
             // fileSizeColumn
             // 
-            this.fileSizeColumn.DisplayIndex = 3;
             this.fileSizeColumn.Text = "File Size";
-            // 
-            // peopleColumn
-            // 
-            this.peopleColumn.DisplayIndex = 1;
-            this.peopleColumn.Text = "People";
             // 
             // preview
             // 
@@ -839,10 +842,11 @@ namespace MediaLibrary
         private System.Windows.Forms.SplitContainer splitContainer;
         private System.Windows.Forms.ListView listView;
         private System.Windows.Forms.ColumnHeader nameColumn;
-        private System.Windows.Forms.ColumnHeader tagsColumns;
+        private System.Windows.Forms.ColumnHeader tagsColumn;
         private System.Windows.Forms.ColumnHeader fileSizeColumn;
         private System.Windows.Forms.ColumnHeader peopleColumn;
         private PreviewControl preview;
         private System.Windows.Forms.ToolStripMenuItem editPeopleMenuItem;
+        private System.Windows.Forms.ColumnHeader pathColumn;
     }
 }
