@@ -17,6 +17,7 @@ namespace MediaLibrary.Storage
     using System.Threading.Tasks;
     using Dapper;
     using MediaLibrary.Storage.Search;
+    using MediaLibrary.Tagging;
     using NeoSmart.AsyncLock;
 
     public class MediaIndex : IDisposable
@@ -24,12 +25,14 @@ namespace MediaLibrary.Storage
         public static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
 
         private readonly string indexPath;
+        private readonly TagRulesGrammar tagRuleGrammar;
         private AsyncLock dbLock = new AsyncLock();
         private Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
 
         public MediaIndex(string indexPath)
         {
             this.indexPath = indexPath;
+            this.tagRuleGrammar = new TagRulesGrammar();
         }
 
         public event EventHandler<HashInvalidatedEventArgs> HashInvalidated;
@@ -41,6 +44,8 @@ namespace MediaLibrary.Storage
         public event EventHandler<ItemAddedEventArgs<HashTag>> HashTagAdded;
 
         public event EventHandler<ItemRemovedEventArgs<HashTag>> HashTagRemoved;
+
+        public TagRuleEngine TagEngine { get; private set; }
 
         public static async Task<HashInfo> HashFileAsync(string path)
         {
@@ -164,8 +169,12 @@ namespace MediaLibrary.Storage
                 (await conn.QueryAsync<Alias>(Alias.Queries.GetAliasesBySite, new { Site = site }).ConfigureAwait(false)).ToList());
 
         public Task<List<Person>> GetAllPeople() =>
-                    this.QueryIndex(async conn =>
+            this.QueryIndex(async conn =>
                 (await conn.QueryAsync<Person>(Person.Queries.GetAllPeople).ConfigureAwait(false)).ToList());
+
+        public Task<string> GetAllTagRules() =>
+            this.QueryIndex(async conn =>
+                string.Join(Environment.NewLine, await conn.QueryAsync<string>(Queries.GetAllTagRules).ConfigureAwait(false)));
 
         public Task<List<string>> GetAllTags() =>
             this.QueryIndex(async conn =>
@@ -205,6 +214,7 @@ namespace MediaLibrary.Storage
         public async Task Initialize()
         {
             await this.UpdateIndex(Queries.CreateSchema).ConfigureAwait(false);
+            this.TagEngine = new TagRuleEngine(this.tagRuleGrammar.Parse(await this.GetAllTagRules().ConfigureAwait(false)));
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
             lock (this.fileSystemWatchers)
             {
@@ -219,7 +229,7 @@ namespace MediaLibrary.Storage
             await this.UpdateIndex(Alias.Queries.RemoveAlias, alias).ConfigureAwait(false);
 
         public async Task RemoveFilePath(string path) =>
-            await this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path });
+            await this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path }).ConfigureAwait(false);
 
         public async Task RemoveHashPerson(HashPerson hashPerson)
         {
@@ -315,6 +325,13 @@ namespace MediaLibrary.Storage
 
         public async Task UpdatePerson(Person person) =>
             await this.UpdateIndex(Person.Queries.UpdatePerson, person).ConfigureAwait(false);
+
+        public async Task UpdateTagRules(string rules)
+        {
+            var updatedEngine = new TagRuleEngine(this.tagRuleGrammar.Parse(rules));
+            await this.UpdateIndex(Queries.UdateTagRules, new { Rules = rules }).ConfigureAwait(false);
+            this.TagEngine = updatedEngine;
+        }
 
         private void AddFileSystemWatcher(string path)
         {
@@ -588,6 +605,11 @@ namespace MediaLibrary.Storage
 
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_HashTag_Hash_Tag ON HashTag (Hash, Tag);
 
+                CREATE TABLE IF NOT EXISTS TagRules
+                (
+                    Rules text NOT NULL
+                );
+
                 CREATE TABLE IF NOT EXISTS Person
                 (
                     PersonId integer NOT NULL,
@@ -618,6 +640,12 @@ namespace MediaLibrary.Storage
                 );
             ";
 
+            public static readonly string GetAllTagRules = @"
+                SELECT
+                    Rules
+                FROM TagRules
+            ";
+
             public static readonly string GetIndexedPaths = @"
                 SELECT
                     Path
@@ -626,6 +654,11 @@ namespace MediaLibrary.Storage
 
             public static readonly string RemoveIndexedPath = @"
                 DELETE FROM IndexedPaths WHERE Path = @Path
+            ";
+
+            public static readonly string UdateTagRules = @"
+                DELETE FROM TagRules;
+                INSERT INTO TagRules (Rules) VALUES (@Rules);
             ";
         }
     }

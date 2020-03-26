@@ -31,13 +31,14 @@ namespace MediaLibrary
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.mainMenu = new System.Windows.Forms.MenuStrip();
-            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.addIndexedFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.optionsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addIndexedFolderMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.findDuplicatesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.editPeopleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.findDuplicatesMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editPeopleMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editTagRulesMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.favoriteMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editTagsMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addPeopleMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -90,8 +91,8 @@ namespace MediaLibrary
             this.addPeopleContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.listView = new System.Windows.Forms.ListView();
-            this.pathColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.pathColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.peopleColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tagsColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.fileSizeColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -109,9 +110,9 @@ namespace MediaLibrary
             // mainMenu
             // 
             this.mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.optionsToolStripMenuItem,
+            this.optionsMenuItem,
             this.toolsMenuItem,
-            this.editToolStripMenuItem});
+            this.editMenuItem});
             this.mainMenu.Location = new System.Drawing.Point(0, 0);
             this.mainMenu.Name = "mainMenu";
             this.mainMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
@@ -119,66 +120,75 @@ namespace MediaLibrary
             this.mainMenu.TabIndex = 0;
             this.mainMenu.Text = "menuStrip";
             // 
-            // optionsToolStripMenuItem
+            // optionsMenuItem
             // 
-            this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.addIndexedFolderToolStripMenuItem,
-            this.aboutToolStripMenuItem});
-            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
-            this.optionsToolStripMenuItem.Text = "&Options";
+            this.optionsMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addIndexedFolderMainMenuItem,
+            this.aboutMainMenuItem});
+            this.optionsMenuItem.Name = "optionsMenuItem";
+            this.optionsMenuItem.Size = new System.Drawing.Size(61, 20);
+            this.optionsMenuItem.Text = "&Options";
             // 
-            // addIndexedFolderToolStripMenuItem
+            // addIndexedFolderMainMenuItem
             // 
-            this.addIndexedFolderToolStripMenuItem.Image = global::MediaLibrary.Properties.Resources.folder_add;
-            this.addIndexedFolderToolStripMenuItem.Name = "addIndexedFolderToolStripMenuItem";
-            this.addIndexedFolderToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
-            this.addIndexedFolderToolStripMenuItem.Text = "Add &Indexed Folder...";
-            this.addIndexedFolderToolStripMenuItem.Click += new System.EventHandler(this.AddIndexedFolderToolStripMenuItem_Click);
+            this.addIndexedFolderMainMenuItem.Image = global::MediaLibrary.Properties.Resources.folder_add;
+            this.addIndexedFolderMainMenuItem.Name = "addIndexedFolderMainMenuItem";
+            this.addIndexedFolderMainMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.addIndexedFolderMainMenuItem.Text = "Add &Indexed Folder...";
+            this.addIndexedFolderMainMenuItem.Click += new System.EventHandler(this.AddIndexedFolderToolStripMenuItem_Click);
             // 
-            // aboutToolStripMenuItem
+            // aboutMainMenuItem
             // 
-            this.aboutToolStripMenuItem.Image = global::MediaLibrary.Properties.Resources.information_circle;
-            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
-            this.aboutToolStripMenuItem.Text = "Ab&out...";
-            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
+            this.aboutMainMenuItem.Image = global::MediaLibrary.Properties.Resources.information_circle;
+            this.aboutMainMenuItem.Name = "aboutMainMenuItem";
+            this.aboutMainMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.aboutMainMenuItem.Text = "Ab&out...";
+            this.aboutMainMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
             // 
             // toolsMenuItem
             // 
             this.toolsMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.findDuplicatesMenuItem,
-            this.editPeopleMenuItem});
+            this.findDuplicatesMainMenuItem,
+            this.editPeopleMainMenuItem,
+            this.editTagRulesMainMenuItem});
             this.toolsMenuItem.Name = "toolsMenuItem";
             this.toolsMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsMenuItem.Text = "Tools";
             // 
-            // findDuplicatesMenuItem
+            // findDuplicatesMainMenuItem
             // 
-            this.findDuplicatesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_stack;
-            this.findDuplicatesMenuItem.Name = "findDuplicatesMenuItem";
-            this.findDuplicatesMenuItem.Size = new System.Drawing.Size(164, 22);
-            this.findDuplicatesMenuItem.Text = "Find &Duplicates...";
-            this.findDuplicatesMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
+            this.findDuplicatesMainMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_stack;
+            this.findDuplicatesMainMenuItem.Name = "findDuplicatesMainMenuItem";
+            this.findDuplicatesMainMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.findDuplicatesMainMenuItem.Text = "Find &Duplicates...";
+            this.findDuplicatesMainMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
             // 
-            // editPeopleMenuItem
+            // editPeopleMainMenuItem
             // 
-            this.editPeopleMenuItem.Image = global::MediaLibrary.Properties.Resources.multiple_actions_edit_1;
-            this.editPeopleMenuItem.Name = "editPeopleMenuItem";
-            this.editPeopleMenuItem.Size = new System.Drawing.Size(164, 22);
-            this.editPeopleMenuItem.Text = "Edit &People...";
-            this.editPeopleMenuItem.Click += new System.EventHandler(this.EditPeopleMenuItem_Click);
+            this.editPeopleMainMenuItem.Image = global::MediaLibrary.Properties.Resources.multiple_actions_edit_1;
+            this.editPeopleMainMenuItem.Name = "editPeopleMainMenuItem";
+            this.editPeopleMainMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editPeopleMainMenuItem.Text = "Edit &People...";
+            this.editPeopleMainMenuItem.Click += new System.EventHandler(this.EditPeopleMenuItem_Click);
             // 
-            // editToolStripMenuItem
+            // editTagRulesMainMenuItem
             // 
-            this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.editTagRulesMainMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_settings;
+            this.editTagRulesMainMenuItem.Name = "editTagRulesMainMenuItem";
+            this.editTagRulesMainMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editTagRulesMainMenuItem.Text = "Edit &Tag Rules...";
+            this.editTagRulesMainMenuItem.Click += new System.EventHandler(this.EditTagRulesMenuItem_Click);
+            // 
+            // editMenuItem
+            // 
+            this.editMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.favoriteMainMenuItem,
             this.editTagsMainMenuItem,
             this.addPeopleMainMenuItem});
-            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
-            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
-            this.editToolStripMenuItem.Text = "&Edit";
-            this.editToolStripMenuItem.DropDownOpened += new System.EventHandler(this.EditToolStripMenuItem_DropDownOpened);
+            this.editMenuItem.Name = "editMenuItem";
+            this.editMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.editMenuItem.Text = "&Edit";
+            this.editMenuItem.DropDownOpened += new System.EventHandler(this.EditToolStripMenuItem_DropDownOpened);
             // 
             // favoriteMainMenuItem
             // 
@@ -720,13 +730,13 @@ namespace MediaLibrary
             this.listView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ListView_MouseClick);
             this.listView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListView_DoubleClick);
             // 
-            // pathColumn
-            // 
-            this.pathColumn.Text = "Path";
-            // 
             // nameColumn
             // 
             this.nameColumn.Text = "Name";
+            // 
+            // pathColumn
+            // 
+            this.pathColumn.Text = "Path";
             // 
             // peopleColumn
             // 
@@ -783,8 +793,8 @@ namespace MediaLibrary
         #endregion
 
         private System.Windows.Forms.MenuStrip mainMenu;
-        private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem addIndexedFolderToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem optionsMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addIndexedFolderMainMenuItem;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripProgressBar mainProgressBar;
         private System.Windows.Forms.ToolStrip toolStrip;
@@ -795,7 +805,7 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripButton homeButton;
         private System.Windows.Forms.ToolStripTextBox searchBox;
-        private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem aboutMainMenuItem;
         private System.Windows.Forms.ImageList fileTypeImages;
         private System.Windows.Forms.ToolStripSplitButton favoriteFilesDropDown;
         private System.Windows.Forms.ToolStripMenuItem favoriteFilesMenuItem;
@@ -831,11 +841,11 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem favoriteContextMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editTagsContextMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem findDuplicatesMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem findDuplicatesMainMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addPeopleContextMenuItem;
         private System.Windows.Forms.ToolStripMenuItem showPreviewMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator8;
-        private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editMenuItem;
         private System.Windows.Forms.ToolStripMenuItem favoriteMainMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editTagsMainMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addPeopleMainMenuItem;
@@ -846,7 +856,8 @@ namespace MediaLibrary
         private System.Windows.Forms.ColumnHeader fileSizeColumn;
         private System.Windows.Forms.ColumnHeader peopleColumn;
         private PreviewControl preview;
-        private System.Windows.Forms.ToolStripMenuItem editPeopleMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editPeopleMainMenuItem;
         private System.Windows.Forms.ColumnHeader pathColumn;
+        private System.Windows.Forms.ToolStripMenuItem editTagRulesMainMenuItem;
     }
 }

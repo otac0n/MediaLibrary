@@ -22,6 +22,9 @@
     <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MediaLibrary.Tagging\MediaLibrary.Tagging.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <PegGrammar Include="Search\SearchGrammar.peg" />
     <AdditionalFiles Include="MediaLibrary.Storage.ruleset" />
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />

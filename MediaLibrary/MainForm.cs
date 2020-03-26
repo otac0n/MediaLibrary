@@ -295,6 +295,14 @@ namespace MediaLibrary
             }
         }
 
+        private void EditTagRulesMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var editTagRulesForm = new EditTagRulesForm(this.index))
+            {
+                editTagRulesForm.ShowDialog(this);
+            }
+        }
+
         private void EditToolStripMenuItem_DropDownOpened(object sender, EventArgs e)
         {
             var searchResults = this.GetSelectedSearchResults();
