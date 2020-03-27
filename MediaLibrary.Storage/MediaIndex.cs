@@ -626,9 +626,11 @@ namespace MediaLibrary.Storage
                 );
 
                 CREATE VIEW IF NOT EXISTS Names AS
-                SELECT PersonId, Name FROM Person
-                UNION ALL
-                SELECT Personid, Name FROM Alias;
+                SELECT DISTINCT PersonId, Name FROM (
+                    SELECT PersonId, Name FROM Person
+                    UNION ALL
+                    SELECT Personid, Name FROM Alias
+                );
 
                 CREATE TABLE IF NOT EXISTS HashPerson
                 (
