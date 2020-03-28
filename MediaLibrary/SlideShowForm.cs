@@ -107,22 +107,22 @@ namespace MediaLibrary
 
         private void Index_HashPersonAdded(object sender, ItemAddedEventArgs<(HashPerson hash, Person person)> e)
         {
-            this.UpdateSearchResult(e.Item.hash.Hash, r => MediaIndex.UpdateSearchResult(r, e));
+            this.UpdateSearchResult(e.Item.hash.Hash);
         }
 
         private void Index_HashPersonRemoved(object sender, ItemRemovedEventArgs<HashPerson> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => MediaIndex.UpdateSearchResult(r, e));
+            this.UpdateSearchResult(e.Item.Hash);
         }
 
         private void Index_HashTagAdded(object sender, ItemAddedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => MediaIndex.UpdateSearchResult(r, e));
+            this.UpdateSearchResult(e.Item.Hash);
         }
 
         private void Index_HashTagRemoved(object sender, ItemRemovedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, r => MediaIndex.UpdateSearchResult(r, e));
+            this.UpdateSearchResult(e.Item.Hash);
         }
 
         private async Task Next()
@@ -272,19 +272,11 @@ namespace MediaLibrary
             this.favoriteButton.Checked = this.Current?.Tags?.Contains("favorite") ?? false;
         }
 
-        private void UpdateSearchResult(string hash, Func<SearchResult, SearchResult> updateSearchResult)
+        private void UpdateSearchResult(string hash)
         {
-            if (this.searchResults.TryGetValue(hash, out var original))
+            if (hash == this.playlistManager.Current)
             {
-                var result = updateSearchResult(original);
-                if (!object.ReferenceEquals(original, result))
-                {
-                    this.searchResults[hash] = result;
-                    if (hash == this.playlistManager.Current)
-                    {
-                        this.InvokeIfRequired(() => this.UpdatePreview());
-                    }
-                }
+                this.InvokeIfRequired(() => this.UpdatePreview());
             }
         }
 

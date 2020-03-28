@@ -357,34 +357,22 @@ namespace MediaLibrary
 
         private void Index_HashPersonAdded(object sender, ItemAddedEventArgs<(HashPerson hash, Person person)> e)
         {
-            this.UpdateSearchResult(
-                e.Item.hash.Hash,
-                r => MediaIndex.UpdateSearchResult(r, e),
-                UpdateListItemPeople);
+            this.UpdateSearchResult(e.Item.hash.Hash, UpdateListItemPeople);
         }
 
         private void Index_HashPersonRemoved(object sender, ItemRemovedEventArgs<HashPerson> e)
         {
-            this.UpdateSearchResult(
-                e.Item.Hash,
-                r => MediaIndex.UpdateSearchResult(r, e),
-                UpdateListItemPeople);
+            this.UpdateSearchResult(e.Item.Hash, UpdateListItemPeople);
         }
 
         private void Index_HashTagAdded(object sender, ItemAddedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(
-                e.Item.Hash,
-                r => MediaIndex.UpdateSearchResult(r, e),
-                UpdateListItemTags);
+            this.UpdateSearchResult(e.Item.Hash, UpdateListItemTags);
         }
 
         private void Index_HashTagRemoved(object sender, ItemRemovedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(
-                e.Item.Hash,
-                r => MediaIndex.UpdateSearchResult(r, e),
-                UpdateListItemTags);
+            this.UpdateSearchResult(e.Item.Hash, UpdateListItemTags);
         }
 
         private void ListView_ColumnClick(object sender, ColumnClickEventArgs e)
@@ -648,17 +636,12 @@ namespace MediaLibrary
             });
         }
 
-        private void UpdateSearchResult(string hash, Func<SearchResult, SearchResult> updateSearchResult, Action<ListViewItem, SearchResult> updateListViewItem)
+        private void UpdateSearchResult(string hash, Action<ListViewItem, SearchResult> updateListViewItem)
         {
             if (this.items.TryGetValue(hash, out var item))
             {
-                var original = (SearchResult)item.Tag;
-                var result = updateSearchResult(original);
-                if (!object.ReferenceEquals(original, result))
-                {
-                    item.Tag = result;
-                    this.InvokeIfRequired(() => updateListViewItem(item, result));
-                }
+                var searchResult = (SearchResult)item.Tag;
+                this.InvokeIfRequired(() => updateListViewItem(item, searchResult));
             }
         }
 
@@ -707,7 +690,7 @@ namespace MediaLibrary
                         break;
 
                     case PeopleColumnIndex:
-                        value = ((ImmutableList<Person>)a.SubItems[PeopleColumnIndex].Tag).Count.CompareTo(((ImmutableList<Person>)b.SubItems[PeopleColumnIndex].Tag).Count);
+                        value = ((ImmutableHashSet<Person>)a.SubItems[PeopleColumnIndex].Tag).Count.CompareTo(((ImmutableHashSet<Person>)b.SubItems[PeopleColumnIndex].Tag).Count);
                         break;
 
                     default:

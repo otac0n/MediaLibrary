@@ -25,6 +25,8 @@ namespace MediaLibrary.Storage
         public static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
 
         private readonly string indexPath;
+        private readonly WeakReferenceCache<long, Person> personCache = new WeakReferenceCache<long, Person>();
+        private readonly WeakReferenceCache<string, SearchResult> searchResultsCache = new WeakReferenceCache<string, SearchResult>();
         private readonly TagRulesGrammar tagRuleGrammar;
         private AsyncLock dbLock = new AsyncLock();
         private Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
@@ -85,26 +87,6 @@ namespace MediaLibrary.Storage
             return new HashInfo(sb.ToString(), fileSize, FileTypeRecognizer.GetType(recognizerState));
         }
 
-        public static SearchResult UpdateSearchResult(SearchResult searchResult, ItemAddedEventArgs<(HashPerson hash, Person person)> @event) =>
-            searchResult.People.Any(p => p.PersonId == @event.Item.hash.PersonId)
-                ? searchResult
-                : searchResult.With(people: searchResult.People.Add(@event.Item.person));
-
-        public static SearchResult UpdateSearchResult(SearchResult searchResult, ItemRemovedEventArgs<HashPerson> @event) =>
-            searchResult.People.Any(p => p.PersonId == @event.Item.PersonId)
-                ? searchResult.With(people: searchResult.People.RemoveAll(p => p.PersonId == @event.Item.PersonId))
-                : searchResult;
-
-        public static SearchResult UpdateSearchResult(SearchResult searchResult, ItemAddedEventArgs<HashTag> @event) =>
-            searchResult.Tags.Contains(@event.Item.Tag)
-                ? searchResult
-                : searchResult.With(tags: searchResult.Tags.Add(@event.Item.Tag));
-
-        public static SearchResult UpdateSearchResult(SearchResult searchResult, ItemRemovedEventArgs<HashTag> @event) =>
-            searchResult.Tags.Contains(@event.Item.Tag)
-                ? searchResult.With(tags: searchResult.Tags.Remove(@event.Item.Tag))
-                : searchResult;
-
         public Task<Alias> AddAlias(Alias alias) =>
             this.QueryIndex(
                 async conn => (await conn.QueryAsync<Alias>(Alias.Queries.AddAlias, alias).ConfigureAwait(false)).Single());
@@ -117,8 +99,22 @@ namespace MediaLibrary.Storage
             }
 
             await this.UpdateIndex(HashPerson.Queries.AddHashPerson, hashPerson).ConfigureAwait(false);
-            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hashPerson.Hash));
-            this.HashPersonAdded?.Invoke(this, new ItemAddedEventArgs<(HashPerson, Person)>((hashPerson, await this.GetPerson(hashPerson.PersonId).ConfigureAwait(false))));
+
+            var hash = hashPerson.Hash;
+            var personId = hashPerson.PersonId;
+            Person person = null;
+            if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && (person = searchResult.People.FirstOrDefault(p => p.PersonId == personId)) == null)
+            {
+                if (!this.personCache.TryGetValue(personId, out person))
+                {
+                    person = await this.GetPersonById(personId).ConfigureAwait(false);
+                }
+
+                searchResult.People = searchResult.People.Add(person);
+            }
+
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
+            this.HashPersonAdded?.Invoke(this, new ItemAddedEventArgs<(HashPerson, Person)>((hashPerson, person ?? await this.GetPersonById(personId).ConfigureAwait(false))));
         }
 
         public async Task AddHashTag(HashTag hashTag)
@@ -129,7 +125,14 @@ namespace MediaLibrary.Storage
             }
 
             await this.UpdateIndex(HashTag.Queries.AddHashTag, hashTag).ConfigureAwait(false);
-            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hashTag.Hash));
+
+            var hash = hashTag.Hash;
+            if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && !searchResult.Tags.Contains(hashTag.Tag))
+            {
+                searchResult.Tags = searchResult.Tags.Add(hashTag.Tag);
+            }
+
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
             this.HashTagAdded?.Invoke(this, new ItemAddedEventArgs<HashTag>(hashTag));
         }
 
@@ -170,7 +173,10 @@ namespace MediaLibrary.Storage
 
         public Task<List<Person>> GetAllPeople() =>
             this.QueryIndex(async conn =>
-                (await conn.QueryAsync<Person>(Person.Queries.GetAllPeople).ConfigureAwait(false)).ToList());
+            {
+                var reader = await conn.QueryMultipleAsync(Person.Queries.GetAllPeople).ConfigureAwait(false);
+                return (await this.ReadPeople(reader).ConfigureAwait(false)).ToList();
+            });
 
         public Task<string> GetAllTagRules() =>
             this.QueryIndex(async conn =>
@@ -209,7 +215,10 @@ namespace MediaLibrary.Storage
 
         public Task<Person> GetPersonById(int personId) =>
             this.QueryIndex(async conn =>
-                (await conn.QueryAsync<Person>(Person.Queries.GetPersonById, new { PersonId = personId }).ConfigureAwait(false)).SingleOrDefault());
+            {
+                var reader = await conn.QueryMultipleAsync(Person.Queries.GetPersonById, new { PersonId = personId }).ConfigureAwait(false);
+                return (await this.ReadPeople(reader).ConfigureAwait(false)).SingleOrDefault();
+            });
 
         public async Task Initialize()
         {
@@ -239,7 +248,14 @@ namespace MediaLibrary.Storage
             }
 
             await this.UpdateIndex(HashPerson.Queries.RemoveHashPerson, hashPerson).ConfigureAwait(false);
-            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hashPerson.Hash));
+
+            var hash = hashPerson.Hash;
+            if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.People.FirstOrDefault(p => p.PersonId == hashPerson.PersonId) is Person person)
+            {
+                searchResult.People = searchResult.People.Remove(person);
+            }
+
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
             this.HashPersonRemoved?.Invoke(this, new ItemRemovedEventArgs<HashPerson>(hashPerson));
         }
 
@@ -251,7 +267,14 @@ namespace MediaLibrary.Storage
             }
 
             await this.UpdateIndex(HashTag.Queries.RemoveHashTag, hashTag).ConfigureAwait(false);
-            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hashTag.Hash));
+
+            var hash = hashTag.Hash;
+            if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.Tags.Contains(hashTag.Tag))
+            {
+                searchResult.Tags = searchResult.Tags.Remove(hashTag.Tag);
+            }
+
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
             this.HashTagRemoved?.Invoke(this, new ItemRemovedEventArgs<HashTag>(hashTag));
         }
 
@@ -303,20 +326,43 @@ namespace MediaLibrary.Storage
                 var reader = await conn.QueryMultipleAsync(sqlQuery).ConfigureAwait(false);
                 var tags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
                 var fileNames = (await reader.ReadAsync<FilePath>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.LastHash);
-                var people = (await reader.ReadAsync<Person>(buffered: false).ConfigureAwait(false)).ToDictionary(f => f.PersonId);
+                var people = (await this.ReadPeople(reader).ConfigureAwait(false)).ToDictionary(p => p.PersonId);
+
                 var hashPeople = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
                 var hashes = (await reader.ReadAsync<HashInfo>(buffered: false).ConfigureAwait(false)).ToList();
 
                 var results = new List<SearchResult>();
                 foreach (var hash in hashes)
                 {
-                    results.Add(new SearchResult(
+                    var updatedTags = tags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet();
+                    var updatedPaths = fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet();
+                    var updatedPeople = hashPeople[hash.Hash].Select(p => people[p.PersonId]).ToImmutableHashSet();
+                    results.Add(this.searchResultsCache.AddOrUpdate(
                         hash.Hash,
-                        hash.FileType,
-                        hash.FileSize,
-                        tags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet(),
-                        fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet(),
-                        hashPeople[hash.Hash].Select(p => people[p.PersonId]).ToImmutableList()));
+                        key => new SearchResult(
+                            key,
+                            hash.FileType,
+                            hash.FileSize,
+                            updatedTags,
+                            updatedPaths,
+                            updatedPeople),
+                        (key, searchResult) =>
+                        {
+                            if (!searchResult.Tags.SetEquals(updatedTags))
+                            {
+                                searchResult.Tags = updatedTags;
+                            }
+
+                            if (!searchResult.Paths.SetEquals(updatedPaths))
+                            {
+                                searchResult.Paths = updatedPaths;
+                            }
+
+                            if (!searchResult.People.SetEquals(updatedPeople))
+                            {
+                                searchResult.People = updatedPeople;
+                            }
+                        }));
                 }
 
                 return results;
@@ -324,7 +370,7 @@ namespace MediaLibrary.Storage
         }
 
         public async Task UpdatePerson(Person person) =>
-            await this.UpdateIndex(Person.Queries.UpdatePerson, person).ConfigureAwait(false);
+            await this.UpdateIndex(Person.Queries.UpdatePerson, new { person.PersonId, person.Name }).ConfigureAwait(false);
 
         public async Task UpdateTagRules(string rules)
         {
@@ -364,10 +410,6 @@ namespace MediaLibrary.Storage
             this.QueryIndex(async conn =>
                 (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList());
 
-        private Task<Person> GetPerson(int personId) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<Person>(Person.Queries.GetPersonById, new { PersonId = personId }).ConfigureAwait(false)).SingleOrDefault());
-
         private async Task<T> QueryIndex<T>(Func<SQLiteConnection, Task<T>> query)
         {
             using (await this.dbLock.LockAsync().ConfigureAwait(false))
@@ -375,6 +417,34 @@ namespace MediaLibrary.Storage
             {
                 return await query(conn).ConfigureAwait(false);
             }
+        }
+
+        private async Task<IEnumerable<Person>> ReadPeople(SqlMapper.GridReader reader)
+        {
+            var aliases = (await reader.ReadAsync<Alias>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.PersonId);
+
+            return (await reader.ReadAsync<Person>(buffered: false).ConfigureAwait(false)).Select(f =>
+            {
+                var updatedAliases = aliases[f.PersonId].ToImmutableHashSet();
+                void UpdatePerson(Person person)
+                {
+                    if (person.Aliases == null || !person.Aliases.SetEquals(updatedAliases))
+                    {
+                        person.Aliases = updatedAliases;
+                    }
+                }
+
+                return this.personCache.AddOrUpdate(f.PersonId,
+                    _ =>
+                    {
+                        UpdatePerson(f);
+                        return f;
+                    },
+                    (_, person) =>
+                    {
+                        UpdatePerson(person);
+                    });
+            });
         }
 
         private void RemoveFileSystemWatcher(string path)

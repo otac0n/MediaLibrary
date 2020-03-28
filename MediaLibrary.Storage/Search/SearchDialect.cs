@@ -186,6 +186,7 @@ namespace MediaLibrary.Storage.Search
             var fetchTags = true;
             var fetchPaths = true;
             var fetchPeople = true;
+            var fetchAliases = true && fetchPeople;
             var fetchAny = fetchTags || fetchPaths || fetchPeople;
 
             var sb = new StringBuilder();
@@ -244,8 +245,15 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine("DROP TABLE IF EXISTS temp.SearchHashPerson;")
                     .AppendLine("CREATE TEMP TABLE temp.SearchHashPerson (Hash text, PersonId int, PRIMARY KEY (Hash, PersonId));")
                     .AppendLine("INSERT INTO temp.SearchHashPerson (Hash, PersonId)")
-                    .AppendLine("SELECT hp.* FROM temp.SearchHashInfo h INNER JOIN HashPerson hp ON h.Hash = hp.Hash;")
-                    .AppendLine("SELECT DISTINCT p.* FROM temp.SearchHashPerson hp INNER JOIN Person p ON hp.PersonId = p.PersonId;")
+                    .AppendLine("SELECT hp.* FROM temp.SearchHashInfo h INNER JOIN HashPerson hp ON h.Hash = hp.Hash;");
+
+                if (fetchAliases)
+                {
+                    sb.AppendLine("SELECT PersonId, Site, Name FROM Alias WHERE PersonId IN (SELECT PersonId FROM temp.SearchHashPerson);");
+                }
+
+                sb
+                    .AppendLine("SELECT PersonId, Name FROM Person WHERE PersonId IN (SELECT PersonId FROM temp.SearchHashPerson);")
                     .AppendLine("SELECT * FROM temp.SearchHashPerson;")
                     .AppendLine("DROP TABLE temp.SearchHashPerson;");
             }

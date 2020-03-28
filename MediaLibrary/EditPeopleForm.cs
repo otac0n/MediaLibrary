@@ -200,7 +200,7 @@ namespace MediaLibrary
                             needsRefresh = true;
                         }
 
-                        person = new Person(person.PersonId, newName);
+                        person.Name = newName;
                         await this.index.UpdatePerson(person).ConfigureAwait(true);
                         this.SelectedPerson = person;
 

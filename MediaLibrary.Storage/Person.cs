@@ -2,6 +2,8 @@
 
 namespace MediaLibrary.Storage
 {
+    using System.Collections.Immutable;
+
     public class Person
     {
         public Person(int personId, string name)
@@ -16,7 +18,9 @@ namespace MediaLibrary.Storage
             this.Name = name;
         }
 
-        public string Name { get; }
+        public ImmutableHashSet<Alias> Aliases { get; set; }
+
+        public string Name { get; set; }
 
         public int PersonId { get; }
 
@@ -32,16 +36,29 @@ namespace MediaLibrary.Storage
             public static readonly string GetAllPeople = @"
                 SELECT
                     PersonId,
+                    Site,
                     Name
-                FROM Person
+                FROM Alias;
+
+                SELECT
+                    PersonId,
+                    Name
+                FROM Person;
             ";
 
             public static readonly string GetPersonById = @"
                 SELECT
                     PersonId,
+                    Site,
+                    Name
+                FROM Alias
+                WHERE PersonId = @PersonId;
+
+                SELECT
+                    PersonId,
                     Name
                 FROM Person
-                WHERE PersonId = @PersonId
+                WHERE PersonId = @PersonId;
             ";
 
             public static readonly string RemovePerson = @"
@@ -50,7 +67,6 @@ namespace MediaLibrary.Storage
 
             public static readonly string UpdatePerson = @"
                 UPDATE Person SET Name = @Name WHERE PersonId = @PersonId;
-                SELECT PersonId, Name FROM Person WHERE PersonId = @PersonId;
             ";
         }
     }
