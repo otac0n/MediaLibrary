@@ -29,7 +29,7 @@ namespace MediaLibrary
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.personCombo = new System.Windows.Forms.ComboBox();
+            this.personSearchBox = new MediaLibrary.PersonSearchBox();
             this.editorTablePanel = new System.Windows.Forms.TableLayoutPanel();
             this.nameLabel = new System.Windows.Forms.Label();
             this.nameTextBox = new System.Windows.Forms.TextBox();
@@ -48,18 +48,14 @@ namespace MediaLibrary
             ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).BeginInit();
             this.SuspendLayout();
             // 
-            // personCombo
+            // personSearchBox
             // 
-            this.personCombo.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.personCombo.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.personCombo.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.personCombo.FormattingEnabled = true;
-            this.personCombo.Location = new System.Drawing.Point(12, 14);
-            this.personCombo.Name = "personCombo";
-            this.personCombo.Size = new System.Drawing.Size(546, 21);
-            this.personCombo.TabIndex = 0;
-            this.personCombo.SelectionChangeCommitted += new System.EventHandler(this.PersonCombo_SelectionChangeCommitted);
+            this.personSearchBox.Location = new System.Drawing.Point(105, 13);
+            this.personSearchBox.Name = "personSearchBox";
+            this.personSearchBox.SelectedPerson = null;
+            this.personSearchBox.Size = new System.Drawing.Size(450, 22);
+            this.personSearchBox.TabIndex = 2;
+            this.personSearchBox.SelectedPersonChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
             // 
             // editorTablePanel
             // 
@@ -100,9 +96,10 @@ namespace MediaLibrary
             // 
             this.nameTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.nameTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.nameTextBox.Location = new System.Drawing.Point(86, 3);
+            this.nameTextBox.Location = new System.Drawing.Point(93, 3);
+            this.nameTextBox.Margin = new System.Windows.Forms.Padding(10, 3, 3, 3);
             this.nameTextBox.Name = "nameTextBox";
-            this.nameTextBox.Size = new System.Drawing.Size(457, 32);
+            this.nameTextBox.Size = new System.Drawing.Size(450, 32);
             this.nameTextBox.TabIndex = 2;
             this.nameTextBox.Validated += new System.EventHandler(this.NameTextBox_Validated);
             // 
@@ -196,7 +193,7 @@ namespace MediaLibrary
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(570, 349);
             this.Controls.Add(this.editorTablePanel);
-            this.Controls.Add(this.personCombo);
+            this.Controls.Add(this.personSearchBox);
             this.KeyPreview = true;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -217,7 +214,7 @@ namespace MediaLibrary
 
         #endregion
 
-        private System.Windows.Forms.ComboBox personCombo;
+        private PersonSearchBox personSearchBox;
         private System.Windows.Forms.TableLayoutPanel editorTablePanel;
         private System.Windows.Forms.Label nameLabel;
         private System.Windows.Forms.TextBox nameTextBox;

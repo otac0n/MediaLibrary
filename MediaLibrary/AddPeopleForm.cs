@@ -26,23 +26,23 @@ namespace MediaLibrary
 
         private async void AddButton_Click(object sender, EventArgs e)
         {
-            var name = this.personCombo.Text.Trim();
+            var name = this.personSearchBox.Text.Trim();
             if (string.IsNullOrWhiteSpace(name))
             {
                 return;
             }
 
-            if (!(this.personCombo.SelectedItem is Person person))
+            if (!(this.personSearchBox.SelectedPerson is Person person))
             {
-                this.personCombo.Text = string.Empty;
-                this.personCombo.Focus();
+                this.personSearchBox.Text = string.Empty;
+                this.personSearchBox.Focus();
 
                 person = await this.index.AddPerson(name).ConfigureAwait(true);
             }
             else
             {
-                this.personCombo.Text = string.Empty;
-                this.personCombo.Focus();
+                this.personSearchBox.Text = string.Empty;
+                this.personSearchBox.Focus();
             }
 
             if (this.personControls.TryGetValue(person.PersonId, out var personControl))
@@ -111,9 +111,9 @@ namespace MediaLibrary
         private async void PopulatePeopleCombo()
         {
             var people = await this.index.GetAllPeople().ConfigureAwait(true);
-            var text = this.personCombo.Text;
-            this.personCombo.DataSource = people;
-            this.personCombo.Text = text;
+            var text = this.personSearchBox.Text;
+            this.personSearchBox.People = people;
+            this.personSearchBox.Text = text;
         }
     }
 }

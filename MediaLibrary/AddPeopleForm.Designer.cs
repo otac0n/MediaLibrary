@@ -28,22 +28,20 @@ namespace MediaLibrary
         /// </summary>
         private void InitializeComponent()
         {
-            this.personCombo = new System.Windows.Forms.ComboBox();
+            this.personSearchBox = new MediaLibrary.PersonSearchBox();
             this.addButton = new System.Windows.Forms.Button();
             this.existingPeople = new System.Windows.Forms.FlowLayoutPanel();
             this.SuspendLayout();
             // 
-            // personCombo
+            // personSearchBox
             // 
-            this.personCombo.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.personCombo.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.personCombo.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.personCombo.FormattingEnabled = true;
-            this.personCombo.Location = new System.Drawing.Point(12, 14);
-            this.personCombo.Name = "personCombo";
-            this.personCombo.Size = new System.Drawing.Size(247, 21);
-            this.personCombo.TabIndex = 0;
+            this.personSearchBox.Location = new System.Drawing.Point(12, 14);
+            this.personSearchBox.Name = "personSearchBox";
+            this.personSearchBox.People = null;
+            this.personSearchBox.Text = "";
+            this.personSearchBox.SelectedPerson = null;
+            this.personSearchBox.Size = new System.Drawing.Size(247, 21);
+            this.personSearchBox.TabIndex = 3;
             // 
             // addButton
             // 
@@ -75,7 +73,7 @@ namespace MediaLibrary
             this.ClientSize = new System.Drawing.Size(352, 119);
             this.Controls.Add(this.existingPeople);
             this.Controls.Add(this.addButton);
-            this.Controls.Add(this.personCombo);
+            this.Controls.Add(this.personSearchBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.KeyPreview = true;
             this.MaximizeBox = false;
@@ -90,7 +88,7 @@ namespace MediaLibrary
 
         #endregion
 
-        private System.Windows.Forms.ComboBox personCombo;
+        private PersonSearchBox personSearchBox;
         private System.Windows.Forms.Button addButton;
         private System.Windows.Forms.FlowLayoutPanel existingPeople;
     }

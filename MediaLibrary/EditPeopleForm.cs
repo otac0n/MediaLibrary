@@ -8,7 +8,6 @@ namespace MediaLibrary
     using System.Threading;
     using System.Windows.Forms;
     using MediaLibrary.Storage;
-    using MediaLibrary.Storage.Search;
 
     public partial class EditPeopleForm : Form
     {
@@ -20,7 +19,7 @@ namespace MediaLibrary
         {
             this.InitializeComponent();
             this.index = index;
-            this.PopulatePeopleCombo();
+            this.PopulatePeopleSearchBox();
         }
 
         public Person SelectedPerson { get; private set; }
@@ -218,10 +217,10 @@ namespace MediaLibrary
             }
         }
 
-        private async void PersonCombo_SelectionChangeCommitted(object sender, EventArgs e)
+        private async void PersonSearchBox_SelectedPersonChanged(object sender, EventArgs e)
         {
             this.editorTablePanel.Enabled = false;
-            if (this.personCombo.SelectedItem is Person person)
+            if (this.personSearchBox.SelectedPerson is Person person)
             {
                 this.SelectedPerson = await this.index.GetPersonById(person.PersonId).ConfigureAwait(true);
                 this.SelectedPersonAliases = await this.index.GetAliases(person.PersonId).ConfigureAwait(true);
@@ -231,12 +230,12 @@ namespace MediaLibrary
             }
         }
 
-        private async void PopulatePeopleCombo()
+        private async void PopulatePeopleSearchBox()
         {
             this.people = await this.index.GetAllPeople().ConfigureAwait(true);
-            var text = this.personCombo.Text;
-            this.personCombo.DataSource = this.people;
-            this.personCombo.Text = text;
+            var text = this.personSearchBox.Text;
+            this.personSearchBox.People = this.people;
+            this.personSearchBox.Text = text;
         }
 
         private void RefreshView()
