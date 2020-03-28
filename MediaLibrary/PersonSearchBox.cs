@@ -6,7 +6,6 @@ namespace MediaLibrary
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Drawing;
-    using System.Drawing.Drawing2D;
     using System.Linq;
     using System.Text.RegularExpressions;
     using System.Windows.Forms;
@@ -71,22 +70,33 @@ namespace MediaLibrary
         private static List<Person> Search(HashSet<string> searchTerms, IEnumerable<Person> people)
         {
             return people
-                .Select(p => new { Person = p, NameTerms = ToTerms(p.Name) })
+                .Select(p =>
+                {
+                    var nameTerms = ToTerms(p.Name);
+                    var allTerms = new HashSet<string>(nameTerms, Comparer);
+                    foreach (var alias in p.Aliases)
+                    {
+                        allTerms.UnionWith(ToTerms(alias.Name));
+                    }
+
+                    return new { Person = p, NameTerms = nameTerms, AllTerms = allTerms };
+                })
                 .OrderByDescending(p => p.NameTerms.SetEquals(searchTerms))
                 .ThenByDescending(p => p.NameTerms.IsSupersetOf(searchTerms))
+                .ThenByDescending(p => p.AllTerms.IsSupersetOf(searchTerms))
                 .ThenByDescending(p => Math.Max(
-                    p.NameTerms.Count(n => searchTerms.Contains(n)),
-                    searchTerms.Count(n => p.NameTerms.Contains(n))))
+                    p.AllTerms.Count(n => searchTerms.Contains(n)),
+                    searchTerms.Count(n => p.AllTerms.Contains(n))))
                 .ThenByDescending(p => Math.Max(
-                    p.NameTerms.Count(n => searchTerms.Any(t => t.IndexOf(n, Comparison) >= 0)),
-                    searchTerms.Count(n => p.NameTerms.Any(t => t.IndexOf(n, Comparison) >= 0))))
+                    p.AllTerms.Count(n => searchTerms.Any(t => t.IndexOf(n, Comparison) >= 0)),
+                    searchTerms.Count(n => p.AllTerms.Any(t => t.IndexOf(n, Comparison) >= 0))))
                 .ThenBy(p => p.Person.Name, Comparer)
                 .Select(p => p.Person)
                 .ToList();
         }
 
         private static HashSet<string> ToTerms(string name) =>
-            new HashSet<string>(Regex.Matches(name, @"\w+").Cast<Match>().Select(m => m.Value), StringComparer.CurrentCultureIgnoreCase);
+            new HashSet<string>(Regex.Matches(name, @"\w+").Cast<Match>().Select(m => m.Value), Comparer);
 
         private void SearchBox_DrawItem(object sender, DrawItemEventArgs e)
         {
@@ -102,10 +112,10 @@ namespace MediaLibrary
                 : new Regex(string.Join("|", this.terms.Union(ToTerms(item.Name).Where(n => this.terms.Any(t => t.IndexOf(n, Comparison) >= 0))).Select(t => Regex.Escape(t))), RegexOptions.IgnoreCase);
             var format = TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.TextBoxControl | TextFormatFlags.NoPadding;
             var bounds = e.Bounds;
-            void DrawString(string text)
+            bool DrawString(string text, bool addHighlight = true)
             {
                 var index = 0;
-                var nextMatch = termPattern.Match(text);
+                var nextMatch = addHighlight ? termPattern.Match(text) : NoMatch.Match(text);
                 while (true)
                 {
                     var highlight = false;
@@ -133,20 +143,148 @@ namespace MediaLibrary
                     TextRenderer.DrawText(e.Graphics, chunk, font, bounds, color, format);
                     var size = TextRenderer.MeasureText(e.Graphics, chunk, font, bounds.Size, format);
                     bounds = new Rectangle(bounds.X + size.Width, bounds.Y, bounds.Width - size.Width, bounds.Height);
-                    if (index >= text.Length || bounds.Left <= 0)
+                    if (bounds.Width <= 0)
                     {
-                        break;
+                        return false;
+                    }
+
+                    if (index >= text.Length)
+                    {
+                        return true;
                     }
                 }
             }
 
-            DrawString(item.Name);
+            if (DrawString(item.Name))
+            {
+                if (item.Aliases.Count > 0)
+                {
+                    if (DrawString(" (aka ", addHighlight: false))
+                    {
+                        var finished = true;
+                        var first = true;
+                        foreach (var alias in item.Aliases.OrderByDescending(a => termPattern.Matches(a.Name).Cast<Match>().Sum(m => m.Length)))
+                        {
+                            if (!first)
+                            {
+                                if (!DrawString(", ", addHighlight: false))
+                                {
+                                    finished = false;
+                                    break;
+                                }
+                            }
+
+                            if (!DrawString(alias.Name))
+                            {
+                                finished = false;
+                                break;
+                            }
+
+                            first = false;
+                        }
+
+                        if (finished)
+                        {
+                            DrawString(")", addHighlight: false);
+                        }
+                    }
+                }
+            }
 
             e.DrawFocusRectangle();
         }
 
         private void SearchBox_MeasureItem(object sender, MeasureItemEventArgs e)
         {
+            var baseFont = this.searchBox.Font;
+            var item = (Person)this.searchBox.Items[e.Index];
+            var highlightFont = new Font(baseFont, FontStyle.Bold);
+
+            var termPattern = this.terms.Count == 0
+                ? NoMatch
+                : new Regex(string.Join("|", this.terms.Union(ToTerms(item.Name).Where(n => this.terms.Any(t => t.IndexOf(n, Comparison) >= 0))).Select(t => Regex.Escape(t))), RegexOptions.IgnoreCase);
+            var format = TextFormatFlags.SingleLine | TextFormatFlags.TextBoxControl | TextFormatFlags.NoPadding;
+
+            var bounds = new Rectangle(Point.Empty, new Size(e.ItemWidth, e.ItemHeight));
+            bool MeasureString(string text, bool addHighlight = true)
+            {
+                var index = 0;
+                var nextMatch = addHighlight ? termPattern.Match(text) : NoMatch.Match(text);
+                while (true)
+                {
+                    var highlight = false;
+                    string chunk;
+                    if (!nextMatch.Success)
+                    {
+                        chunk = text.Substring(index);
+                        index = text.Length;
+                        nextMatch = null;
+                    }
+                    else if (nextMatch.Index == index)
+                    {
+                        highlight = true;
+                        chunk = nextMatch.Value;
+                        index += nextMatch.Length;
+                        nextMatch = termPattern.Match(text, index);
+                    }
+                    else
+                    {
+                        chunk = text.Substring(index, nextMatch.Index - index);
+                        index = nextMatch.Index;
+                    }
+
+                    var font = highlight ? highlightFont : baseFont;
+                    var size = TextRenderer.MeasureText(e.Graphics, chunk, font, bounds.Size, format);
+                    bounds = new Rectangle(bounds.X + size.Width, bounds.Y, bounds.Width - size.Width, bounds.Height);
+                    if (bounds.Width <= 0)
+                    {
+                        return false;
+                    }
+
+                    if (index >= text.Length)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (MeasureString(item.Name))
+            {
+                if (item.Aliases.Count > 0)
+                {
+                    if (MeasureString(" (aka ", addHighlight: false))
+                    {
+                        var finished = true;
+                        var first = true;
+                        foreach (var alias in item.Aliases)
+                        {
+                            if (!first)
+                            {
+                                if (!MeasureString(", ", addHighlight: false))
+                                {
+                                    finished = false;
+                                    break;
+                                }
+                            }
+
+                            if (!MeasureString(alias.Name))
+                            {
+                                finished = false;
+                                break;
+                            }
+
+                            first = false;
+                        }
+
+                        if (finished)
+                        {
+                            MeasureString(")", addHighlight: false);
+                        }
+                    }
+                }
+            }
+
+            e.ItemWidth = bounds.X;
         }
 
         private void SearchBox_SelectionChangeCommitted(object sender, EventArgs e)
