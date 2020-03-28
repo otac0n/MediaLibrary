@@ -3,13 +3,22 @@
 namespace MediaLibrary.Storage.Search
 {
     using System;
+    using System.Linq;
     using System.Text;
+    using MediaLibrary.Tagging;
     using static QueryBuilder;
 
     public class SearchDialect : AnsiSqlCompiler
     {
+        private readonly TagRuleEngine tagEngine;
         private int depth = 0;
+        private bool excludeHidden = true;
         private bool joinCopies = false;
+
+        public SearchDialect(TagRuleEngine tagEngine)
+        {
+            this.tagEngine = tagEngine;
+        }
 
         /// <inheritdoc/>
         public override string Compile(Term term)
@@ -77,7 +86,13 @@ namespace MediaLibrary.Storage.Search
                         throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
                     }
 
-                    return $"EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag = {Literal(field.Value)})";
+                    if (this.excludeHidden && (field.Value == "hidden" || this.tagEngine.GetTagAncestors(field.Value).Contains("hidden")))
+                    {
+                        this.excludeHidden = false;
+                    }
+
+                    var tags = this.tagEngine.GetTagDescendants(field.Value).Add(field.Value);
+                    return $"EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", tags.Select(Literal))}))";
 
                 case "copies":
                     this.joinCopies = true;
@@ -200,8 +215,18 @@ namespace MediaLibrary.Storage.Search
 
             sb
                 .AppendLine("WHERE (")
-                .AppendLine(filter)
-                .AppendLine(");");
+                .AppendLine(filter);
+            if (this.excludeHidden)
+            {
+                var tags = this.tagEngine.GetTagDescendants("hidden").Add("hidden");
+                sb
+                    .AppendLine(")")
+                    .Append("AND NOT EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN (")
+                    .Append(string.Join(", ", tags.Select(Literal)))
+                    .Append(")");
+            }
+
+            sb.AppendLine(");");
 
             if (fetchTags)
             {

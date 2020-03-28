@@ -294,7 +294,7 @@ namespace MediaLibrary.Storage
         public async Task<List<SearchResult>> SearchIndex(string query)
         {
             var term = new SearchGrammar().Parse(query);
-            var dialect = new SearchDialect();
+            var dialect = new SearchDialect(this.TagEngine);
             var sqlQuery = dialect.Compile(term);
 
             using (await this.dbLock.LockAsync().ConfigureAwait(false))
