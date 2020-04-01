@@ -38,39 +38,22 @@ namespace MediaLibrary
 
             set
             {
-                this.previewItem = value;
-
-                var url = value == null
-                    ? null
-                    : (from p in value.Paths
-                       where File.Exists(p)
-                       select p).FirstOrDefault();
-                if (value == null || IsImage(value))
+                if (!object.ReferenceEquals(this.previewItem, value))
                 {
-                    this.mediaPlayer.URL = null;
-                    this.mediaPlayer.Visible = false;
-                    this.thumbnail.ImageLocation = url;
-                    this.thumbnail.Visible = url != null;
-                }
-                else
-                {
-                    this.thumbnail.ImageLocation = null;
-                    this.thumbnail.Visible = false;
-                    this.mediaPlayer.URL = url;
-                    var wasVisible = this.mediaPlayer.Visible;
-                    this.mediaPlayer.Visible = url != null;
-                    if (this.mediaPlayer.Visible && !wasVisible)
-                    {
-                        this.mediaPlayer.Dock = DockStyle.None;
-                        this.mediaPlayer.Dock = DockStyle.Fill;
-                        this.ResetMediaPlayer();
-                    }
+                    this.previewItem = value;
+                    this.UpdatePreview();
                 }
             }
         }
 
         public static bool IsImage(SearchResult searchResult) =>
             searchResult != null && (searchResult.FileType == "image" || searchResult.FileType.StartsWith("image/", StringComparison.Ordinal));
+
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            this.UpdatePreview();
+            base.OnVisibleChanged(e);
+        }
 
         private void MediaPlayer_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
         {
@@ -107,6 +90,37 @@ namespace MediaLibrary
             this.mediaPlayer.uiMode = "full";
             this.mediaPlayer.enableContextMenu = false;
             this.mediaPlayer.stretchToFit = true;
+        }
+
+        private void UpdatePreview()
+        {
+            var item = this.previewItem;
+            var url = !this.Visible || item == null
+                ? null
+                : (from p in this.previewItem.Paths
+                   where File.Exists(p)
+                   select p).FirstOrDefault();
+            if (this.previewItem == null || IsImage(this.previewItem))
+            {
+                this.mediaPlayer.URL = null;
+                this.mediaPlayer.Visible = false;
+                this.thumbnail.ImageLocation = url;
+                this.thumbnail.Visible = url != null;
+            }
+            else
+            {
+                this.thumbnail.ImageLocation = null;
+                this.thumbnail.Visible = false;
+                this.mediaPlayer.URL = url;
+                var wasVisible = this.mediaPlayer.Visible;
+                this.mediaPlayer.Visible = url != null;
+                if (this.mediaPlayer.Visible && !wasVisible)
+                {
+                    this.mediaPlayer.Dock = DockStyle.None;
+                    this.mediaPlayer.Dock = DockStyle.Fill;
+                    this.ResetMediaPlayer();
+                }
+            }
         }
     }
 }
