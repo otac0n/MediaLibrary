@@ -92,6 +92,7 @@ namespace MediaLibrary
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Edit Tag Rules";
             this.Load += new System.EventHandler(this.EditTagRulesForm_Load);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.EditTagRulesForm_KeyDown);
             this.ResumeLayout(false);
             this.PerformLayout();
 

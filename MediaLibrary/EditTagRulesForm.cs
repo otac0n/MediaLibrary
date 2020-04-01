@@ -22,6 +22,15 @@ namespace MediaLibrary
             this.Hide();
         }
 
+        private void EditTagRulesForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.S && !e.Alt && !e.Shift)
+            {
+                this.SaveButton_Click(this, EventArgs.Empty);
+                e.Handled = true;
+            }
+        }
+
         private async void EditTagRulesForm_Load(object sender, EventArgs e)
         {
             this.rules.Text = await this.index.GetAllTagRules().ConfigureAwait(true);
