@@ -213,12 +213,20 @@ namespace MediaLibrary.Storage
             }
         }
 
+        public Task<List<HashTag>> GetHashTags(string hash) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<HashTag>(HashTag.Queries.GetHashTags, new { Hash = hash }).ConfigureAwait(false)).ToList());
+
         public Task<Person> GetPersonById(int personId) =>
             this.QueryIndex(async conn =>
             {
                 var reader = await conn.QueryMultipleAsync(Person.Queries.GetPersonById, new { PersonId = personId }).ConfigureAwait(false);
                 return (await this.ReadPeople(reader).ConfigureAwait(false)).SingleOrDefault();
             });
+
+        public Task<List<HashTag>> GetRejectedTags(string hash) =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<HashTag>(HashTag.Queries.GetRejectedTags, new { Hash = hash }).ConfigureAwait(false)).ToList());
 
         public async Task Initialize()
         {
@@ -259,14 +267,14 @@ namespace MediaLibrary.Storage
             this.HashPersonRemoved?.Invoke(this, new ItemRemovedEventArgs<HashPerson>(hashPerson));
         }
 
-        public async Task RemoveHashTag(HashTag hashTag)
+        public async Task RemoveHashTag(HashTag hashTag, bool rejectTag = false)
         {
             if (hashTag == null)
             {
                 throw new ArgumentNullException(nameof(hashTag));
             }
 
-            await this.UpdateIndex(HashTag.Queries.RemoveHashTag, hashTag).ConfigureAwait(false);
+            await this.UpdateIndex(rejectTag ? HashTag.Queries.RejectHashTag : HashTag.Queries.RemoveHashTag, hashTag).ConfigureAwait(false);
 
             var hash = hashTag.Hash;
             if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.Tags.Contains(hashTag.Tag))
@@ -674,6 +682,16 @@ namespace MediaLibrary.Storage
                 );
 
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_HashTag_Hash_Tag ON HashTag (Hash, Tag);
+
+                CREATE TABLE IF NOT EXISTS RejectedTags
+                (
+                    Hash text NOT NULL,
+                    Tag text NOT NULL,
+                    PRIMARY KEY (Hash, Tag),
+                    FOREIGN KEY (Hash) REFERENCES HashInfo (Hash) ON DELETE CASCADE
+                );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_RejectedTags_Hash_Tag ON RejectedTags (Hash, Tag);
 
                 CREATE TABLE IF NOT EXISTS TagRules
                 (

@@ -17,6 +17,7 @@ namespace MediaLibrary.Storage
         internal static class Queries
         {
             public static readonly string AddHashTag = @"
+                DELETE FROM RejectedTags WHERE Hash = @Hash AND Tag = @Tag;
                 INSERT OR REPLACE INTO HashTag (Hash, Tag) VALUES (@Hash, @Tag)
             ";
 
@@ -24,12 +25,25 @@ namespace MediaLibrary.Storage
                 SELECT DISTINCT Tag FROM HashTag
             ";
 
-            public static readonly string GetHashTag = @"
+            public static readonly string GetHashTags = @"
                 SELECT
                     Hash,
                     Tag
                 FROM HashTag
                 WHERE Hash = @Hash
+            ";
+
+            public static readonly string GetRejectedTags = @"
+                SELECT
+                    Hash,
+                    Tag
+                FROM RejectedTags
+                WHERE Hash = @Hash
+            ";
+
+            public static readonly string RejectHashTag = @"
+                DELETE FROM HashTag WHERE Hash = @Hash AND Tag = @Tag;
+                INSERT OR REPLACE INTO RejectedTags (Hash, Tag) VALUES (@Hash, @Tag)
             ";
 
             public static readonly string RemoveHashTag = @"

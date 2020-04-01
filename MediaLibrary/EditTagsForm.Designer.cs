@@ -30,7 +30,10 @@ namespace MediaLibrary
         {
             this.tagCombo = new System.Windows.Forms.ComboBox();
             this.addButton = new System.Windows.Forms.Button();
+            this.tagLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.suggestedTags = new System.Windows.Forms.FlowLayoutPanel();
             this.existingTags = new System.Windows.Forms.FlowLayoutPanel();
+            this.tagLayoutPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // tagCombo
@@ -42,13 +45,13 @@ namespace MediaLibrary
             this.tagCombo.FormattingEnabled = true;
             this.tagCombo.Location = new System.Drawing.Point(12, 14);
             this.tagCombo.Name = "tagCombo";
-            this.tagCombo.Size = new System.Drawing.Size(247, 21);
+            this.tagCombo.Size = new System.Drawing.Size(229, 21);
             this.tagCombo.TabIndex = 0;
             // 
             // addButton
             // 
             this.addButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.addButton.Location = new System.Drawing.Point(265, 12);
+            this.addButton.Location = new System.Drawing.Point(247, 12);
             this.addButton.Name = "addButton";
             this.addButton.Size = new System.Drawing.Size(75, 23);
             this.addButton.TabIndex = 1;
@@ -56,34 +59,57 @@ namespace MediaLibrary
             this.addButton.UseVisualStyleBackColor = true;
             this.addButton.Click += new System.EventHandler(this.AddButton_Click);
             // 
+            // tagLayoutPanel
+            // 
+            this.tagLayoutPanel.AutoScroll = true;
+            this.tagLayoutPanel.Controls.Add(this.suggestedTags);
+            this.tagLayoutPanel.Controls.Add(this.existingTags);
+            this.tagLayoutPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.tagLayoutPanel.Location = new System.Drawing.Point(12, 45);
+            this.tagLayoutPanel.Name = "tagLayoutPanel";
+            this.tagLayoutPanel.Size = new System.Drawing.Size(310, 104);
+            this.tagLayoutPanel.TabIndex = 4;
+            this.tagLayoutPanel.WrapContents = false;
+            // 
+            // suggestedTags
+            // 
+            this.suggestedTags.AutoSize = true;
+            this.suggestedTags.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.suggestedTags.Location = new System.Drawing.Point(3, 3);
+            this.suggestedTags.Name = "suggestedTags";
+            this.suggestedTags.Size = new System.Drawing.Size(0, 0);
+            this.suggestedTags.TabIndex = 4;
+            // 
             // existingTags
             // 
-            this.existingTags.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.existingTags.AutoScroll = true;
-            this.existingTags.Location = new System.Drawing.Point(12, 41);
+            this.existingTags.AutoSize = true;
+            this.existingTags.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.existingTags.Location = new System.Drawing.Point(3, 9);
             this.existingTags.Name = "existingTags";
-            this.existingTags.Size = new System.Drawing.Size(328, 66);
-            this.existingTags.TabIndex = 2;
+            this.existingTags.Size = new System.Drawing.Size(0, 0);
+            this.existingTags.TabIndex = 5;
             // 
             // EditTagsForm
             // 
             this.AcceptButton = this.addButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(352, 119);
-            this.Controls.Add(this.existingTags);
+            this.ClientSize = new System.Drawing.Size(334, 161);
+            this.Controls.Add(this.tagLayoutPanel);
             this.Controls.Add(this.addButton);
             this.Controls.Add(this.tagCombo);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.KeyPreview = true;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(350, 200);
             this.Name = "EditTagsForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Edit Tags";
+            this.Load += new System.EventHandler(this.EditTagsForm_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.AddTagsForm_KeyDown);
+            this.tagLayoutPanel.ResumeLayout(false);
+            this.tagLayoutPanel.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -92,6 +118,8 @@ namespace MediaLibrary
 
         private System.Windows.Forms.ComboBox tagCombo;
         private System.Windows.Forms.Button addButton;
+        private System.Windows.Forms.FlowLayoutPanel tagLayoutPanel;
+        private System.Windows.Forms.FlowLayoutPanel suggestedTags;
         private System.Windows.Forms.FlowLayoutPanel existingTags;
     }
 }
