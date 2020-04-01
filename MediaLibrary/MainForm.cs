@@ -7,6 +7,7 @@ namespace MediaLibrary
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics;
+    using System.Drawing;
     using System.IO;
     using System.Linq;
     using System.Threading;
@@ -154,6 +155,22 @@ namespace MediaLibrary
                     addPeopleForm.ShowDialog(this);
                 }
             }
+        }
+
+        private void AddSavedSearchMenuItem(SavedSearch savedSearch)
+        {
+            var searchItem = new ToolStripMenuItem
+            {
+                Name = "savedSearchMenuItem",
+                Size = new System.Drawing.Size(206, 22),
+                Text = savedSearch.Name,
+                Tag = savedSearch,
+            };
+
+            searchItem.Click += new System.EventHandler(this.SavedSearchMenuItem_Click);
+
+            this.savedSearchesSeparator.Visible = true;
+            this.savedSearchesMenuItem.DropDownItems.Add(searchItem);
         }
 
         private void AddTagsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -455,7 +472,15 @@ namespace MediaLibrary
 
         private async void MainForm_Load(object sender, EventArgs e)
         {
+            this.savedSearchesMenuItem.Enabled = false;
             await this.index.Initialize().ConfigureAwait(true);
+
+            foreach (var savedSearch in await this.index.GetAllSavedSearches().ConfigureAwait(true))
+            {
+                this.AddSavedSearchMenuItem(savedSearch);
+            }
+
+            this.savedSearchesMenuItem.Enabled = true;
 
             this.TrackTaskProgress(async progress =>
             {
@@ -485,6 +510,25 @@ namespace MediaLibrary
         {
             this.items.Remove(((SearchResult)value.Tag).Hash);
             this.listView.Items.Remove(value);
+        }
+
+        private void SavedSearchMenuItem_Click(object sender, EventArgs e)
+        {
+            var savedSearch = (SavedSearch)((ToolStripMenuItem)sender).Tag;
+            this.searchBox.Text = savedSearch.Query;
+        }
+
+        private async void SaveThisSearchMenuItem_Click(object sender, EventArgs e)
+        {
+            var searchText = this.searchBox.Text;
+            using (var saveSearchForm = new SaveSearchForm())
+            {
+                if (saveSearchForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    var savedSearch = await this.index.AddSavedSearch(saveSearchForm.SelectedName, searchText).ConfigureAwait(true);
+                    this.AddSavedSearchMenuItem(savedSearch);
+                }
+            }
         }
 
         private void SearchBookmark_Click(object sender, EventArgs e)

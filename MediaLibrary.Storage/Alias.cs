@@ -12,10 +12,8 @@ namespace MediaLibrary.Storage
         }
 
         public Alias(long personId, string site, string name)
+            : this(checked((int)personId), site, name)
         {
-            this.Site = site;
-            this.Name = name;
-            this.PersonId = checked((int)personId);
         }
 
         public string Name { get; }

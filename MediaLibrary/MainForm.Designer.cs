@@ -49,6 +49,8 @@ namespace MediaLibrary
             this.playAllButton = new System.Windows.Forms.ToolStripButton();
             this.shuffleAllButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.homeButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.favoriteFilesDropDown = new System.Windows.Forms.ToolStripSplitButton();
             this.favoriteFilesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
@@ -61,8 +63,6 @@ namespace MediaLibrary
             this.starredAudioMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.starredImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.starredVideoMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.homeButton = new System.Windows.Forms.ToolStripButton();
             this.audioDropDown = new System.Windows.Forms.ToolStripSplitButton();
             this.allAudioMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
@@ -84,6 +84,10 @@ namespace MediaLibrary
             this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
             this.detailsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.thumbnailsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
+            this.savedSearchesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveThisSearchMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.savedSearchesSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.fileTypeImages = new System.Windows.Forms.ImageList(this.components);
             this.itemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.favoriteContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -159,7 +163,7 @@ namespace MediaLibrary
             // 
             this.findDuplicatesMainMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_stack;
             this.findDuplicatesMainMenuItem.Name = "findDuplicatesMainMenuItem";
-            this.findDuplicatesMainMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.findDuplicatesMainMenuItem.Size = new System.Drawing.Size(164, 22);
             this.findDuplicatesMainMenuItem.Text = "Find &Duplicates...";
             this.findDuplicatesMainMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
             // 
@@ -167,7 +171,7 @@ namespace MediaLibrary
             // 
             this.editPeopleMainMenuItem.Image = global::MediaLibrary.Properties.Resources.multiple_actions_edit_1;
             this.editPeopleMainMenuItem.Name = "editPeopleMainMenuItem";
-            this.editPeopleMainMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editPeopleMainMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editPeopleMainMenuItem.Text = "Edit &People...";
             this.editPeopleMainMenuItem.Click += new System.EventHandler(this.EditPeopleMenuItem_Click);
             // 
@@ -175,7 +179,7 @@ namespace MediaLibrary
             // 
             this.editTagRulesMainMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_settings;
             this.editTagRulesMainMenuItem.Name = "editTagRulesMainMenuItem";
-            this.editTagRulesMainMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editTagRulesMainMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editTagRulesMainMenuItem.Text = "Edit &Tag Rules...";
             this.editTagRulesMainMenuItem.Click += new System.EventHandler(this.EditTagRulesMenuItem_Click);
             // 
@@ -243,10 +247,10 @@ namespace MediaLibrary
             this.playAllButton,
             this.shuffleAllButton,
             this.toolStripSeparator1,
+            this.homeButton,
+            this.toolStripSeparator2,
             this.favoriteFilesDropDown,
             this.starredDropDown,
-            this.toolStripSeparator2,
-            this.homeButton,
             this.audioDropDown,
             this.imagesDropDown,
             this.videoDropDown,
@@ -293,6 +297,21 @@ namespace MediaLibrary
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
             this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            // 
+            // homeButton
+            // 
+            this.homeButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.homeButton.Image = global::MediaLibrary.Properties.Resources.house_2;
+            this.homeButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.homeButton.Name = "homeButton";
+            this.homeButton.Size = new System.Drawing.Size(23, 22);
+            this.homeButton.Text = "Home";
+            this.homeButton.Click += new System.EventHandler(this.SearchBookmark_Click);
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
             // favoriteFilesDropDown
             // 
@@ -367,6 +386,7 @@ namespace MediaLibrary
             this.starredDropDown.Size = new System.Drawing.Size(32, 22);
             this.starredDropDown.Tag = "stars:>=3";
             this.starredDropDown.Text = "Starred";
+            this.starredDropDown.Visible = false;
             this.starredDropDown.ButtonClick += new System.EventHandler(this.SearchBookmark_Click);
             // 
             // starredFilesMenuItem
@@ -409,21 +429,6 @@ namespace MediaLibrary
             this.starredVideoMenuItem.Tag = "stars:>=3 type:video";
             this.starredVideoMenuItem.Text = "Video";
             this.starredVideoMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
-            // 
-            // homeButton
-            // 
-            this.homeButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.homeButton.Image = global::MediaLibrary.Properties.Resources.house_2;
-            this.homeButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.homeButton.Name = "homeButton";
-            this.homeButton.Size = new System.Drawing.Size(23, 22);
-            this.homeButton.Text = "Home";
-            this.homeButton.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
             // audioDropDown
             // 
@@ -583,7 +588,9 @@ namespace MediaLibrary
             this.showPreviewMenuItem,
             this.toolStripSeparator8,
             this.detailsMenuItem,
-            this.thumbnailsMenuItem});
+            this.thumbnailsMenuItem,
+            this.toolStripSeparator9,
+            this.savedSearchesMenuItem});
             this.viewButton.Image = global::MediaLibrary.Properties.Resources.view_1;
             this.viewButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.viewButton.Name = "viewButton";
@@ -597,14 +604,14 @@ namespace MediaLibrary
             this.showPreviewMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.showPreviewMenuItem.Image = global::MediaLibrary.Properties.Resources.view_square;
             this.showPreviewMenuItem.Name = "showPreviewMenuItem";
-            this.showPreviewMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.showPreviewMenuItem.Size = new System.Drawing.Size(180, 22);
             this.showPreviewMenuItem.Text = "Show Preview";
             this.showPreviewMenuItem.CheckedChanged += new System.EventHandler(this.ShowPreviewMenuItem_CheckedChanged);
             // 
             // toolStripSeparator8
             // 
             this.toolStripSeparator8.Name = "toolStripSeparator8";
-            this.toolStripSeparator8.Size = new System.Drawing.Size(144, 6);
+            this.toolStripSeparator8.Size = new System.Drawing.Size(177, 6);
             // 
             // detailsMenuItem
             // 
@@ -613,7 +620,7 @@ namespace MediaLibrary
             this.detailsMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.detailsMenuItem.Image = global::MediaLibrary.Properties.Resources.list_bullets_1;
             this.detailsMenuItem.Name = "detailsMenuItem";
-            this.detailsMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.detailsMenuItem.Size = new System.Drawing.Size(180, 22);
             this.detailsMenuItem.Text = "Details";
             this.detailsMenuItem.Click += new System.EventHandler(this.DetailsMenuItem_Click);
             // 
@@ -622,9 +629,37 @@ namespace MediaLibrary
             this.thumbnailsMenuItem.CheckOnClick = true;
             this.thumbnailsMenuItem.Image = global::MediaLibrary.Properties.Resources.picture_landscape;
             this.thumbnailsMenuItem.Name = "thumbnailsMenuItem";
-            this.thumbnailsMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.thumbnailsMenuItem.Size = new System.Drawing.Size(180, 22);
             this.thumbnailsMenuItem.Text = "Thumbnails";
             this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
+            // 
+            // toolStripSeparator9
+            // 
+            this.toolStripSeparator9.Name = "toolStripSeparator9";
+            this.toolStripSeparator9.Size = new System.Drawing.Size(177, 6);
+            // 
+            // savedSearchesMenuItem
+            // 
+            this.savedSearchesMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.saveThisSearchMenuItem,
+            this.savedSearchesSeparator});
+            this.savedSearchesMenuItem.Name = "savedSearchesMenuItem";
+            this.savedSearchesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.savedSearchesMenuItem.Text = "&Saved Searches";
+            // 
+            // saveThisSearchMenuItem
+            // 
+            this.saveThisSearchMenuItem.Name = "saveThisSearchMenuItem";
+            this.saveThisSearchMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
+            this.saveThisSearchMenuItem.Size = new System.Drawing.Size(206, 22);
+            this.saveThisSearchMenuItem.Text = "Save this search...";
+            this.saveThisSearchMenuItem.Click += new System.EventHandler(this.SaveThisSearchMenuItem_Click);
+            // 
+            // savedSearchesSeparator
+            // 
+            this.savedSearchesSeparator.Name = "savedSearchesSeparator";
+            this.savedSearchesSeparator.Size = new System.Drawing.Size(203, 6);
+            this.savedSearchesSeparator.Visible = false;
             // 
             // fileTypeImages
             // 
@@ -803,9 +838,7 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripButton playAllButton;
         private System.Windows.Forms.ToolStripButton shuffleAllButton;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripButton homeButton;
-        private System.Windows.Forms.ToolStripTextBox searchBox;
         private System.Windows.Forms.ToolStripMenuItem aboutMainMenuItem;
         private System.Windows.Forms.ImageList fileTypeImages;
         private System.Windows.Forms.ToolStripSplitButton favoriteFilesDropDown;
@@ -860,5 +893,11 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem editPeopleMainMenuItem;
         private System.Windows.Forms.ColumnHeader pathColumn;
         private System.Windows.Forms.ToolStripMenuItem editTagRulesMainMenuItem;
+        private System.Windows.Forms.ToolStripTextBox searchBox;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
+        private System.Windows.Forms.ToolStripMenuItem savedSearchesMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveThisSearchMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripSeparator savedSearchesSeparator;
     }
 }

@@ -147,6 +147,10 @@ namespace MediaLibrary.Storage
             this.QueryIndex(
                 async conn => (await conn.QueryAsync<Person>(Person.Queries.AddPerson, new { Name = name }).ConfigureAwait(false)).Single());
 
+        public Task<SavedSearch> AddSavedSearch(string name, string query) =>
+            this.QueryIndex(
+                async conn => (await conn.QueryAsync<SavedSearch>(SavedSearch.Queries.AddSavedSearch, new { Name = name, Query = query }).ConfigureAwait(false)).Single());
+
         public void Dispose()
         {
             lock (this.fileSystemWatchers)
@@ -177,6 +181,10 @@ namespace MediaLibrary.Storage
                 var reader = await conn.QueryMultipleAsync(Person.Queries.GetAllPeople).ConfigureAwait(false);
                 return (await this.ReadPeople(reader).ConfigureAwait(false)).ToList();
             });
+
+        public Task<List<SavedSearch>> GetAllSavedSearches() =>
+            this.QueryIndex(async conn =>
+                (await conn.QueryAsync<SavedSearch>(SavedSearch.Queries.GetSavedSearches).ConfigureAwait(false)).ToList());
 
         public Task<string> GetAllTagRules() =>
             this.QueryIndex(async conn =>
@@ -727,6 +735,14 @@ namespace MediaLibrary.Storage
                     PRIMARY KEY (Hash, PersonId),
                     FOREIGN KEY (Hash) REFERENCES HashInfo (Hash) ON DELETE CASCADE,
                     FOREIGN KEY (PersonId) REFERENCES Person (PersonId) ON DELETE CASCADE
+                );
+
+                CREATE TABLE IF NOT EXISTS SavedSearch
+                (
+                    SearchId integer NOT NULL,
+                    Name text NOT NULL,
+                    Query text NOT NULL,
+                    PRIMARY KEY (SearchId)
                 );
             ";
 
