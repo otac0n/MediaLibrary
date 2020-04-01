@@ -48,11 +48,6 @@ namespace MediaLibrary
             this.index.HashPersonAdded += this.Index_HashPersonAdded;
             this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
             this.ApplySettings();
-            this.TrackTaskProgress(async progress =>
-            {
-                await this.index.Initialize().ConfigureAwait(false);
-                await index.Rescan(progress).ConfigureAwait(true);
-            });
         }
 
         private static bool CanDrop(DragEventArgs e) =>
@@ -199,6 +194,7 @@ namespace MediaLibrary
             }
 
             this.listView.BeginUpdate();
+
             var displayIndex = 0;
             foreach (var desc in columnsDesc)
             {
@@ -217,6 +213,7 @@ namespace MediaLibrary
                     }
                 }
             }
+
             this.listView.EndUpdate();
 
             void ColumnsChanged(IEnumerable<ColumnHeader> headers)
@@ -454,6 +451,16 @@ namespace MediaLibrary
             e.Effect = CanDrop(e)
                 ? DragDropEffects.Link
                 : DragDropEffects.None;
+        }
+
+        private async void MainForm_Load(object sender, EventArgs e)
+        {
+            await this.index.Initialize().ConfigureAwait(true);
+
+            this.TrackTaskProgress(async progress =>
+            {
+                await this.index.Rescan(progress).ConfigureAwait(true);
+            });
         }
 
         private void OpenSlideshow(bool shuffle = false, bool autoPlay = false)
