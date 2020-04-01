@@ -28,20 +28,10 @@ namespace MediaLibrary
         /// </summary>
         private void InitializeComponent()
         {
-            this.personSearchBox = new MediaLibrary.PersonSearchBox();
             this.addButton = new System.Windows.Forms.Button();
             this.existingPeople = new System.Windows.Forms.FlowLayoutPanel();
+            this.personSearchBox = new MediaLibrary.PersonSearchBox();
             this.SuspendLayout();
-            // 
-            // personSearchBox
-            // 
-            this.personSearchBox.Location = new System.Drawing.Point(12, 14);
-            this.personSearchBox.Name = "personSearchBox";
-            this.personSearchBox.People = null;
-            this.personSearchBox.Text = "";
-            this.personSearchBox.SelectedPerson = null;
-            this.personSearchBox.Size = new System.Drawing.Size(247, 21);
-            this.personSearchBox.TabIndex = 3;
             // 
             // addButton
             // 
@@ -64,6 +54,18 @@ namespace MediaLibrary
             this.existingPeople.Name = "existingPeople";
             this.existingPeople.Size = new System.Drawing.Size(328, 66);
             this.existingPeople.TabIndex = 2;
+            // 
+            // personSearchBox
+            // 
+            this.personSearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.personSearchBox.Location = new System.Drawing.Point(12, 14);
+            this.personSearchBox.Name = "personSearchBox";
+            this.personSearchBox.SelectedPerson = null;
+            this.personSearchBox.Size = new System.Drawing.Size(247, 21);
+            this.personSearchBox.TabIndex = 0;
+            this.personSearchBox.SelectedPersonChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
+            this.personSearchBox.TextUpdate += new System.EventHandler(this.PersonSearchBox_TextUpdate);
+            this.personSearchBox.TextChanged += new System.EventHandler(this.PersonSearchBox_TextChanged);
             // 
             // AddPeopleForm
             // 

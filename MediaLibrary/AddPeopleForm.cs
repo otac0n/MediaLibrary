@@ -41,7 +41,7 @@ namespace MediaLibrary
             }
             else
             {
-                this.personSearchBox.Text = string.Empty;
+                this.personSearchBox.SelectedPerson = null;
                 this.personSearchBox.Focus();
             }
 
@@ -92,6 +92,21 @@ namespace MediaLibrary
             }
         }
 
+        private void PersonSearchBox_SelectedPersonChanged(object sender, EventArgs e)
+        {
+            this.UpdateTitle();
+        }
+
+        private void PersonSearchBox_TextChanged(object sender, EventArgs e)
+        {
+            this.UpdateTitle();
+        }
+
+        private void PersonSearchBox_TextUpdate(object sender, EventArgs e)
+        {
+            this.UpdateTitle();
+        }
+
         private void PopulateExistingPeople()
         {
             var people = new Dictionary<int, Person>();
@@ -111,9 +126,18 @@ namespace MediaLibrary
         private async void PopulatePeopleCombo()
         {
             var people = await this.index.GetAllPeople().ConfigureAwait(true);
-            var text = this.personSearchBox.Text;
             this.personSearchBox.People = people;
-            this.personSearchBox.Text = text;
+        }
+
+        private void UpdateTitle()
+        {
+            var person = this.personSearchBox.SelectedPerson;
+            var text = this.personSearchBox.Text;
+            this.Text =
+                person != null ? $"Add Person: {person} (ID: {person.PersonId})" :
+                !string.IsNullOrEmpty(text) ? $"Add Person: {text} (Create)" :
+                "Add People";
+            System.Diagnostics.Debug.WriteLine($"Updated Title: '{this.Text}'");
         }
     }
 }
