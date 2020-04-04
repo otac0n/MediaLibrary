@@ -790,7 +790,6 @@ namespace MediaLibrary
             this.preview.Dock = System.Windows.Forms.DockStyle.Fill;
             this.preview.Location = new System.Drawing.Point(0, 0);
             this.preview.Name = "preview";
-            this.preview.PreviewItem = null;
             this.preview.Size = new System.Drawing.Size(334, 379);
             this.preview.TabIndex = 5;
             // 

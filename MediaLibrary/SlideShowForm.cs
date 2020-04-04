@@ -267,7 +267,7 @@ namespace MediaLibrary
         private void UpdatePreview()
         {
             this.advanceOnNextStop = false;
-            this.preview.PreviewItem = this.Current;
+            this.preview.PreviewItems = new[] { this.Current };
             this.favoriteButton.Enabled = this.Current != null;
             this.favoriteButton.Checked = this.Current?.Tags?.Contains("favorite") ?? false;
         }

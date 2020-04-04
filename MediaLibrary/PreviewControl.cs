@@ -3,6 +3,8 @@
 namespace MediaLibrary
 {
     using System;
+    using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.ComponentModel;
     using System.IO;
     using System.Linq;
@@ -11,7 +13,8 @@ namespace MediaLibrary
 
     public partial class PreviewControl : UserControl
     {
-        private SearchResult previewItem;
+        private SearchResult displayedItem;
+        private ImmutableList<SearchResult> previewItems;
 
         public PreviewControl()
         {
@@ -32,17 +35,14 @@ namespace MediaLibrary
         public event EventHandler Stopped;
 
         [Category("Data")]
-        public SearchResult PreviewItem
+        public IList<SearchResult> PreviewItems
         {
-            get => this.previewItem;
+            get => this.previewItems;
 
             set
             {
-                if (!object.ReferenceEquals(this.previewItem, value))
-                {
-                    this.previewItem = value;
-                    this.UpdatePreview();
-                }
+                this.previewItems = value?.ToImmutableList() ?? ImmutableList<SearchResult>.Empty;
+                this.UpdatePreview();
             }
         }
 
@@ -94,31 +94,36 @@ namespace MediaLibrary
 
         private void UpdatePreview()
         {
-            var item = this.previewItem;
-            var url = !this.Visible || item == null
-                ? null
-                : (from p in this.previewItem.Paths
-                   where File.Exists(p)
-                   select p).FirstOrDefault();
-            if (this.previewItem == null || IsImage(this.previewItem))
+            var item = this.previewItems?.Count == 1 ? this.previewItems.Single() : null;
+            if (!object.ReferenceEquals(item, this.displayedItem))
             {
-                this.mediaPlayer.URL = null;
-                this.mediaPlayer.Visible = false;
-                this.thumbnail.ImageLocation = url;
-                this.thumbnail.Visible = url != null;
-            }
-            else
-            {
-                this.thumbnail.ImageLocation = null;
-                this.thumbnail.Visible = false;
-                this.mediaPlayer.URL = url;
-                var wasVisible = this.mediaPlayer.Visible;
-                this.mediaPlayer.Visible = url != null;
-                if (this.mediaPlayer.Visible && !wasVisible)
+                this.displayedItem = item;
+
+                var url = !this.Visible || item == null
+                    ? null
+                    : (from p in item.Paths
+                       where File.Exists(p)
+                       select p).FirstOrDefault();
+                if (item == null || IsImage(item))
                 {
-                    this.mediaPlayer.Dock = DockStyle.None;
-                    this.mediaPlayer.Dock = DockStyle.Fill;
-                    this.ResetMediaPlayer();
+                    this.mediaPlayer.URL = null;
+                    this.mediaPlayer.Visible = false;
+                    this.thumbnail.ImageLocation = url;
+                    this.thumbnail.Visible = url != null;
+                }
+                else
+                {
+                    this.thumbnail.ImageLocation = null;
+                    this.thumbnail.Visible = false;
+                    this.mediaPlayer.URL = url;
+                    var wasVisible = this.mediaPlayer.Visible;
+                    this.mediaPlayer.Visible = url != null;
+                    if (this.mediaPlayer.Visible && !wasVisible)
+                    {
+                        this.mediaPlayer.Dock = DockStyle.None;
+                        this.mediaPlayer.Dock = DockStyle.Fill;
+                        this.ResetMediaPlayer();
+                    }
                 }
             }
         }

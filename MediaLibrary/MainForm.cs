@@ -649,9 +649,7 @@ namespace MediaLibrary
 
         private void UpdatePreview()
         {
-            this.preview.PreviewItem = this.listView.SelectedItems.Count == 1
-                ? (SearchResult)this.listView.SelectedItems.Cast<ListViewItem>().Single().Tag
-                : null;
+            this.preview.PreviewItems = this.listView.SelectedItems.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
         }
 
         private void UpdateProgress()
