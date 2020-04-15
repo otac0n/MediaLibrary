@@ -82,7 +82,7 @@ namespace MediaLibrary
         private static bool IsCopyFileName(string sourceName, string copyName)
         {
             var copyPrefixes = new Regex(@"\G(?:Copy of )");
-            var copySuffixes = new Regex(@"\G(?:\(Copy\)|\s|.temp|.tmp)");
+            var copySuffixes = new Regex(@"\G(?:\(Copy\)|-\s?Copy|\s|.temp|.tmp)");
             var valueSuffix = new Regex(@"\G\((?<value>\d)\)");
 
             bool IsCopyFileName(int sourceIndex = 0, int copyIndex = 0)
@@ -138,7 +138,6 @@ namespace MediaLibrary
             if (this.running)
             {
                 this.cancel.Cancel();
-                this.Hide();
             }
 
             this.Hide();
@@ -270,6 +269,7 @@ namespace MediaLibrary
             this.SetRunning(true);
 
             var allGroups = this.duplicatesList.Groups.Cast<ListViewGroup>().ToList();
+            var anyRemoved = false;
             for (var g = 0; g < allGroups.Count; g++)
             {
                 if (this.cancel.IsCancellationRequested)
@@ -300,6 +300,7 @@ namespace MediaLibrary
 
                 if (toKeep.Count > 0)
                 {
+                    anyRemoved = true;
                     progressBytes += toRemove.Count * result.FileSize;
                     this.progressBar.Value = totalBytes != 0
                         ? (int)(progressBytes * this.progressBar.Maximum / totalBytes)
@@ -347,6 +348,11 @@ namespace MediaLibrary
             }
 
             this.SetRunning(false);
+
+            if (!anyRemoved)
+            {
+                this.Hide();
+            }
         }
 
         private async Task<bool> SafeDelete(string expectedHash, List<string> keep, List<string> remove)
