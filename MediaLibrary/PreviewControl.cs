@@ -95,16 +95,16 @@ namespace MediaLibrary
         private void UpdatePreview()
         {
             var item = this.previewItems?.Count == 1 ? this.previewItems.Single() : null;
-            if (!object.ReferenceEquals(item, this.displayedItem))
+            var displayedItem = this.Visible ? item : null;
+            if (!object.ReferenceEquals(displayedItem, this.displayedItem))
             {
-                this.displayedItem = item;
-
-                var url = !this.Visible || item == null
+                this.displayedItem = displayedItem;
+                var url = displayedItem == null
                     ? null
-                    : (from p in item.Paths
+                    : (from p in displayedItem.Paths
                        where File.Exists(p)
                        select p).FirstOrDefault();
-                if (item == null || IsImage(item))
+                if (url == null || IsImage(item))
                 {
                     this.mediaPlayer.URL = null;
                     this.mediaPlayer.Visible = false;
