@@ -30,9 +30,9 @@
         {
             this.personName = new System.Windows.Forms.Label();
             this.deleteButton = new System.Windows.Forms.PictureBox();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.personPicture = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.deleteButton)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.personPicture)).BeginInit();
             this.SuspendLayout();
             // 
             // personName
@@ -65,20 +65,20 @@
             this.deleteButton.TabStop = false;
             this.deleteButton.Click += new System.EventHandler(this.DeleteButton_Click);
             // 
-            // pictureBox1
+            // personPicture
             // 
-            this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Left;
-            this.pictureBox1.Image = global::MediaLibrary.Properties.Resources.single_neutral;
-            this.pictureBox1.Location = new System.Drawing.Point(0, 0);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(20, 13);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
-            this.pictureBox1.Click += new System.EventHandler(this.Person_Click);
-            this.pictureBox1.DoubleClick += new System.EventHandler(this.Person_DoubleClick);
-            this.pictureBox1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Person_MouseClick);
-            this.pictureBox1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.Person_MouseDoubleClick);
+            this.personPicture.Dock = System.Windows.Forms.DockStyle.Left;
+            this.personPicture.Image = global::MediaLibrary.Properties.Resources.single_neutral;
+            this.personPicture.Location = new System.Drawing.Point(0, 0);
+            this.personPicture.Name = "personPicture";
+            this.personPicture.Size = new System.Drawing.Size(20, 13);
+            this.personPicture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.personPicture.TabIndex = 0;
+            this.personPicture.TabStop = false;
+            this.personPicture.Click += new System.EventHandler(this.Person_Click);
+            this.personPicture.DoubleClick += new System.EventHandler(this.Person_DoubleClick);
+            this.personPicture.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Person_MouseClick);
+            this.personPicture.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.Person_MouseDoubleClick);
             // 
             // PersonControl
             // 
@@ -89,11 +89,11 @@
             this.BackColor = System.Drawing.SystemColors.Info;
             this.Controls.Add(this.personName);
             this.Controls.Add(this.deleteButton);
-            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.personPicture);
             this.Name = "PersonControl";
             this.Size = new System.Drawing.Size(53, 13);
             ((System.ComponentModel.ISupportInitialize)(this.deleteButton)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.personPicture)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -101,7 +101,7 @@
 
         #endregion
 
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox personPicture;
         private System.Windows.Forms.Label personName;
         private System.Windows.Forms.PictureBox deleteButton;
     }

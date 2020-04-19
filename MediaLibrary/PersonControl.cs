@@ -5,11 +5,14 @@ namespace MediaLibrary
     using System;
     using System.ComponentModel;
     using System.Drawing;
+    using System.Threading;
     using System.Windows.Forms;
     using MediaLibrary.Storage;
 
     public partial class PersonControl : UserControl
     {
+        private Alias alias;
+        private int iconVersion;
         private bool indeterminate;
         private Person person;
 
@@ -19,6 +22,33 @@ namespace MediaLibrary
         }
 
         public event EventHandler DeleteClick;
+
+        [SettingsBindable(true)]
+        [Browsable(true)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        public Alias Alias
+        {
+            get
+            {
+                return this.alias;
+            }
+
+            set
+            {
+                this.alias = value;
+                if (value != null)
+                {
+                    this.person = null;
+                    this.personName.Text = value.Name;
+                    this.UpdateIcon(value.Site);
+                }
+                else if (this.person == null)
+                {
+                    this.personName.Text = "?";
+                }
+            }
+        }
 
         [DefaultValue(true)]
         [SettingsBindable(true)]
@@ -56,7 +86,6 @@ namespace MediaLibrary
             }
         }
 
-        /// <inheritdoc/>
         [SettingsBindable(true)]
         [Browsable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
@@ -73,9 +102,11 @@ namespace MediaLibrary
                 this.person = value;
                 if (value != null)
                 {
+                    this.alias = null;
                     this.personName.Text = value.Name;
+                    this.UpdateIcon(null);
                 }
-                else
+                else if (this.alias == null)
                 {
                     this.personName.Text = "?";
                 }
@@ -105,6 +136,23 @@ namespace MediaLibrary
         private void Person_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             this.OnMouseDoubleClick(e);
+        }
+
+        private async void UpdateIcon(string site)
+        {
+            var version = Interlocked.Increment(ref this.iconVersion);
+            this.personPicture.Image = Properties.Resources.single_neutral;
+            if (site != null)
+            {
+                var favicon = await FaviconCache.GetFavicon(new UriBuilder("http", site).Uri).ConfigureAwait(true);
+                if (favicon != null)
+                {
+                    if (this.iconVersion == version)
+                    {
+                        this.personPicture.Image = favicon;
+                    }
+                }
+            }
         }
     }
 }

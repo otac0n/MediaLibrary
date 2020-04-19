@@ -305,7 +305,7 @@ namespace MediaLibrary
                 {
                     var aliasControl = new PersonControl
                     {
-                        Person = new Person(alias.PersonId, alias.Name), // Fake person, because the person control doesn't support displaying an alias.
+                        Alias = alias,
                         AllowDelete = true,
                         Tag = alias,
                     };
