@@ -17,12 +17,13 @@ namespace MediaLibrary
         {
             if (@this.InvokeRequired)
             {
-                if (@this is Control control && control.IsDisposed)
+                try
                 {
-                    return;
+                    @this.Invoke(action, Array.Empty<object>());
                 }
-
-                @this.Invoke(action, Array.Empty<object>());
+                catch (ObjectDisposedException)
+                {
+                }
             }
             else
             {
