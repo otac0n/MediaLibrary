@@ -189,7 +189,7 @@ namespace MediaLibrary
                 }
                 else
                 {
-                    node = new TreeNode(Path.GetFileName(key = group.Key)) { ImageKey = "folder-empty", SelectedImageKey = "folder-empty" };
+                    node = new TreeNode(Path.GetFileName(key = group.Key)) { ImageKey = "folder-none", SelectedImageKey = "folder-none" };
                     foreach (var item in items.OrderBy(i => i.Node.Nodes.Count == 0).ThenBy(i => i.Node.Text))
                     {
                         queue.Remove(item);
