@@ -61,7 +61,14 @@ namespace MediaLibrary.Storage.Search
 
                     if (int.TryParse(field.Value, out var personId))
                     {
-                        return $"EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash AND p.PersonId = {personId})";
+                        if (personId == 0)
+                        {
+                            return $"NOT EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash)";
+                        }
+                        else
+                        {
+                            return $"EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash AND p.PersonId = {personId})";
+                        }
                     }
                     else
                     {
