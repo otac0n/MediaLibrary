@@ -330,10 +330,10 @@ namespace MediaLibrary.Storage
             await Task.WhenAll(tasks);
         }
 
-        public async Task<List<SearchResult>> SearchIndex(string query)
+        public async Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
         {
             var term = new SearchGrammar().Parse(query);
-            var dialect = new SearchDialect(this.TagEngine);
+            var dialect = new SearchDialect(this.TagEngine, excludeHidden);
             var sqlQuery = dialect.Compile(term);
 
             using (await this.dbLock.LockAsync().ConfigureAwait(false))

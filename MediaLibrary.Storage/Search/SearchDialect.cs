@@ -12,12 +12,13 @@ namespace MediaLibrary.Storage.Search
     {
         private readonly TagRuleEngine tagEngine;
         private int depth = 0;
-        private bool excludeHidden = true;
+        private bool excludeHidden;
         private bool joinCopies = false;
 
-        public SearchDialect(TagRuleEngine tagEngine)
+        public SearchDialect(TagRuleEngine tagEngine, bool excludeHidden = true)
         {
             this.tagEngine = tagEngine;
+            this.excludeHidden = excludeHidden;
         }
 
         /// <inheritdoc/>

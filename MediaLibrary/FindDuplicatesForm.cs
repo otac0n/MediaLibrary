@@ -157,7 +157,7 @@ namespace MediaLibrary
 
         private async void FindDuplicatesForm_Load(object sender, System.EventArgs e)
         {
-            var results = await this.index.SearchIndex("copies>1").ConfigureAwait(true);
+            var results = await this.index.SearchIndex("copies>1", excludeHidden: false).ConfigureAwait(true);
 
             this.duplicatesList.ItemChecked -= this.DuplicatesList_ItemChecked;
             this.duplicatesList.BeginUpdate();
