@@ -144,7 +144,17 @@ namespace MediaLibrary
             this.personPicture.Image = Properties.Resources.single_neutral;
             if (site != null)
             {
-                var favicon = await FaviconCache.GetFavicon(new UriBuilder("http", site).Uri).ConfigureAwait(true);
+                Image favicon;
+
+                try
+                {
+                    favicon = await FaviconCache.GetFavicon(new UriBuilder("http", site).Uri).ConfigureAwait(true);
+                }
+                catch
+                {
+                    favicon = null;
+                }
+
                 if (favicon != null)
                 {
                     if (this.iconVersion == version)
