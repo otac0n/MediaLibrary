@@ -18,7 +18,6 @@ namespace MediaLibrary.Storage
     using Dapper;
     using MediaLibrary.Storage.Search;
     using MediaLibrary.Tagging;
-    using NeoSmart.AsyncLock;
 
     public class MediaIndex : IDisposable
     {
@@ -28,7 +27,7 @@ namespace MediaLibrary.Storage
         private readonly WeakReferenceCache<long, Person> personCache = new WeakReferenceCache<long, Person>();
         private readonly WeakReferenceCache<string, SearchResult> searchResultsCache = new WeakReferenceCache<string, SearchResult>();
         private readonly TagRulesGrammar tagRuleGrammar;
-        private AsyncLock dbLock = new AsyncLock();
+        private ReaderWriterLockSlim dbLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
         private Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
 
         public MediaIndex(string indexPath)
@@ -88,8 +87,7 @@ namespace MediaLibrary.Storage
         }
 
         public Task<Alias> AddAlias(Alias alias) =>
-            this.QueryIndex(
-                async conn => (await conn.QueryAsync<Alias>(Alias.Queries.AddAlias, alias).ConfigureAwait(false)).Single());
+            this.IndexUpdate(conn => conn.Query<Alias>(Alias.Queries.AddAlias, alias).Single());
 
         public async Task AddHashPerson(HashPerson hashPerson)
         {
@@ -98,7 +96,7 @@ namespace MediaLibrary.Storage
                 throw new ArgumentNullException(nameof(hashPerson));
             }
 
-            await this.UpdateIndex(HashPerson.Queries.AddHashPerson, hashPerson).ConfigureAwait(false);
+            await this.IndexWrite(conn => conn.Execute(HashPerson.Queries.AddHashPerson, hashPerson)).ConfigureAwait(false);
 
             var hash = hashPerson.Hash;
             var personId = hashPerson.PersonId;
@@ -124,7 +122,7 @@ namespace MediaLibrary.Storage
                 throw new ArgumentNullException(nameof(hashTag));
             }
 
-            await this.UpdateIndex(HashTag.Queries.AddHashTag, hashTag).ConfigureAwait(false);
+            await this.IndexWrite(conn => conn.Execute(HashTag.Queries.AddHashTag, hashTag)).ConfigureAwait(false);
 
             var hash = hashTag.Hash;
             if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && !searchResult.Tags.Contains(hashTag.Tag))
@@ -138,18 +136,16 @@ namespace MediaLibrary.Storage
 
         public async Task AddIndexedPath(string path, IProgress<RescanProgress> progress = null)
         {
-            await this.UpdateIndex(Queries.AddIndexedPath, new { Path = path }).ConfigureAwait(false);
+            await this.IndexWrite(conn => conn.Execute(Queries.AddIndexedPath, new { Path = path })).ConfigureAwait(false);
             await this.RescanIndexedPath(path, progress).ConfigureAwait(false);
             this.AddFileSystemWatcher(path);
         }
 
         public Task<Person> AddPerson(string name) =>
-            this.QueryIndex(
-                async conn => (await conn.QueryAsync<Person>(Person.Queries.AddPerson, new { Name = name }).ConfigureAwait(false)).Single());
+            this.IndexUpdate(conn => conn.Query<Person>(Person.Queries.AddPerson, new { Name = name }).Single());
 
         public Task<SavedSearch> AddSavedSearch(string name, string query) =>
-            this.QueryIndex(
-                async conn => (await conn.QueryAsync<SavedSearch>(SavedSearch.Queries.AddSavedSearch, new { Name = name, Query = query }).ConfigureAwait(false)).Single());
+            this.IndexUpdate(conn => conn.Query<SavedSearch>(SavedSearch.Queries.AddSavedSearch, new { Name = name, Query = query }).Single());
 
         public void Dispose()
         {
@@ -164,35 +160,31 @@ namespace MediaLibrary.Storage
         }
 
         public Task<List<Alias>> GetAliases(int personId) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<Alias>(Alias.Queries.GetAliasesByPersonId, new { PersonId = personId }).ConfigureAwait(false)).ToList());
+            this.IndexRead(conn =>
+                conn.Query<Alias>(Alias.Queries.GetAliasesByPersonId, new { PersonId = personId }).ToList());
 
         public Task<List<Alias>> GetAllAliasesForSite(string site, string name) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<Alias>(Alias.Queries.GetAliasesBySiteAndName, new { Name = name, Site = site }).ConfigureAwait(false)).ToList());
+            this.IndexRead(conn =>
+                conn.Query<Alias>(Alias.Queries.GetAliasesBySiteAndName, new { Name = name, Site = site }).ToList());
 
         public Task<List<Alias>> GetAllAliasesForSite(string site) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<Alias>(Alias.Queries.GetAliasesBySite, new { Site = site }).ConfigureAwait(false)).ToList());
+            this.IndexRead(conn =>
+                conn.Query<Alias>(Alias.Queries.GetAliasesBySite, new { Site = site }).ToList());
 
         public Task<List<Person>> GetAllPeople() =>
-            this.QueryIndex(async conn =>
-            {
-                var reader = await conn.QueryMultipleAsync(Person.Queries.GetAllPeople).ConfigureAwait(false);
-                return (await this.ReadPeople(reader).ConfigureAwait(false)).ToList();
-            });
+            this.IndexRead(conn => this.ReadPeople(conn.QueryMultiple(Person.Queries.GetAllPeople)).ToList());
 
         public Task<List<SavedSearch>> GetAllSavedSearches() =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<SavedSearch>(SavedSearch.Queries.GetSavedSearches).ConfigureAwait(false)).ToList());
+            this.IndexRead(conn =>
+                conn.Query<SavedSearch>(SavedSearch.Queries.GetSavedSearches).ToList());
 
         public Task<string> GetAllTagRules() =>
-            this.QueryIndex(async conn =>
-                string.Join(Environment.NewLine, await conn.QueryAsync<string>(Queries.GetAllTagRules).ConfigureAwait(false)));
+            this.IndexRead(conn =>
+                string.Join(Environment.NewLine, conn.Query<string>(Queries.GetAllTagRules)));
 
         public Task<List<string>> GetAllTags() =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<string>(HashTag.Queries.GetAllTags).ConfigureAwait(false)).ToList());
+            this.IndexRead(conn =>
+                conn.Query<string>(HashTag.Queries.GetAllTags).ToList());
 
         public async Task<SQLiteConnection> GetConnection(bool readOnly = false)
         {
@@ -222,23 +214,23 @@ namespace MediaLibrary.Storage
         }
 
         public Task<List<HashTag>> GetHashTags(string hash) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<HashTag>(HashTag.Queries.GetHashTags, new { Hash = hash }).ConfigureAwait(false)).ToList());
+            this.IndexRead(conn =>
+                conn.Query<HashTag>(HashTag.Queries.GetHashTags, new { Hash = hash }).ToList());
 
         public Task<Person> GetPersonById(int personId) =>
-            this.QueryIndex(async conn =>
+            this.IndexRead(conn =>
             {
-                var reader = await conn.QueryMultipleAsync(Person.Queries.GetPersonById, new { PersonId = personId }).ConfigureAwait(false);
-                return (await this.ReadPeople(reader).ConfigureAwait(false)).SingleOrDefault();
+                var reader = conn.QueryMultiple(Person.Queries.GetPersonById, new { PersonId = personId });
+                return this.ReadPeople(reader).SingleOrDefault();
             });
 
         public Task<List<HashTag>> GetRejectedTags(string hash) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<HashTag>(HashTag.Queries.GetRejectedTags, new { Hash = hash }).ConfigureAwait(false)).ToList());
+            this.IndexRead(conn =>
+                conn.Query<HashTag>(HashTag.Queries.GetRejectedTags, new { Hash = hash }).ToList());
 
         public async Task Initialize()
         {
-            await this.UpdateIndex(Queries.CreateSchema).ConfigureAwait(false);
+            await this.IndexWrite(conn => conn.Execute(Queries.CreateSchema)).ConfigureAwait(false);
             this.TagEngine = new TagRuleEngine(this.tagRuleGrammar.Parse(await this.GetAllTagRules().ConfigureAwait(false)));
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
             lock (this.fileSystemWatchers)
@@ -250,11 +242,9 @@ namespace MediaLibrary.Storage
             }
         }
 
-        public async Task RemoveAlias(Alias alias) =>
-            await this.UpdateIndex(Alias.Queries.RemoveAlias, alias).ConfigureAwait(false);
+        public Task RemoveAlias(Alias alias) => this.IndexWrite(conn => conn.Execute(Alias.Queries.RemoveAlias, alias));
 
-        public async Task RemoveFilePath(string path) =>
-            await this.UpdateIndex(FilePath.Queries.RemoveFilePathByPath, new { Path = path }).ConfigureAwait(false);
+        public Task RemoveFilePath(string path) => this.IndexWrite(conn => conn.Execute(FilePath.Queries.RemoveFilePathByPath, new { Path = path }));
 
         public async Task RemoveHashPerson(HashPerson hashPerson)
         {
@@ -263,7 +253,7 @@ namespace MediaLibrary.Storage
                 throw new ArgumentNullException(nameof(hashPerson));
             }
 
-            await this.UpdateIndex(HashPerson.Queries.RemoveHashPerson, hashPerson).ConfigureAwait(false);
+            await this.IndexWrite(conn => conn.Execute(HashPerson.Queries.RemoveHashPerson, hashPerson)).ConfigureAwait(false);
 
             var hash = hashPerson.Hash;
             if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.People.FirstOrDefault(p => p.PersonId == hashPerson.PersonId) is Person person)
@@ -282,7 +272,7 @@ namespace MediaLibrary.Storage
                 throw new ArgumentNullException(nameof(hashTag));
             }
 
-            await this.UpdateIndex(rejectTag ? HashTag.Queries.RejectHashTag : HashTag.Queries.RemoveHashTag, hashTag).ConfigureAwait(false);
+            await this.IndexWrite(conn => conn.Execute(rejectTag ? HashTag.Queries.RejectHashTag : HashTag.Queries.RemoveHashTag, hashTag)).ConfigureAwait(false);
 
             var hash = hashTag.Hash;
             if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.Tags.Contains(hashTag.Tag))
@@ -297,7 +287,7 @@ namespace MediaLibrary.Storage
         public async Task RemoveIndexedPath(string path)
         {
             this.RemoveFileSystemWatcher(path);
-            await this.UpdateIndex(Queries.RemoveIndexedPath, new { Path = path }).ConfigureAwait(false);
+            await this.IndexWrite(conn => conn.Execute(Queries.RemoveIndexedPath, new { Path = path })).ConfigureAwait(false);
         }
 
         public async Task Rescan(IProgress<RescanProgress> progress = null)
@@ -336,16 +326,27 @@ namespace MediaLibrary.Storage
             var dialect = new SearchDialect(this.TagEngine, excludeHidden);
             var sqlQuery = dialect.Compile(term);
 
-            using (await this.dbLock.LockAsync().ConfigureAwait(false))
-            using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
+            using (var conn = await this.GetConnection().ConfigureAwait(false))
             {
-                var reader = await conn.QueryMultipleAsync(sqlQuery).ConfigureAwait(false);
-                var tags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
-                var fileNames = (await reader.ReadAsync<FilePath>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.LastHash);
-                var people = (await this.ReadPeople(reader).ConfigureAwait(false)).ToDictionary(p => p.PersonId);
-
-                var hashPeople = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
-                var hashes = (await reader.ReadAsync<HashInfo>(buffered: false).ConfigureAwait(false)).ToList();
+                ILookup<string, HashTag> tags;
+                ILookup<string, FilePath> fileNames;
+                Dictionary<int, Person> people;
+                ILookup<string, HashPerson> hashPeople;
+                IList<HashInfo> hashes;
+                try
+                {
+                    this.dbLock.EnterReadLock();
+                    var reader = conn.QueryMultiple(sqlQuery);
+                    tags = reader.Read<HashTag>(buffered: false).ToLookup(f => f.Hash);
+                    fileNames = reader.Read<FilePath>(buffered: false).ToLookup(f => f.LastHash);
+                    people = this.ReadPeople(reader).ToDictionary(p => p.PersonId);
+                    hashPeople = reader.Read<HashPerson>(buffered: false).ToLookup(f => f.Hash);
+                    hashes = reader.Read<HashInfo>(buffered: false).ToList();
+                }
+                finally
+                {
+                    this.dbLock.ExitReadLock();
+                }
 
                 var results = new List<SearchResult>();
                 foreach (var hash in hashes)
@@ -385,13 +386,13 @@ namespace MediaLibrary.Storage
             }
         }
 
-        public async Task UpdatePerson(Person person) =>
-            await this.UpdateIndex(Person.Queries.UpdatePerson, new { person.PersonId, person.Name }).ConfigureAwait(false);
+        public Task UpdatePerson(Person person) =>
+            this.IndexWrite(conn => conn.Execute(Person.Queries.UpdatePerson, new { person.PersonId, person.Name }));
 
         public async Task UpdateTagRules(string rules)
         {
             var updatedEngine = new TagRuleEngine(this.tagRuleGrammar.Parse(rules));
-            await this.UpdateIndex(Queries.UdateTagRules, new { Rules = rules }).ConfigureAwait(false);
+            await this.IndexWrite(conn => conn.Execute(Queries.UdateTagRules, new { Rules = rules })).ConfigureAwait(false);
             this.TagEngine = updatedEngine;
         }
 
@@ -407,39 +408,79 @@ namespace MediaLibrary.Storage
         }
 
         private Task<FilePath> GetFilePath(string path) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<FilePath>(FilePath.Queries.GetFilePathByPath, new { Path = path }).ConfigureAwait(false)).SingleOrDefault());
+            this.IndexRead(conn =>
+                conn.Query<FilePath>(FilePath.Queries.GetFilePathByPath, new { Path = path }).SingleOrDefault());
 
         private Task<FilePath> GetFilePaths(string hash) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<FilePath>(FilePath.Queries.GetFilePathsByHash, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault());
+            this.IndexRead(conn =>
+                conn.Query<FilePath>(FilePath.Queries.GetFilePathsByHash, new { Hash = hash }).SingleOrDefault());
 
         private Task<List<FilePath>> GetFilePathsUnder(string path) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<FilePath>(FilePath.Queries.GetFilePathsUnder, new { Path = QueryBuilder.EscapeLike(path) }).ConfigureAwait(false)).ToList());
+            this.IndexRead(conn =>
+                conn.Query<FilePath>(FilePath.Queries.GetFilePathsUnder, new { Path = QueryBuilder.EscapeLike(path) }).ToList());
 
         private Task<HashInfo> GetHashInfo(string hash) =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<HashInfo>(HashInfo.Queries.GetHashInfo, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault());
+            this.IndexRead(conn =>
+                conn.Query<HashInfo>(HashInfo.Queries.GetHashInfo, new { Hash = hash }).SingleOrDefault());
 
         private Task<List<string>> GetIndexedPaths() =>
-            this.QueryIndex(async conn =>
-                (await conn.QueryAsync<string>(Queries.GetIndexedPaths).ConfigureAwait(false)).ToList());
+            this.IndexRead(conn =>
+                conn.Query<string>(Queries.GetIndexedPaths).ToList());
 
-        private async Task<T> QueryIndex<T>(Func<SQLiteConnection, Task<T>> query)
+        private async Task<T> IndexRead<T>(Func<SQLiteConnection, T> query)
         {
-            using (await this.dbLock.LockAsync().ConfigureAwait(false))
-            using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
+            using (var conn = await this.GetConnection(readOnly: true).ConfigureAwait(false))
             {
-                return await query(conn).ConfigureAwait(false);
+                try
+                {
+                    this.dbLock.EnterReadLock();
+                    return query(conn);
+                }
+                finally
+                {
+                    this.dbLock.ExitReadLock();
+                }
             }
         }
 
-        private async Task<IEnumerable<Person>> ReadPeople(SqlMapper.GridReader reader)
+        private async Task<T> IndexUpdate<T>(Func<SQLiteConnection, T> query)
         {
-            var aliases = (await reader.ReadAsync<Alias>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.PersonId);
+            await Task.Yield();
+            using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
+            {
+                try
+                {
+                    this.dbLock.EnterWriteLock();
+                    return query(conn);
+                }
+                finally
+                {
+                    this.dbLock.ExitWriteLock();
+                }
+            }
+        }
 
-            return (await reader.ReadAsync<Person>(buffered: false).ConfigureAwait(false)).Select(f =>
+        private async Task IndexWrite(Action<SQLiteConnection> query)
+        {
+            using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
+            {
+                try
+                {
+                    this.dbLock.EnterWriteLock();
+                    query(conn);
+                }
+                finally
+                {
+                    this.dbLock.ExitWriteLock();
+                }
+            }
+        }
+
+        private IEnumerable<Person> ReadPeople(SqlMapper.GridReader reader)
+        {
+            var aliases = reader.Read<Alias>(buffered: false).ToLookup(f => f.PersonId);
+
+            return reader.Read<Person>(buffered: false).Select(f =>
             {
                 var updatedAliases = aliases[f.PersonId].ToImmutableHashSet();
                 void UpdatePerson(Person person)
@@ -497,14 +538,14 @@ namespace MediaLibrary.Storage
                 if (hashInfo == null)
                 {
                     hashInfo = await HashFileAsync(path).ConfigureAwait(false);
-                    await this.UpdateIndex(HashInfo.Queries.AddHashInfo, hashInfo).ConfigureAwait(false);
+                    await this.IndexWrite(conn => conn.Execute(HashInfo.Queries.AddHashInfo, hashInfo)).ConfigureAwait(false);
                     filePath = new FilePath(path, hashInfo.Hash, modifiedTime, missingSince: null);
-                    await this.UpdateIndex(FilePath.Queries.AddFilePath, filePath).ConfigureAwait(false);
+                    await this.IndexWrite(conn => conn.Execute(FilePath.Queries.AddFilePath, filePath)).ConfigureAwait(false);
                 }
                 else if (filePath.MissingSince != null)
                 {
                     filePath = filePath.With(missingSince: null);
-                    await this.UpdateIndex(FilePath.Queries.AddFilePath, filePath).ConfigureAwait(false);
+                    await this.IndexWrite(conn => conn.Execute(FilePath.Queries.AddFilePath, filePath)).ConfigureAwait(false);
                 }
 
                 return hashInfo.Hash;
@@ -523,7 +564,7 @@ namespace MediaLibrary.Storage
                     }
                     else
                     {
-                        await this.UpdateIndex(FilePath.Queries.AddFilePath, filePath.With(missingSince: now)).ConfigureAwait(false);
+                        await this.IndexWrite(conn => conn.Execute(FilePath.Queries.AddFilePath, filePath.With(missingSince: now))).ConfigureAwait(false);
                     }
                 }
 
@@ -613,15 +654,6 @@ namespace MediaLibrary.Storage
             await Task.WhenAll(enumerateTask, populateTask).ConfigureAwait(false);
             await Task.WhenAll(pendingTasks).ConfigureAwait(false);
             ReportProgress(force: true);
-        }
-
-        private async Task UpdateIndex(string query, object param = null)
-        {
-            using (await this.dbLock.LockAsync().ConfigureAwait(false))
-            using (var conn = await this.GetConnection(readOnly: false).ConfigureAwait(false))
-            {
-                await conn.ExecuteAsync(query, param).ConfigureAwait(false);
-            }
         }
 
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
