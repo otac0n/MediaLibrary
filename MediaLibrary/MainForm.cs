@@ -7,7 +7,6 @@ namespace MediaLibrary
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics;
-    using System.Drawing;
     using System.IO;
     using System.Linq;
     using System.Threading;
@@ -506,12 +505,6 @@ namespace MediaLibrary
             this.OpenSlideshow();
         }
 
-        private void RemoveListItem(ListViewItem value)
-        {
-            this.items.Remove(((SearchResult)value.Tag).Hash);
-            this.listView.Items.Remove(value);
-        }
-
         private void SavedSearchMenuItem_Click(object sender, EventArgs e)
         {
             var savedSearch = (SavedSearch)((ToolStripMenuItem)sender).Tag;
@@ -561,27 +554,25 @@ namespace MediaLibrary
 
             if (this.searchVersion == searchVersion)
             {
-                var existing = this.listView.Items.Cast<ListViewItem>().ToDictionary(i => ((SearchResult)i.Tag).Hash);
                 var newHashes = new HashSet<string>(data.Select(i => i.Hash));
 
                 this.listView.BeginUpdate();
                 this.listView.ListViewItemSorter = null;
 
-                foreach (var kvp in existing)
+                for (var i = this.listView.Items.Count - 1; i >= 0; i--)
                 {
-                    if (!newHashes.Contains(kvp.Key))
+                    var item = this.listView.Items[i];
+                    var hash = ((SearchResult)item.Tag).Hash;
+                    if (!newHashes.Contains(hash))
                     {
-                        this.RemoveListItem(kvp.Value);
+                        this.items.Remove(hash);
+                        this.listView.Items.RemoveAt(i);
                     }
                 }
 
                 foreach (var item in data)
                 {
-                    if (existing.TryGetValue(item.Hash, out var existingItem))
-                    {
-                        UpdateListItem(existingItem, item);
-                    }
-                    else
+                    if (!this.items.TryGetValue(item.Hash, out var _))
                     {
                         this.listView.Items.Add(this.CreateListItem(item));
                     }
