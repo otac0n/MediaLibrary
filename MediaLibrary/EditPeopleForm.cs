@@ -234,6 +234,8 @@ namespace MediaLibrary
             var text = this.personSearchBox.Text;
             this.personSearchBox.People = this.people;
             this.personSearchBox.Text = text;
+
+            this.siteTextBox.AutoCompleteCustomSource.AddRange(await this.index.GetAllAliasSites().ConfigureAwait(true));
         }
 
         private void RefreshView()

@@ -63,6 +63,13 @@ namespace MediaLibrary.Storage
                 WHERE Name = @Name AND (Site = @Site OR (@Site IS NULL AND Site IS NULL))
             ";
 
+            public static readonly string GetAllSites = @"
+                SELECT DISTINCT
+                    Site
+                FROM Alias
+                WHERE Site IS NOT NULL
+            ";
+
             public static readonly string RemoveAlias = @"
                 DELETE FROM Alias WHERE Name = @Name AND (Site = @Site OR (@Site IS NULL AND Site IS NULL)) AND PersonId = @PersonId
             ";

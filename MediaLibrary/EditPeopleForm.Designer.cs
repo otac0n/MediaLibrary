@@ -38,9 +38,9 @@ namespace MediaLibrary
             this.addUsernameFlowPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.usernamesFlowPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.siteTextBox = new System.Windows.Forms.TextBox();
-            this.usernameTextBox = new System.Windows.Forms.TextBox();
             this.addUsernameButton = new System.Windows.Forms.Button();
+            this.usernameTextBox = new System.Windows.Forms.TextBox();
+            this.siteTextBox = new System.Windows.Forms.TextBox();
             this.errorProvider = new System.Windows.Forms.ErrorProvider(this.components);
             this.editorTablePanel.SuspendLayout();
             this.addUsernameFlowPanel.SuspendLayout();
@@ -50,11 +50,12 @@ namespace MediaLibrary
             // 
             // personSearchBox
             // 
+            this.personSearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.personSearchBox.Location = new System.Drawing.Point(105, 13);
             this.personSearchBox.Name = "personSearchBox";
             this.personSearchBox.SelectedPerson = null;
-            this.personSearchBox.Size = new System.Drawing.Size(450, 22);
-            this.personSearchBox.TabIndex = 2;
+            this.personSearchBox.Size = new System.Drawing.Size(450, 21);
+            this.personSearchBox.TabIndex = 0;
             this.personSearchBox.SelectedPersonChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
             // 
             // editorTablePanel
@@ -100,7 +101,7 @@ namespace MediaLibrary
             this.nameTextBox.Margin = new System.Windows.Forms.Padding(10, 3, 3, 3);
             this.nameTextBox.Name = "nameTextBox";
             this.nameTextBox.Size = new System.Drawing.Size(450, 32);
-            this.nameTextBox.TabIndex = 2;
+            this.nameTextBox.TabIndex = 1;
             this.nameTextBox.Validated += new System.EventHandler(this.NameTextBox_Validated);
             // 
             // aliasesTablePanel
@@ -123,7 +124,7 @@ namespace MediaLibrary
             this.usernamesLabel.Location = new System.Drawing.Point(3, 44);
             this.usernamesLabel.Name = "usernamesLabel";
             this.usernamesLabel.Size = new System.Drawing.Size(63, 13);
-            this.usernamesLabel.TabIndex = 4;
+            this.usernamesLabel.TabIndex = 2;
             this.usernamesLabel.Text = "&Usernames:";
             // 
             // addUsernameFlowPanel
@@ -157,21 +158,7 @@ namespace MediaLibrary
             this.panel1.Location = new System.Drawing.Point(3, 9);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(324, 30);
-            this.panel1.TabIndex = 7;
-            // 
-            // siteTextBox
-            // 
-            this.siteTextBox.Location = new System.Drawing.Point(4, 5);
-            this.siteTextBox.Name = "siteTextBox";
-            this.siteTextBox.Size = new System.Drawing.Size(100, 20);
-            this.siteTextBox.TabIndex = 0;
-            // 
-            // usernameTextBox
-            // 
-            this.usernameTextBox.Location = new System.Drawing.Point(110, 5);
-            this.usernameTextBox.Name = "usernameTextBox";
-            this.usernameTextBox.Size = new System.Drawing.Size(130, 20);
-            this.usernameTextBox.TabIndex = 1;
+            this.panel1.TabIndex = 0;
             // 
             // addUsernameButton
             // 
@@ -182,6 +169,22 @@ namespace MediaLibrary
             this.addUsernameButton.Text = "Add Username";
             this.addUsernameButton.UseVisualStyleBackColor = true;
             this.addUsernameButton.Click += new System.EventHandler(this.AddUsernameButton_Click);
+            // 
+            // usernameTextBox
+            // 
+            this.usernameTextBox.Location = new System.Drawing.Point(110, 5);
+            this.usernameTextBox.Name = "usernameTextBox";
+            this.usernameTextBox.Size = new System.Drawing.Size(130, 20);
+            this.usernameTextBox.TabIndex = 1;
+            // 
+            // siteTextBox
+            // 
+            this.siteTextBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.siteTextBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            this.siteTextBox.Location = new System.Drawing.Point(4, 5);
+            this.siteTextBox.Name = "siteTextBox";
+            this.siteTextBox.Size = new System.Drawing.Size(100, 20);
+            this.siteTextBox.TabIndex = 0;
             // 
             // errorProvider
             // 

@@ -171,6 +171,10 @@ namespace MediaLibrary.Storage
             this.IndexRead(conn =>
                 conn.Query<Alias>(Alias.Queries.GetAliasesBySite, new { Site = site }).ToList());
 
+        public Task<string[]> GetAllAliasSites() =>
+            this.IndexRead(conn =>
+                conn.Query<string>(Alias.Queries.GetAllSites).ToArray());
+
         public Task<List<Person>> GetAllPeople() =>
             this.IndexRead(conn => this.ReadPeople(conn.QueryMultiple(Person.Queries.GetAllPeople)).ToList());
 
