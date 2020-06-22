@@ -16,6 +16,7 @@ namespace MediaLibrary.Storage
     using System.Threading;
     using System.Threading.Tasks;
     using Dapper;
+    using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;
     using MediaLibrary.Tagging;
 
