@@ -111,6 +111,9 @@ namespace MediaLibrary.Storage.Search
 
                     return $"COALESCE(c.Copies, 0) {ConvertOperator(field.Operator)} {copies}";
 
+                case "hash":
+                    return $"Hash {ConvertOperator(field.Operator)} {Literal(field.Value)}";
+
                 default:
                     throw new NotSupportedException();
             }

@@ -1,0 +1,197 @@
+<html>
+<head>
+
+<title>Media Library</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<style>
+    html, body {
+        margin: 0;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #results {
+        flex-grow: 1;
+        flex-shrink: 1;
+        overflow: auto;
+    }
+
+    #preview {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .preview {
+        width: auto;
+        height: auto;
+        max-width: 90%;
+        max-height: 90%;
+    }
+
+    .selected {
+        background-color: whitesmoke;
+    }
+</style>
+
+</head>
+<body>
+
+<div id="searchbar">
+  <input id="q" type="text" value="type:image #favorite @Katie" /><button id="search" type="button">Search</button>
+</div>
+<div id="results">
+</div>
+<div id="preview" style="display: none;">
+</div>
+
+<script>
+    $q = $("#q");
+    $results = $("#results");
+    $preview = $("#preview");
+
+    $("#search").on("click", function () {
+        refreshGrid($q.val());
+    });
+
+    $("#results").on("click", "> .result", function () {
+        selectResult($(this));
+    });
+
+    $preview.on("click",  closePreview);
+
+    var touchstart = null;
+    var swipeThreshold = 30;
+    $preview.on("touchstart", function (event) {
+        if (event.changedTouches.length == 1) {
+            touchstart = {
+                x: event.changedTouches[0].screenX,
+                y: event.changedTouches[0].screenY,
+                t: new Date(),
+            };
+        } else {
+            touchstart = null;
+        }
+    });
+
+    $preview.on("touchend", function (event) {
+        if (touchstart && new Date() - touchstart.t < 500) {
+            var dx = event.changedTouches[0].screenX - touchstart.x;
+            var dy = event.changedTouches[0].screenY - touchstart.y;
+
+            if ((dx * dx) + (dy * dy) > (swipeThreshold * swipeThreshold)) {
+                if (Math.abs(dx) >= Math.abs(dy) * 1.5) {
+                    move(-Math.sign(dx));
+                }
+            }
+        }
+
+        touchstart = null;
+    });
+
+    document.onkeydown = function (e) {
+        if ($preview.is(":visible")) {
+            switch(e.which) {
+                case 37:
+                    movePrev();
+                    break;
+
+                case 39:
+                    moveNext();
+                    break;
+            }
+
+            e.preventDefault();
+        }
+    };
+
+    var searchVersion = 0;
+    function refreshGrid(q) {
+        var version = ++searchVersion;
+        $.ajax("files?q=" + encodeURIComponent(q)).done(function (data) {
+            if (version == searchVersion) {
+                $results.empty();
+                $results.append(data.map(itemTemplate));
+            }
+        });
+    }
+
+    function moveNext() {
+        move(1);
+    }
+
+    function movePrev() {
+        move(-1);
+    }
+
+    function move(dir) {
+        $selected = $results.find("> .selected");
+        $sibling = dir > 0 ? $selected.next() : $selected.prev();
+        selectResult($sibling);
+    }
+
+    function selectResult($result) {
+        $results.find("> .result").removeClass("selected");
+        $preview.empty();
+        var result = $result[0];
+        if (result) {
+            $preview.append(previewTemplate($result.addClass("selected")));
+            showPreview();
+            result.scrollIntoView();
+        } else {
+            closePreview();
+        }
+    }
+
+    function showPreview() {
+        $preview.show();
+        //$preview[0].requestFullscreen();
+    }
+
+    function closePreview() {
+        //document.exitFullscreen();
+        $preview.hide();
+    }
+
+    function itemTemplate(item) {
+        return $('<div class="result" />')
+            .text(/[^\\\/]+$/g.exec(item.paths[0])[0] || item.hash)
+            .data("hash", item.hash)
+            .data("fileType", item.fileType)
+            .data("tags", item.tags);
+    }
+
+    function previewTemplate($result) {
+        var hash = $result.data("hash");
+        var fileType = $result.data("fileType");
+        var url = "files/" + encodeURIComponent(hash);
+
+        if (fileType == "image" || fileType.startsWith("image/")) {
+            return $('<img class="preview" />')
+                .attr("src", url);
+        } else if (fileType == "video" || fileType.startsWith("video/")) {
+            return $('<video class="preview" autoplay controls muted />')
+                .append($("<source />")
+                    .attr("src", url)
+                    .attr("type", fileType));
+        }
+    }
+</script>
+
+</body>
+</html>

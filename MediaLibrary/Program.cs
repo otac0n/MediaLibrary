@@ -6,7 +6,9 @@ namespace MediaLibrary
     using System.IO;
     using System.Windows.Forms;
     using CommandLine;
+    using MediaLibrary.Http;
     using MediaLibrary.Storage;
+    using Microsoft.Owin.Hosting;
     using static System.Environment;
 
     internal class Program
@@ -29,11 +31,14 @@ namespace MediaLibrary
             Directory.CreateDirectory(Path.GetDirectoryName(options.IndexPath));
 
             var index = new MediaIndex(options.IndexPath);
-
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm(index));
-            return 0;
+            var startup = new Startup(index);
+            using (WebApp.Start(options.BaseUri, startup.Configuration))
+            {
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new MainForm(index));
+                return 0;
+            }
         }
 
         private static void PopulateDefaults(Options options)
@@ -42,10 +47,18 @@ namespace MediaLibrary
             {
                 options.IndexPath = Path.Combine(Environment.GetFolderPath(SpecialFolder.LocalApplicationData, SpecialFolderOption.DoNotVerify), "MediaLibrary", "MediaLibrary.db");
             }
+
+            if (string.IsNullOrEmpty(options.BaseUri))
+            {
+                options.BaseUri = "http://localhost:9000/";
+            }
         }
 
         public class Options
         {
+            [Option('u', "base-uri", HelpText = "The base URI of the application.")]
+            public string BaseUri { get; set; }
+
             [Option('p', "index-path", HelpText = "The path of the index database.")]
             public string IndexPath { get; set; }
         }

@@ -23,18 +23,22 @@
     <PackageReference Include="CommandLineParser" Version="2.7.82" />
     <PackageReference Include="FixMe" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="GitVersionTask" Version="4.0.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.2.7" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8" PrivateAssets="All" />
     <PackageReference Include="Pegasus" Version="4.1.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All" />
     <PackageReference Include="System.Collections.Immutable" Version="1.7.0" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
     <PackageReference Include="System.Runtime" Version="4.3.1" />
+    <PackageReference Include="Unity.AspNet.WebApi" Version="5.11.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MediaLibrary.Storage\MediaLibrary.Storage.csproj" />
     <ProjectReference Include="..\MediaLibrary.Tagging\MediaLibrary.Tagging.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Http\Views\Index.html" />
+    <EmbeddedResource Include="Http\Views\Index.html" />
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
