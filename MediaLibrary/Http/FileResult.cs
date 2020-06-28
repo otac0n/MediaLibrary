@@ -13,7 +13,7 @@ namespace MediaLibrary.Http
 
     public class FileResult : IHttpActionResult
     {
-        public FileResult(string path, string contentType, bool attachment = false)
+        public FileResult(string path, string contentType, RangeHeaderValue range = null)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -27,30 +27,57 @@ namespace MediaLibrary.Http
 
             this.FilePath = path;
             this.ContentType = contentType;
-            this.Attachment = attachment;
+            this.Range = range;
         }
-
-        public bool Attachment { get; }
 
         public string ContentType { get; }
 
         public string FilePath { get; }
 
+        public RangeHeaderValue Range { get; }
+
         public Task<HttpResponseMessage> ExecuteAsync(CancellationToken cancellationToken)
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK);
-            response.Content = new StreamContent(File.OpenRead(this.FilePath));
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue(this.ContentType);
-
-            if (this.Attachment)
+            FileStream stream = null;
+            try
             {
-                response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-                {
-                    FileName = Path.GetFileName(this.FilePath),
-                };
-            }
+                stream = File.OpenRead(this.FilePath);
 
-            return Task.FromResult(response);
+                HttpResponseMessage response;
+                if (this.Range != null)
+                {
+                    // Return part of the video
+                    response = new HttpResponseMessage(HttpStatusCode.PartialContent)
+                    {
+                        Content = new ByteRangeStreamContent(stream, this.Range, this.ContentType),
+                    };
+                }
+                else
+                {
+                    // Return complete video
+                    response = new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StreamContent(stream),
+                    };
+
+                    response.Content.Headers.ContentType = new MediaTypeHeaderValue(this.ContentType);
+                    response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+                    {
+                        FileName = Path.GetFileName(this.FilePath),
+                    };
+                }
+
+                var result = Task.FromResult(response);
+                stream = null;
+                return result;
+            }
+            finally
+            {
+                if (stream != null)
+                {
+                    stream.Dispose();
+                }
+            }
         }
     }
 }

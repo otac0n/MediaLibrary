@@ -39,7 +39,7 @@ namespace MediaLibrary.Http
                 return this.NotFound();
             }
 
-            return new FileResult(path, result.FileType);
+            return new FileResult(path, result.FileType, this.Request.Headers.Range);
         }
 
         [Route("")]
