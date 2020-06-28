@@ -7,8 +7,8 @@ namespace MediaLibrary.Http
     using MediaLibrary.Storage;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
-    using Newtonsoft.Json.Serialization;
     using Owin;
+    using SqueezeMe;
     using Unity;
     using Unity.AspNet.WebApi;
 
@@ -43,6 +43,7 @@ namespace MediaLibrary.Http
 
             config.MapHttpAttributeRoutes();
 
+            appBuilder.UseCompression();
             appBuilder.UseWebApi(config);
         }
     }
