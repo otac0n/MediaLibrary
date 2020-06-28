@@ -54,6 +54,9 @@ namespace MediaLibrary.Storage.Search
 
             switch (field.Field)
             {
+                case null:
+                    return $"EXISTS (SELECT 1 FROM Paths WHERE LastHash = h.Hash AND MissingSince IS NULL AND {Contains("Path", field.Value)})";
+
                 case "@":
                     if (field.Operator != FieldTerm.EqualsOperator)
                     {
