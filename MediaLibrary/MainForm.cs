@@ -542,6 +542,12 @@ namespace MediaLibrary
         private async void SearchBox_TextChangedAsync(object sender, EventArgs e)
         {
             var searchVersion = Interlocked.Increment(ref this.searchVersion);
+            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(true);
+            if (this.searchVersion != searchVersion)
+            {
+                return;
+            }
+
             IList<SearchResult> data;
             try
             {
