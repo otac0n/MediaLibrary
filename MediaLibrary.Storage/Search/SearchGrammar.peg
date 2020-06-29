@@ -22,7 +22,7 @@ term <Term>
     / ":"? value:atom { new FieldTerm(null, value) };
 
 atom
-    = "" str:[^-" \t\r\n:()><]+
+    = str:([^-" \t\r\n:()><][^" \t\r\n:()><]*)
     / '"' str:([^"] / '"' t:'"' { t })+ ('"' / EOF) { string.Concat(str) };
 
 _ = "" WS?;
