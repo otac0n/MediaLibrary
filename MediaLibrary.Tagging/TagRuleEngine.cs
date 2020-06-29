@@ -5,14 +5,14 @@ namespace MediaLibrary.Tagging
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics;
     using System.Linq;
 
     public sealed class TagRuleEngine
     {
         private readonly Dictionary<string, string> renameMap = new Dictionary<string, string>();
-        private readonly Dictionary<string, ImmutableHashSet<string>> specializationChildMap = new Dictionary<string, ImmutableHashSet<string>>();
-        private readonly Dictionary<string, ImmutableHashSet<string>> specializationParentMap = new Dictionary<string, ImmutableHashSet<string>>();
+        private readonly Dictionary<string, ImmutableHashSet<string>> specializationChildTotalMap = new Dictionary<string, ImmutableHashSet<string>>();
+        private readonly Dictionary<string, ImmutableDictionary<string, TagRule>> specializationParentRuleMap = new Dictionary<string, ImmutableDictionary<string, TagRule>>();
+        private readonly Dictionary<string, ImmutableHashSet<string>> specializationParentTotalMap = new Dictionary<string, ImmutableHashSet<string>>();
         private readonly ILookup<TagOperator, TagRule> tagRules;
 
         public TagRuleEngine(IEnumerable<TagRule> rules)
@@ -75,8 +75,9 @@ namespace MediaLibrary.Tagging
                 var fromTag = rule.Left.Single();
                 var toTag = rule.Right.Single();
 
-                AddParentToChildren(fromTag, toTag, this.specializationChildMap, this.specializationParentMap);
-                AddParentToChildren(toTag, fromTag, this.specializationParentMap, this.specializationChildMap);
+                AddParentToChild(fromTag, toTag, rule, this.specializationParentRuleMap);
+                AddParentToChildren(fromTag, toTag, this.specializationChildTotalMap, this.specializationParentTotalMap);
+                AddParentToChildren(toTag, fromTag, this.specializationParentTotalMap, this.specializationChildTotalMap);
             }
         }
 
@@ -93,13 +94,13 @@ namespace MediaLibrary.Tagging
             var effectiveTags = normalizedTags;
             foreach (var tag in effectiveTags)
             {
-                if (this.specializationParentMap.TryGetValue(tag, out var specializes))
+                if (this.specializationParentTotalMap.TryGetValue(tag, out var specializes))
                 {
                     effectiveTags = effectiveTags.Union(specializes);
                 }
             }
 
-            var missingTagSets = ImmutableList<ImmutableHashSet<string>>.Empty;
+            var missingTagSets = ImmutableList<(TagRule rule, ImmutableHashSet<string> choices)>.Empty;
             var effectiveAndSingleMissingTags = new HashSet<string>(effectiveTags);
             var changed = true;
             while (changed)
@@ -116,13 +117,13 @@ namespace MediaLibrary.Tagging
                 {
                     foreach (var rule in firstGroup)
                     {
-                        missingTagSets = missingTagSets.Add(rule.Right);
+                        missingTagSets = missingTagSets.Add((rule, rule.Right));
                         if (rule.Right.Count == 1)
                         {
                             var right = rule.Right.Single();
                             if (effectiveAndSingleMissingTags.Add(right))
                             {
-                                if (this.specializationParentMap.TryGetValue(right, out var specializes))
+                                if (this.specializationParentTotalMap.TryGetValue(right, out var specializes))
                                 {
                                     effectiveAndSingleMissingTags.UnionWith(specializes);
                                 }
@@ -135,21 +136,26 @@ namespace MediaLibrary.Tagging
                 }
             }
 
-            var suggestedTags = ImmutableHashSet.CreateRange(missingTagSets.SelectMany(s => s));
+            var suggestedTags = ImmutableHashSet.CreateRange(missingTagSets.SelectMany(s => s.choices.Select(c => (s.rule, c))));
             foreach (var rule in ruleLookup[TagOperator.Suggestion])
             {
                 if (effectiveAndSingleMissingTags.IsSupersetOf(rule.Left) && !effectiveAndSingleMissingTags.Overlaps(rule.Right))
                 {
-                    suggestedTags = suggestedTags.Union(rule.Right);
+                    suggestedTags = suggestedTags.Union(rule.Right.Select(c => (rule, c)));
                 }
             }
 
             foreach (var tag in effectiveAndSingleMissingTags)
             {
-                if (this.specializationChildMap.TryGetValue(tag, out var children) &&
+                if (this.specializationChildTotalMap.TryGetValue(tag, out var children) &&
                     !effectiveAndSingleMissingTags.Overlaps(children))
                 {
-                    suggestedTags = suggestedTags.Union(children);
+                    suggestedTags = suggestedTags.Union(
+                        from child in children
+                        from directParent in this.specializationParentRuleMap[child]
+                        let parentTag = directParent.Key
+                        where parentTag == tag || (this.specializationParentTotalMap.TryGetValue(parentTag, out var grandparents) && grandparents.Contains(tag))
+                        select (directParent.Value, child));
                 }
             }
 
@@ -161,10 +167,23 @@ namespace MediaLibrary.Tagging
         }
 
         public ImmutableHashSet<string> GetTagAncestors(string tag) =>
-            this.specializationParentMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
+            this.specializationParentTotalMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
 
         public ImmutableHashSet<string> GetTagDescendants(string tag) =>
-            this.specializationChildMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
+            this.specializationChildTotalMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
+
+        private static void AddParentToChild(string fromTag, string toTag, TagRule rule, Dictionary<string, ImmutableDictionary<string, TagRule>> map)
+        {
+            if (!map.TryGetValue(fromTag, out var parents))
+            {
+                parents = ImmutableDictionary<string, TagRule>.Empty;
+            }
+
+            if (!parents.ContainsKey(toTag))
+            {
+                map[fromTag] = parents.Add(toTag, rule);
+            }
+        }
 
         private static void AddParentToChildren(string parent, string child, Dictionary<string, ImmutableHashSet<string>> parentMap, Dictionary<string, ImmutableHashSet<string>> childMap)
         {
@@ -231,7 +250,7 @@ namespace MediaLibrary.Tagging
                 if (rule.Operator == TagOperator.BidirectionalImplication ||
                     rule.Operator == TagOperator.BidirectionalSuggestion)
                 {
-                    var singleDirection = (TagOperator)((int)r.Operator - 1);
+                    var singleDirection = (TagOperator)((int)r.Operator + 1);
                     yield return new TagRule(r.Left, singleDirection, r.Right);
                     foreach (var newLeft in rule.Right)
                     {
@@ -253,10 +272,14 @@ namespace MediaLibrary.Tagging
             public static AnalysisResult Empty = new AnalysisResult(
                 ImmutableHashSet<string>.Empty,
                 ImmutableHashSet<string>.Empty,
-                ImmutableList<ImmutableHashSet<string>>.Empty,
-                ImmutableHashSet<string>.Empty);
+                ImmutableList<(TagRule, ImmutableHashSet<string>)>.Empty,
+                ImmutableHashSet<(TagRule, string)>.Empty);
 
-            public AnalysisResult(ImmutableHashSet<string> normalizedTags, ImmutableHashSet<string> effectiveTags, ImmutableList<ImmutableHashSet<string>> missingTagSets, ImmutableHashSet<string> suggestedTags)
+            public AnalysisResult(
+                ImmutableHashSet<string> normalizedTags,
+                ImmutableHashSet<string> effectiveTags,
+                ImmutableList<(TagRule rule, ImmutableHashSet<string> choices)> missingTagSets,
+                ImmutableHashSet<(TagRule rule, string suggestion)> suggestedTags)
             {
                 this.NormalizedTags = normalizedTags;
                 this.EffectiveTags = effectiveTags;
@@ -266,11 +289,11 @@ namespace MediaLibrary.Tagging
 
             public ImmutableHashSet<string> EffectiveTags { get; }
 
-            public ImmutableList<ImmutableHashSet<string>> MissingTagSets { get; }
+            public ImmutableList<(TagRule rule, ImmutableHashSet<string> choices)> MissingTagSets { get; }
 
             public ImmutableHashSet<string> NormalizedTags { get; }
 
-            public ImmutableHashSet<string> SuggestedTags { get; }
+            public ImmutableHashSet<(TagRule rule, string suggestion)> SuggestedTags { get; }
         }
     }
 }

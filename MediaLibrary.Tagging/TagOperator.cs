@@ -13,34 +13,34 @@ namespace MediaLibrary.Tagging
         Definition = 0,
 
         /// <summary>
-        /// The left side implies the right side.
+        /// The left side and right side are mutually exclusive.
         /// </summary>
-        Implication = 1,
-
-        /// <summary>
-        /// The left side and the right side imply each other.
-        /// </summary>
-        BidirectionalImplication = 2,
-
-        /// <summary>
-        /// The left side suggests the right side.
-        /// </summary>
-        Suggestion = 3,
-
-        /// <summary>
-        /// The left side and the right side suggest each other.
-        /// </summary>
-        BidirectionalSuggestion = 4,
+        MutualExclusion = 1,
 
         /// <summary>
         /// The left side excludes the right side.
         /// </summary>
-        Exclusion = 5,
+        Exclusion = 2,
 
         /// <summary>
-        /// The left side and right side are mutually exclusive.
+        /// The left side and the right side imply each other.
         /// </summary>
-        MutualExclusion = 6,
+        BidirectionalImplication = 3,
+
+        /// <summary>
+        /// The left side implies the right side.
+        /// </summary>
+        Implication = 4,
+
+        /// <summary>
+        /// The left side and the right side suggest each other.
+        /// </summary>
+        BidirectionalSuggestion = 5,
+
+        /// <summary>
+        /// The left side suggests the right side.
+        /// </summary>
+        Suggestion = 6,
 
         /// <summary>
         /// The left side specializes the right side.

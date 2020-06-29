@@ -28,11 +28,13 @@ namespace MediaLibrary
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.tagCombo = new System.Windows.Forms.ComboBox();
             this.addButton = new System.Windows.Forms.Button();
             this.tagLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.suggestedTags = new System.Windows.Forms.FlowLayoutPanel();
             this.existingTags = new System.Windows.Forms.FlowLayoutPanel();
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.tagLayoutPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -45,13 +47,13 @@ namespace MediaLibrary
             this.tagCombo.FormattingEnabled = true;
             this.tagCombo.Location = new System.Drawing.Point(12, 14);
             this.tagCombo.Name = "tagCombo";
-            this.tagCombo.Size = new System.Drawing.Size(229, 21);
+            this.tagCombo.Size = new System.Drawing.Size(279, 21);
             this.tagCombo.TabIndex = 0;
             // 
             // addButton
             // 
             this.addButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.addButton.Location = new System.Drawing.Point(247, 12);
+            this.addButton.Location = new System.Drawing.Point(297, 12);
             this.addButton.Name = "addButton";
             this.addButton.Size = new System.Drawing.Size(75, 23);
             this.addButton.TabIndex = 1;
@@ -61,13 +63,16 @@ namespace MediaLibrary
             // 
             // tagLayoutPanel
             // 
+            this.tagLayoutPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tagLayoutPanel.AutoScroll = true;
             this.tagLayoutPanel.Controls.Add(this.suggestedTags);
             this.tagLayoutPanel.Controls.Add(this.existingTags);
             this.tagLayoutPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.tagLayoutPanel.Location = new System.Drawing.Point(12, 45);
             this.tagLayoutPanel.Name = "tagLayoutPanel";
-            this.tagLayoutPanel.Size = new System.Drawing.Size(310, 104);
+            this.tagLayoutPanel.Size = new System.Drawing.Size(360, 204);
             this.tagLayoutPanel.TabIndex = 4;
             this.tagLayoutPanel.WrapContents = false;
             // 
@@ -89,12 +94,18 @@ namespace MediaLibrary
             this.existingTags.Size = new System.Drawing.Size(0, 0);
             this.existingTags.TabIndex = 5;
             // 
+            // toolTip
+            // 
+            this.toolTip.AutoPopDelay = 5000;
+            this.toolTip.InitialDelay = 500;
+            this.toolTip.ReshowDelay = 0;
+            // 
             // EditTagsForm
             // 
             this.AcceptButton = this.addButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(334, 161);
+            this.ClientSize = new System.Drawing.Size(384, 261);
             this.Controls.Add(this.tagLayoutPanel);
             this.Controls.Add(this.addButton);
             this.Controls.Add(this.tagCombo);
@@ -121,5 +132,6 @@ namespace MediaLibrary
         private System.Windows.Forms.FlowLayoutPanel tagLayoutPanel;
         private System.Windows.Forms.FlowLayoutPanel suggestedTags;
         private System.Windows.Forms.FlowLayoutPanel existingTags;
+        private System.Windows.Forms.ToolTip toolTip;
     }
 }

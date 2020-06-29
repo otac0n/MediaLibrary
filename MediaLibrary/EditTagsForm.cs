@@ -4,11 +4,14 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Drawing;
     using System.Linq;
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
+    using MediaLibrary.Tagging;
 
     public partial class EditTagsForm : Form
     {
@@ -45,36 +48,42 @@ namespace MediaLibrary
             this.suggestedTags.Controls.Clear();
             var threshold = this.searchResults.Count / 2 + 1;
             var result = this.index.TagEngine.Analyze(this.tagCounts.Where(t => t.Value >= threshold).Select(t => t.Key));
-            var missingTags = new HashSet<string>(result.MissingTagSets.Where(t => t.Count == 1).SelectMany(t => t));
+            var allMissingTags = new HashSet<string>(result.MissingTagSets.SelectMany(t => t.choices));
+            var missingTags = new HashSet<string>(result.MissingTagSets.Where(t => t.choices.Count == 1).SelectMany(t => t.choices));
 
-            foreach (var tag in result.SuggestedTags)
+            foreach (var g in result.SuggestedTags.GroupBy(r => r.suggestion, r => r.rule))
             {
-                if (!this.rejectedTags.Contains(tag))
+                var suggestion = g.Key;
+                if (!this.rejectedTags.Contains(suggestion))
                 {
-                    this.AddSuggestionControl(tag, missingTags.Contains(tag));
+                    this.AddSuggestionControl(suggestion, missingTags.Contains(suggestion), allMissingTags.Contains(suggestion), g);
                 }
             }
         }
 
-        private TagControl AddSuggestionControl(string tag, bool isMissing)
+        private TagControl AddSuggestionControl(string tag, bool isMissing, bool isInMissingGroups, IEnumerable<TagRule> rules)
         {
+            var toolTip = string.Join(Environment.NewLine, rules.OrderBy(r => r.Operator).ThenBy(r => r.Right.Count));
             if (!this.suggestionControls.TryGetValue(tag, out var suggestionControl))
             {
                 suggestionControl = new TagControl
                 {
                     Text = tag,
-                    Tag = tag,
-                    Indeterminate = !isMissing,
+                    Tag = toolTip,
+                    Indeterminate = !isMissing, // TODO: Third state for !isInMissingGroups,
                     AllowDelete = true,
                 };
                 suggestionControl.MouseClick += this.SuggestionControl_MouseClick;
                 suggestionControl.DeleteClick += this.SuggestionControl_DeleteClick;
+                suggestionControl.MouseEnter += this.SuggestionControl_MouseEnter;
+                suggestionControl.MouseLeave += this.SuggestionControl_MouseLeave;
                 suggestionControl.Cursor = Cursors.Hand;
                 this.suggestionControls[tag] = suggestionControl;
             }
             else
             {
-                suggestionControl.Indeterminate = !isMissing;
+                suggestionControl.Indeterminate = !isMissing; // TODO: Third state for !isInMissingGroups,
+                suggestionControl.Tag = toolTip;
             }
 
             this.suggestedTags.Controls.Add(suggestionControl);
@@ -169,10 +178,14 @@ namespace MediaLibrary
             this.suggestedTags.Controls.Remove(tagControl);
             if (destroy)
             {
-                var tag = (string)tagControl.Tag;
+                var tag = tagControl.Text;
                 tagControl.MouseClick -= this.SuggestionControl_MouseClick;
                 tagControl.DeleteClick -= this.SuggestionControl_DeleteClick;
+                tagControl.MouseEnter -= this.SuggestionControl_MouseEnter;
+                tagControl.MouseLeave -= this.SuggestionControl_MouseLeave;
+                this.toolTip.Hide(this);
                 this.suggestionControls.Remove(tag);
+                this.toolTip.SetToolTip(tagControl, null);
                 tagControl.Dispose();
             }
         }
@@ -182,7 +195,7 @@ namespace MediaLibrary
             this.existingTags.Controls.Remove(tagControl);
             if (destroy)
             {
-                var tag = (string)tagControl.Tag;
+                var tag = tagControl.Text;
                 tagControl.DeleteClick -= this.TagControl_DeleteClick;
                 this.tagControls.Remove(tag);
                 tagControl.Dispose();
@@ -192,7 +205,7 @@ namespace MediaLibrary
         private async void SuggestionControl_DeleteClick(object sender, EventArgs e)
         {
             var tagControl = (TagControl)sender;
-            var tag = (string)tagControl.Tag;
+            var tag = tagControl.Text;
             this.RemoveSuggestionControl(tagControl, destroy: true);
 
             if (this.tagControls.TryGetValue(tag, out tagControl))
@@ -213,16 +226,46 @@ namespace MediaLibrary
         private async void SuggestionControl_MouseClick(object sender, MouseEventArgs e)
         {
             var tagControl = (TagControl)sender;
-            var tag = (string)tagControl.Tag;
+            var tag = tagControl.Text;
             this.RemoveSuggestionControl(tagControl);
 
             await this.AddTagAndUpdate(tag).ConfigureAwait(true);
         }
 
+        private void SuggestionControl_MouseEnter(object sender, EventArgs e)
+        {
+            if (sender is TagControl tagControl)
+            {
+                if (tagControl.Tag is string toolTip)
+                {
+                    var location = tagControl.PointToScreen(new Point(0, tagControl.Height));
+                    location.Offset(-this.Left, -this.Top + 1);
+                    this.toolTip.Show(toolTip, this, location);
+                }
+                else
+                {
+                    this.toolTip.Hide(this);
+                }
+            }
+        }
+
+        private void SuggestionControl_MouseLeave(object sender, EventArgs e)
+        {
+            if (sender is TagControl tagControl)
+            {
+                var cursorPosition = Cursor.Position;
+                var screenRectangle = tagControl.RectangleToScreen(new Rectangle(0, 0, tagControl.Width, tagControl.Height));
+                if (!screenRectangle.Contains(cursorPosition))
+                {
+                    this.toolTip.Hide(this);
+                }
+            }
+        }
+
         private async void TagControl_DeleteClick(object sender, EventArgs e)
         {
             var tagControl = (TagControl)sender;
-            var tag = (string)tagControl.Tag;
+            var tag = tagControl.Text;
             this.RemoveTagControl(tagControl, destroy: true);
 
             foreach (var searchResult in this.searchResults)
