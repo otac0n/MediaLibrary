@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Target Name="EnsureNode">
+    <Exec Command="$(NodeCommand) --version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
+  </Target>
+  <Target Name="EnsureNpm" DependsOnTargets="EnsureNode">
+    <Exec Command="$(NpmCommand) --version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
+  </Target>
+  <Target Name="EnsureAngular" DependsOnTargets="EnsureNpm">
+    <Exec Command="$(AngularCommand) --version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
+  </Target>
+  <Target Name="NpmRestore" DependsOnTargets="EnsureNpm" Inputs="package.json;$(MSBuildThisFile)" Outputs="node_modules\.msbuild">
+    <Exec Command="$(NpmCommand) install" IgnoreStandardErrorWarningFormat="true" CustomWarningRegularExpression="^npm WARN" CustomErrorRegularExpression="^npm ERR!" />
+    <Touch Files="node_modules\.msbuild" AlwaysCreate="true" />
+  </Target>
+  <Target Name="AngularBuild" DependsOnTargets="EnsureAngular;NpmRestore" Inputs="@(None);$(MSBuildThisFile)" Outputs="obj\dist\index.html">
+    <Exec Command="$(AngularCommand) build" IgnoreStandardErrorWarningFormat="true" CustomErrorRegularExpression="^(?:An unhandled exception occurred:|(?:ERROR in )?(?'FILENAME'[^\r\n*?:]+):(?'LINE'\d+):(?'COLUMN'\d+) - (?'CATEGORY'error|warning) (?'CODE'\w+): (?'TEXT'.*)|ERROR in )" />
+  </Target>
+  <Target Name="IncludeDistributables" DependsOnTargets="AngularBuild" AfterTargets="PreBuildEvent">
+    <Exec Command="$(AngularCommand) lint --format=msbuild" IgnoreExitCode="true" />
+    <ItemGroup>
+      <AngularDistributable Include="obj\dist\**\*.*" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="%(AngularDistributable.FullPath)">
+        <Link>%(AngularDistributable.RecursiveDir)%(AngularDistributable.Filename)%(AngularDistributable.Extension)</Link>
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
+</Project>

@@ -17,6 +17,14 @@ _NCrunch*/
 *.ncrunch*
 *.docstates
 
+# Ignore per-user VS Code files.
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
 # Ignore all MonoDevelop generated files.
 *.userprefs
 *.pidb
@@ -30,3 +38,6 @@ TestResult.xml
 
 # Ignore NuGet packages (let package restore handle these)
 /packages/
+
+# Ignore NPM packages (let npm handle these)
+node_modules/

@@ -58,5 +58,13 @@ csharp_space_between_method_call_parameter_list_parentheses = false
 csharp_preserve_single_line_statements = true
 csharp_preserve_single_line_blocks = true
 
+[*.ts]
+indent_size = 4
+quote_type = double
+
 [*.{csproj,xml,yml,yaml,json,config,props,targets,ruleset}]
 indent_size = 2
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false

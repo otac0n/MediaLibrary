@@ -43,6 +43,11 @@ namespace MediaLibrary.Http
 
             config.MapHttpAttributeRoutes();
 
+            config.Routes.MapHttpRoute(
+                name: "DefaultStatic",
+                routeTemplate: "{*view}",
+                defaults: new { controller = "Home" });
+
             appBuilder.UseCompression();
             appBuilder.UseWebApi(config);
         }

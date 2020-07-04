@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);node_modules\**\*.*</DefaultItemExcludes>
+    <NodeCommand Condition=" '$(NodeCommand)' == '' ">node</NodeCommand>
+    <NpmCommand Condition=" '$(NpmCommand)' == '' ">npm</NpmCommand>
+    <AngularCommand Condition=" '$(AngularCommand)' == '' ">ng</AngularCommand>
+  </PropertyGroup>
+</Project>

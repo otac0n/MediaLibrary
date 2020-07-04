@@ -36,10 +36,9 @@
   <ItemGroup>
     <ProjectReference Include="..\MediaLibrary.Storage\MediaLibrary.Storage.csproj" />
     <ProjectReference Include="..\MediaLibrary.Tagging\MediaLibrary.Tagging.csproj" />
+    <ProjectReference Include="..\MediaLibrary.Web\MediaLibrary.Web.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="Http\Views\Index.html" />
-    <EmbeddedResource Include="Http\Views\Index.html" />
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

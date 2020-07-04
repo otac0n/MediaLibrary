@@ -2,16 +2,13 @@
 
 namespace MediaLibrary.Http
 {
-    using System.Threading.Tasks;
     using System.Web.Http;
 
     public class HomeController : ApiController
     {
-        [Route("")]
-        [HttpGet]
-        public async Task<IHttpActionResult> Get()
+        public IHttpActionResult Get(string view)
         {
-            return new ViewResult("Index");
+            return new ViewResult(view);
         }
     }
 }
