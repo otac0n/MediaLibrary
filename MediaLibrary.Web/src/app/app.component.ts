@@ -60,8 +60,8 @@ export class AppComponent {
         this.move(1);
     }
 
-    @HostListener('document:keypress', ['$event'])
-    private handleKeyboardEvent(event: KeyboardEvent) {
+    @HostListener('document:keydown', ['$event'])
+    private keyDown(event: KeyboardEvent) {
         if (this.previewItem) {
             switch (event.which) {
                 case 37:
