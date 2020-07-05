@@ -6,9 +6,11 @@ namespace MediaLibrary
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.ComponentModel;
+    using System.Drawing;
     using System.IO;
     using System.Linq;
     using System.Windows.Forms;
+    using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
 
     public partial class PreviewControl : UserControl
@@ -102,18 +104,19 @@ namespace MediaLibrary
                 var url = displayedItem == null
                     ? null
                     : (from p in displayedItem.Paths
-                       where File.Exists(p)
-                       select p).FirstOrDefault();
+                       let path = MediaIndex.ExtendPath(p)
+                       where File.Exists(path)
+                       select path).FirstOrDefault();
                 if (url == null || IsImage(item))
                 {
                     this.mediaPlayer.URL = null;
                     this.mediaPlayer.Visible = false;
-                    this.thumbnail.ImageLocation = url;
+                    this.thumbnail.Image = url == null ? null : Image.FromFile(url);
                     this.thumbnail.Visible = url != null;
                 }
                 else
                 {
-                    this.thumbnail.ImageLocation = null;
+                    this.thumbnail.Image = null;
                     this.thumbnail.Visible = false;
                     this.mediaPlayer.URL = url;
                     var wasVisible = this.mediaPlayer.Visible;

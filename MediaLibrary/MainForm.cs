@@ -252,7 +252,7 @@ namespace MediaLibrary
 
         private ListViewItem CreateListItem(SearchResult searchResult)
         {
-            var firstPath = searchResult.Paths.FirstOrDefault();
+            var firstPath = searchResult.Paths.OrderBy(p => p.Length).FirstOrDefault();
 
             var columns = new ListViewItem.ListViewSubItem[5];
 
@@ -414,7 +414,7 @@ namespace MediaLibrary
                 {
                     foreach (var path in ((SearchResult)item.Tag).Paths)
                     {
-                        if (File.Exists(path))
+                        if (File.Exists(MediaIndex.ExtendPath(path)))
                         {
                             Process.Start(path);
                             break;

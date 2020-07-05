@@ -32,7 +32,7 @@ namespace MediaLibrary.Http
             }
 
             var result = (await this.index.SearchIndex($"hash:{id}").ConfigureAwait(true)).SingleOrDefault();
-            var path = result?.Paths?.FirstOrDefault(p => File.Exists(p));
+            var path = result?.Paths?.Select(MediaIndex.ExtendPath)?.FirstOrDefault(p => File.Exists(p));
 
             if (path == null)
             {

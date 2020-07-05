@@ -49,13 +49,33 @@ namespace MediaLibrary.Storage
 
         public TagRuleEngine TagEngine { get; private set; }
 
+        public static string ExtendPath(string path)
+        {
+            if (path == null ||
+                path.Length < 260 ||
+                path.StartsWith(@"\\?\", StringComparison.Ordinal) ||
+                path.StartsWith(@"\\.\", StringComparison.Ordinal))
+            {
+                return path;
+            }
+
+            if (path.StartsWith(@"\\", StringComparison.Ordinal))
+            {
+                return @"\\?\UNC" + path.Substring(1);
+            }
+            else
+            {
+                return @"\\?\" + path;
+            }
+        }
+
         public static async Task<HashInfo> HashFileAsync(string path)
         {
             var fileSize = 0L;
             var recognizerState = FileTypeRecognizer.Initialize();
             byte[] hash;
             using (var hashAlgorithm = new SHA256Managed())
-            using (var file = File.OpenRead(path))
+            using (var file = File.OpenRead(ExtendPath(path)))
             {
                 var buffer = new byte[4096];
                 hashAlgorithm.Initialize();
@@ -525,7 +545,7 @@ namespace MediaLibrary.Storage
         {
             filePath = filePath ?? await this.GetFilePath(path).ConfigureAwait(false);
 
-            var fileInfo = new FileInfo(path);
+            var fileInfo = new FileInfo(ExtendPath(path));
             if (fileInfo.Exists)
             {
                 var modifiedTime = fileInfo.LastWriteTimeUtc.Ticks;

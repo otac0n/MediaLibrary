@@ -4,7 +4,6 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
@@ -15,7 +14,6 @@ namespace MediaLibrary
     using ByteSizeLib;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
-    using Microsoft.VisualBasic.FileIO;
 
     public partial class FindDuplicatesForm : Form
     {
@@ -403,7 +401,7 @@ namespace MediaLibrary
             {
                 if (removed.Add(r))
                 {
-                    FileSystem.DeleteFile(r, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+                    NativeMethods.DeleteToRecycleBin(r);
                 }
             }
 
