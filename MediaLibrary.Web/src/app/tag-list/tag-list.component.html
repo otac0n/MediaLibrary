@@ -1,0 +1,3 @@
+<ng-container *ngFor="let tag of tags">
+  <app-tag *ngIf="!excludeFavorite || tag != 'favorite'" [tag]="tag"></app-tag>
+</ng-container>

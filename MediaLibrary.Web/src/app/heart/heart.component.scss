@@ -1,0 +1,103 @@
+.heart {
+    width: 1.5em;
+    height: 1.1em;
+    display: inline-block;
+    vertical-align: middle;
+    cursor: pointer;
+
+    svg {
+        width: 100%;
+        height: 100%;
+        stroke: red;
+        fill: red;
+        fill-opacity: 0;
+    }
+
+    &:hover svg, &.fake-hover svg {
+        fill-opacity: 1;
+        stroke: none;
+        animation: sinus 0.8s infinite;
+        animation-delay: 0.5s;
+    }
+
+    &.favorite svg {
+        fill-opacity: 1;
+        stroke: none;
+    }
+
+    &.favorite:hover svg, &.favorite.fake-hover svg {
+        animation: none;
+        transform: scale(0.5);
+    }
+
+    &.favorite.still-hover svg {
+        transform: scale(1.3);
+        fill-opacity: 1;
+    }
+
+    &.still-hover svg {
+        animation: none;
+        transform: scale(0.5);
+        fill-opacity: 0;
+        stroke: red;
+    }
+}
+
+/* From https://en.wikipedia.org/wiki/Sinus_rhythm#/media/File:SinusRhythmLabels.svg */
+@keyframes sinus {
+    0% {
+        transform: scale(1);
+    }
+
+    7% {
+        transform: scale(1);
+    }
+
+    12% {
+        transform: scale(1.08);
+        animation-timing-function: ease-in;
+    }
+
+    16% {
+        transform: scale(1);
+        animation-timing-function: ease-out;
+    }
+
+    21% {
+        transform: scale(1);
+    }
+
+    23% {
+        transform: scale(0.89);
+    }
+
+    24% {
+        transform: scale(1.8);
+    }
+
+    26% {
+        transform: scale(0.78);
+    }
+
+    28% {
+        transform: scale(1);
+    }
+
+    35% {
+        transform: scale(1);
+    }
+
+    40% {
+        transform: scale(1.15);
+        animation-timing-function: ease-in;
+    }
+
+    43% {
+        transform: scale(1);
+        animation-timing-function: ease-out;
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}

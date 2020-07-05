@@ -1,0 +1,6 @@
+<span class="person">
+  {{person.name}}
+  <ng-container *ngFor="let alias of person.aliases">
+    <img *ngIf="alias.site" src="http://{{alias.site}}/favicon.ico" />
+  </ng-container>
+</span>

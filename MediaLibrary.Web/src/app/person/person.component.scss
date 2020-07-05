@@ -1,0 +1,15 @@
+.person {
+    display: inline-block;
+    white-space: nowrap;
+    border-radius: 0.33em;
+    box-sizing: border-box;
+    padding: 2px 4px;
+    margin: 0 2px;
+    border: 1px solid tan;
+    background-color: tan;
+
+    img {
+        max-height: 16px;
+        vertical-align: middle;
+    }
+}
