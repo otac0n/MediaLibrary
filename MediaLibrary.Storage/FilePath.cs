@@ -1,14 +1,22 @@
 // Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
-using System;
-
 namespace MediaLibrary.Storage
 {
+    using System;
+    using System.Text;
+
     public class FilePath
     {
         public FilePath(string path, string lastHash, long lastModifiedTime, long? missingSince)
+            : this(path, null, lastHash, lastModifiedTime, missingSince)
         {
-            this.Path = path;
+            this.PathRaw = FilePath.GetPathRaw(path);
+        }
+
+        public FilePath(string path, byte[] pathRaw, string lastHash, long lastModifiedTime, long? missingSince)
+        {
+            this.Path = pathRaw == null ? path : PathEncoder.Decode(pathRaw);
+            this.PathRaw = pathRaw;
             this.LastHash = lastHash;
             this.LastModifiedTime = lastModifiedTime;
             this.MissingSince = missingSince;
@@ -22,11 +30,14 @@ namespace MediaLibrary.Storage
 
         public string Path { get; }
 
+        public byte[] PathRaw { get; }
+
         public FilePath With(
             long lastModifiedTime,
             long? missingSince) =>
             new FilePath(
                 this.Path,
+                this.PathRaw,
                 this.LastHash,
                 lastModifiedTime,
                 missingSince);
@@ -35,6 +46,7 @@ namespace MediaLibrary.Storage
             long lastModifiedTime) =>
             new FilePath(
                 this.Path,
+                this.PathRaw,
                 this.LastHash,
                 lastModifiedTime,
                 this.MissingSince);
@@ -43,29 +55,38 @@ namespace MediaLibrary.Storage
             long? missingSince) =>
             new FilePath(
                 this.Path,
+                this.PathRaw,
                 this.LastHash,
                 this.LastModifiedTime,
                 missingSince);
 
+        internal static byte[] GetPathRaw(string path) =>
+            path != Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(path))
+                ? PathEncoder.Encode(path)
+                : null;
+
         internal static class Queries
         {
             public static readonly string AddFilePath = @"
-                INSERT OR REPLACE INTO Paths (Path, LastHash, LastModifiedTime, MissingSince) VALUES (@Path, @LastHash, @LastModifiedTime, @MissingSince)
+                INSERT OR REPLACE INTO Paths (Path, PathRaw, LastHash, LastModifiedTime, MissingSince) VALUES (@Path, @PathRaw, @LastHash, @LastModifiedTime, @MissingSince)
             ";
 
             public static readonly string GetFilePathByPath = @"
                 SELECT
                     Path,
+                    PathRaw,
                     LastHash,
                     LastModifiedTime,
                     MissingSince
                 FROM Paths
                 WHERE Path = @Path
+                AND ((@PathRaw IS NULL AND PathRaw IS NULL) OR (@PathRaw IS NOT NULL AND PathRaw = @PathRaw))
             ";
 
             public static readonly string GetFilePathsByHash = @"
                 SELECT
                     Path,
+                    PathRaw,
                     LastHash,
                     LastModifiedTime,
                     MissingSince
@@ -76,6 +97,7 @@ namespace MediaLibrary.Storage
             public static readonly string GetFilePathsUnder = @"
                 SELECT
                     Path,
+                    PathRaw,
                     LastHash,
                     LastModifiedTime,
                     MissingSince
@@ -84,7 +106,9 @@ namespace MediaLibrary.Storage
             ";
 
             public static readonly string RemoveFilePathByPath = @"
-                DELETE FROM Paths WHERE Path = @Path
+                DELETE FROM Paths
+                WHERE Path = @Path
+                AND ((@PathRaw IS NULL AND PathRaw IS NULL) OR (@PathRaw IS NOT NULL AND PathRaw = @PathRaw))
             ";
         }
     }

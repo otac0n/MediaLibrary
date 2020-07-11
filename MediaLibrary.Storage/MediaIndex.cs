@@ -269,7 +269,9 @@ namespace MediaLibrary.Storage
 
         public Task RemoveAlias(Alias alias) => this.IndexWrite(conn => conn.Execute(Alias.Queries.RemoveAlias, alias));
 
-        public Task RemoveFilePath(string path) => this.IndexWrite(conn => conn.Execute(FilePath.Queries.RemoveFilePathByPath, new { Path = path }));
+        public Task RemoveFilePath(string path) =>
+            this.IndexWrite(conn =>
+                conn.Execute(FilePath.Queries.RemoveFilePathByPath, new { Path = path, PathRaw = FilePath.GetPathRaw(path) }));
 
         public async Task RemoveHashPerson(HashPerson hashPerson)
         {
@@ -421,6 +423,10 @@ namespace MediaLibrary.Storage
             this.TagEngine = updatedEngine;
         }
 
+        private async Task AddFilePath(FilePath filePath) =>
+            await this.IndexWrite(conn =>
+                conn.Execute(FilePath.Queries.AddFilePath, filePath)).ConfigureAwait(false);
+
         private void AddFileSystemWatcher(string path)
         {
             var watcher = new FileSystemWatcher(path);
@@ -434,7 +440,7 @@ namespace MediaLibrary.Storage
 
         private Task<FilePath> GetFilePath(string path) =>
             this.IndexRead(conn =>
-                conn.Query<FilePath>(FilePath.Queries.GetFilePathByPath, new { Path = path }).SingleOrDefault());
+                conn.Query<FilePath>(FilePath.Queries.GetFilePathByPath, new { Path = path, PathRaw = FilePath.GetPathRaw(path) }).SingleOrDefault());
 
         private Task<FilePath> GetFilePaths(string hash) =>
             this.IndexRead(conn =>
@@ -565,12 +571,12 @@ namespace MediaLibrary.Storage
                     hashInfo = await HashFileAsync(path).ConfigureAwait(false);
                     await this.IndexWrite(conn => conn.Execute(HashInfo.Queries.AddHashInfo, hashInfo)).ConfigureAwait(false);
                     filePath = new FilePath(path, hashInfo.Hash, modifiedTime, missingSince: null);
-                    await this.IndexWrite(conn => conn.Execute(FilePath.Queries.AddFilePath, filePath)).ConfigureAwait(false);
+                    await this.AddFilePath(filePath).ConfigureAwait(false);
                 }
                 else if (filePath.MissingSince != null)
                 {
                     filePath = filePath.With(missingSince: null);
-                    await this.IndexWrite(conn => conn.Execute(FilePath.Queries.AddFilePath, filePath)).ConfigureAwait(false);
+                    await this.AddFilePath(filePath).ConfigureAwait(false);
                 }
 
                 return hashInfo.Hash;
@@ -589,7 +595,7 @@ namespace MediaLibrary.Storage
                     }
                     else
                     {
-                        await this.IndexWrite(conn => conn.Execute(FilePath.Queries.AddFilePath, filePath.With(missingSince: now))).ConfigureAwait(false);
+                        await this.AddFilePath(filePath.With(missingSince: now)).ConfigureAwait(false);
                     }
                 }
 
@@ -718,6 +724,7 @@ namespace MediaLibrary.Storage
                 CREATE TABLE IF NOT EXISTS Paths
                 (
                     Path text NOT NULL,
+                    PathRaw blob NULL,
                     LastHash text NOT NULL,
                     LastModifiedTime INTEGER NOT NULL,
                     MissingSince INTEGER NULL,
