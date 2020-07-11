@@ -77,12 +77,15 @@ namespace MediaLibrary.Storage.FileTypes
 
         public string Type { get; }
 
-        public static void Advance(State[] states, byte[] buffer, int index, int count)
+        public static bool Advance(State[] states, byte[] buffer, int index, int count)
         {
+            var done = true;
             for (var i = 0; i < states.Length; i++)
             {
-                State.Advance(ref states[i], buffer, index, count);
+                done &= State.Advance(ref states[i], buffer, index, count);
             }
+
+            return done;
         }
 
         public static string GetType(State[] states) =>
@@ -121,12 +124,12 @@ namespace MediaLibrary.Storage.FileTypes
 
             public string Type => this.recognizer.Type;
 
-            public static void Advance(ref State state, byte[] buffer, int index, int count)
+            public static bool Advance(ref State state, byte[] buffer, int index, int count)
             {
                 var patternMatches = state.matches;
                 if (!patternMatches)
                 {
-                    return;
+                    return true;
                 }
 
                 var recognizer = state.recognizer;
@@ -134,7 +137,7 @@ namespace MediaLibrary.Storage.FileTypes
                 var patternIndex = state.index;
                 if (patternIndex >= pattern.Length)
                 {
-                    return;
+                    return true;
                 }
 
                 for (; count > 0 && patternMatches && patternIndex < pattern.Length; count--, index++, patternIndex++)
@@ -147,6 +150,7 @@ namespace MediaLibrary.Storage.FileTypes
                 }
 
                 state = new State(recognizer, patternIndex, patternMatches);
+                return state.index >= pattern.Length;
             }
         }
 

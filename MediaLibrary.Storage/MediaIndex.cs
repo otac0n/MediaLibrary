@@ -73,6 +73,7 @@ namespace MediaLibrary.Storage
         {
             var fileSize = 0L;
             var recognizerState = FileTypeRecognizer.Initialize();
+            var recognized = false;
             byte[] hash;
             using (var hashAlgorithm = new SHA256Managed())
             using (var file = File.OpenRead(ExtendPath(path)))
@@ -91,7 +92,12 @@ namespace MediaLibrary.Storage
                     else
                     {
                         hashAlgorithm.TransformBlock(buffer, 0, count, buffer, 0);
-                        FileTypeRecognizer.Advance(recognizerState, buffer, 0, count);
+
+                        if (!recognized)
+                        {
+                            recognized = FileTypeRecognizer.Advance(recognizerState, buffer, 0, count);
+                        }
+
                         fileSize += count;
                     }
                 }
