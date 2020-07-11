@@ -6,6 +6,7 @@ namespace MediaLibrary
     using System.Collections;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Collections.Specialized;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
@@ -250,6 +251,15 @@ namespace MediaLibrary
             };
         }
 
+        private void CopyMenuItem_Click(object sender, EventArgs e)
+        {
+            var paths = this.GetSelectedPaths().ToArray();
+            var dataObject = new DataObject();
+            dataObject.SetData(DataFormats.FileDrop, autoConvert: true, paths);
+            dataObject.SetText(string.Join(Environment.NewLine, paths));
+            Clipboard.SetDataObject(dataObject, copy: true);
+        }
+
         private ListViewItem CreateListItem(SearchResult searchResult)
         {
             var firstPath = searchResult.Paths.OrderBy(p => p.Length).FirstOrDefault();
@@ -364,6 +374,22 @@ namespace MediaLibrary
             }
         }
 
+        private IEnumerable<string> GetSelectedPaths()
+        {
+            var items = this.listView.SelectedItems.Cast<ListViewItem>().ToList();
+            foreach (var item in items)
+            {
+                foreach (var path in ((SearchResult)item.Tag).Paths)
+                {
+                    if (File.Exists(MediaIndex.ExtendPath(path)))
+                    {
+                        yield return path;
+                        break;
+                    }
+                }
+            }
+        }
+
         private List<SearchResult> GetSelectedSearchResults() => this.listView.SelectedItems.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
 
         private List<SearchResult> GetVisibleSearchResults() => this.listView.Items.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
@@ -409,18 +435,7 @@ namespace MediaLibrary
         {
             if (this.listView.HitTest(e.X, e.Y).Item != null)
             {
-                var items = this.listView.SelectedItems.Cast<ListViewItem>().ToList();
-                foreach (var item in items)
-                {
-                    foreach (var path in ((SearchResult)item.Tag).Paths)
-                    {
-                        if (File.Exists(MediaIndex.ExtendPath(path)))
-                        {
-                            Process.Start(path);
-                            break;
-                        }
-                    }
-                }
+                this.OpenMenuItem_Click(this.openContextMenuItem, e);
             }
         }
 
@@ -485,6 +500,14 @@ namespace MediaLibrary
             {
                 await this.index.Rescan(progress).ConfigureAwait(true);
             });
+        }
+
+        private void OpenMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (var path in this.GetSelectedPaths())
+            {
+                Process.Start(path);
+            }
         }
 
         private void OpenSlideshow(bool shuffle = false, bool autoPlay = false)

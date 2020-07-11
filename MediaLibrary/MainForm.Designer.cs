@@ -42,6 +42,8 @@ namespace MediaLibrary
             this.favoriteMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editTagsMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addPeopleMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
+            this.copyMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.mainProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.toolStrip = new System.Windows.Forms.ToolStrip();
@@ -93,6 +95,9 @@ namespace MediaLibrary
             this.favoriteContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editTagsContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addPeopleContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripActionSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.openContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.copyContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.listView = new System.Windows.Forms.ListView();
             this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -188,7 +193,9 @@ namespace MediaLibrary
             this.editMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.favoriteMainMenuItem,
             this.editTagsMainMenuItem,
-            this.addPeopleMainMenuItem});
+            this.addPeopleMainMenuItem,
+            this.toolStripMenuItem1,
+            this.copyMainMenuItem});
             this.editMenuItem.Name = "editMenuItem";
             this.editMenuItem.Size = new System.Drawing.Size(39, 20);
             this.editMenuItem.Text = "&Edit";
@@ -220,6 +227,19 @@ namespace MediaLibrary
             this.addPeopleMainMenuItem.Size = new System.Drawing.Size(185, 22);
             this.addPeopleMainMenuItem.Text = "Add &People...";
             this.addPeopleMainMenuItem.Click += new System.EventHandler(this.AddPeopleMenuItem_Click);
+            // 
+            // toolStripMenuItem1
+            // 
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(182, 6);
+            // 
+            // copyMainMenuItem
+            // 
+            this.copyMainMenuItem.Name = "copyMainMenuItem";
+            this.copyMainMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C)));
+            this.copyMainMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.copyMainMenuItem.Text = "&Copy";
+            this.copyMainMenuItem.Click += new System.EventHandler(this.CopyMenuItem_Click);
             // 
             // statusStrip
             // 
@@ -694,15 +714,18 @@ namespace MediaLibrary
             this.itemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.favoriteContextMenuItem,
             this.editTagsContextMenuItem,
-            this.addPeopleContextMenuItem});
+            this.addPeopleContextMenuItem,
+            this.toolStripActionSeparator,
+            this.openContextMenuItem,
+            this.copyContextMenuItem});
             this.itemContextMenu.Name = "itemContextMenu";
-            this.itemContextMenu.Size = new System.Drawing.Size(145, 70);
+            this.itemContextMenu.Size = new System.Drawing.Size(181, 142);
             // 
             // favoriteContextMenuItem
             // 
             this.favoriteContextMenuItem.Image = global::MediaLibrary.Properties.Resources.love_it;
             this.favoriteContextMenuItem.Name = "favoriteContextMenuItem";
-            this.favoriteContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.favoriteContextMenuItem.Size = new System.Drawing.Size(180, 22);
             this.favoriteContextMenuItem.Text = "&Favorite";
             this.favoriteContextMenuItem.Click += new System.EventHandler(this.FavoriteToolStripMenuItem_Click);
             // 
@@ -710,7 +733,7 @@ namespace MediaLibrary
             // 
             this.editTagsContextMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_edit;
             this.editTagsContextMenuItem.Name = "editTagsContextMenuItem";
-            this.editTagsContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.editTagsContextMenuItem.Size = new System.Drawing.Size(180, 22);
             this.editTagsContextMenuItem.Text = "Edit &Tags...";
             this.editTagsContextMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
             // 
@@ -718,9 +741,28 @@ namespace MediaLibrary
             // 
             this.addPeopleContextMenuItem.Image = global::MediaLibrary.Properties.Resources.single_neutral;
             this.addPeopleContextMenuItem.Name = "addPeopleContextMenuItem";
-            this.addPeopleContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.addPeopleContextMenuItem.Size = new System.Drawing.Size(180, 22);
             this.addPeopleContextMenuItem.Text = "Add &People...";
             this.addPeopleContextMenuItem.Click += new System.EventHandler(this.AddPeopleMenuItem_Click);
+            // 
+            // toolStripActionSeparator
+            // 
+            this.toolStripActionSeparator.Name = "toolStripActionSeparator";
+            this.toolStripActionSeparator.Size = new System.Drawing.Size(177, 6);
+            // 
+            // openContextMenuItem
+            // 
+            this.openContextMenuItem.Name = "openContextMenuItem";
+            this.openContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openContextMenuItem.Text = "&Open...";
+            this.openContextMenuItem.Click += new System.EventHandler(this.OpenMenuItem_Click);
+            // 
+            // copyContextMenuItem
+            // 
+            this.copyContextMenuItem.Name = "copyContextMenuItem";
+            this.copyContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.copyContextMenuItem.Text = "&Copy";
+            this.copyContextMenuItem.Click += new System.EventHandler(this.CopyMenuItem_Click);
             // 
             // splitContainer
             // 
@@ -899,5 +941,10 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem saveThisSearchMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripSeparator savedSearchesSeparator;
+        private System.Windows.Forms.ToolStripMenuItem copyContextMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripActionSeparator;
+        private System.Windows.Forms.ToolStripMenuItem openContextMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem copyMainMenuItem;
     }
 }
