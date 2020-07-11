@@ -179,16 +179,12 @@ namespace MediaLibrary.Tagging
                 }
             }
 
-            var suggestedTags = ImmutableHashSet.CreateRange(missingTagSets.SelectMany(s =>
-                s.Result
-                .Select(c => RuleResult.Create(s.Rule, c))));
+            var suggestedTags = ImmutableHashSet.CreateRange(missingTagSets.SelectMany(s => s.Result.Select(c => RuleResult.Create(s.Rule, c))));
             foreach (var rule in ruleLookup[TagOperator.Suggestion])
             {
                 if (effectiveAndSingleMissingTags.IsSupersetOf(rule.Left) && !effectiveAndSingleMissingTags.Overlaps(rule.Right))
                 {
-                    suggestedTags = suggestedTags.Union(
-                        rule.Right
-                        .Select(c => RuleResult.Create(rule, c)));
+                    suggestedTags = suggestedTags.Union(rule.Right.Select(c => RuleResult.Create(rule, c)));
                 }
             }
 
@@ -205,6 +201,23 @@ namespace MediaLibrary.Tagging
                         select RuleResult.Create(directParent.Value, child));
                 }
             }
+
+            ImmutableHashSet<RuleResult<string>> ExpandAbstractTags(IEnumerable<RuleResult<string>> results) => ImmutableHashSet.CreateRange(results.SelectMany(r =>
+            {
+                if (this.abstractTags.Contains(r.Result))
+                {
+                    this.specializationChildTotalMap.TryGetValue(r.Result, out var children);
+                    return children == null
+                        ? Enumerable.Empty<RuleResult<string>>()
+                        : children.Where(c => !this.abstractTags.Contains(c)).Select(c => RuleResult.Create(r.Rule, c));
+                }
+                else
+                {
+                    return new[] { r };
+                }
+            }));
+
+            suggestedTags = ExpandAbstractTags(suggestedTags);
 
             return new AnalysisResult(
                 normalizedTags,
