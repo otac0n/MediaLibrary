@@ -103,6 +103,7 @@ namespace MediaLibrary.Storage.Search
                     }
 
                     var tags = this.tagEngine.GetTagDescendants(field.Value).Add(field.Value);
+                    tags = tags.Union(tags.SelectMany(this.tagEngine.GetTagAliases));
                     return $"EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", tags.Select(Literal))}))";
 
                 case "copies":

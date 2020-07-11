@@ -9,6 +9,7 @@ namespace MediaLibrary.Tagging
 
     public sealed class TagRuleEngine
     {
+        private readonly Dictionary<string, ImmutableHashSet<string>> aliasMap = new Dictionary<string, ImmutableHashSet<string>>();
         private readonly Dictionary<string, string> renameMap = new Dictionary<string, string>();
         private readonly Dictionary<string, ImmutableHashSet<string>> specializationChildTotalMap = new Dictionary<string, ImmutableHashSet<string>>();
         private readonly Dictionary<string, ImmutableDictionary<string, TagRule>> specializationParentRuleMap = new Dictionary<string, ImmutableDictionary<string, TagRule>>();
@@ -22,8 +23,7 @@ namespace MediaLibrary.Tagging
                 throw new ArgumentNullException(nameof(rules));
             }
 
-            var nonDefinitionRules = new List<TagRule>();
-            var reverseRenameMap = new Dictionary<string, List<string>>();
+            var renameMap = new Dictionary<string, ImmutableHashSet<string>>();
             foreach (var rule in rules)
             {
                 if (rule.Operator == TagOperator.Definition || rule.Operator == TagOperator.Specialization)
@@ -37,38 +37,44 @@ namespace MediaLibrary.Tagging
                     {
                         var fromTag = rule.Left.Single();
                         var toTag = rule.Right.Single();
-                        while (this.renameMap.TryGetValue(toTag, out var nextTag))
-                        {
-                            toTag = nextTag;
-                        }
 
-                        this.renameMap[fromTag] = toTag;
+                        AddParentToChild(fromTag, toTag, renameMap);
+                    }
+                }
+            }
 
-                        if (!reverseRenameMap.TryGetValue(toTag, out var destinationReverse))
+            foreach (var rename in renameMap)
+            {
+                var leaves = new HashSet<string>();
+                var seen = new HashSet<string> { rename.Key };
+                var queue = new Queue<string>(rename.Value);
+                while (queue.Count > 0)
+                {
+                    var item = queue.Dequeue();
+                    if (seen.Add(item))
+                    {
+                        if (renameMap.TryGetValue(item, out var nextRenames))
                         {
-                            reverseRenameMap[toTag] = destinationReverse = new List<string>();
-                        }
-
-                        if (reverseRenameMap.TryGetValue(fromTag, out var connected))
-                        {
-                            foreach (var c in connected)
+                            foreach (var next in nextRenames)
                             {
-                                this.renameMap[c] = toTag;
+                                queue.Enqueue(next);
                             }
-
-                            destinationReverse.AddRange(connected);
-                            reverseRenameMap.Remove(fromTag);
                         }
-
-                        destinationReverse.Add(fromTag);
-                        continue;
+                        else
+                        {
+                            leaves.Add(item);
+                        }
                     }
                 }
 
-                nonDefinitionRules.Add(rule);
+                var set = leaves.Count == 0 ? seen : leaves;
+                var target = set.Min();
+
+                this.renameMap[rename.Key] = target;
+                AddParentToChild(target, rename.Key, this.aliasMap);
             }
 
-            this.tagRules = this.SimplifyRules(nonDefinitionRules).ToLookup(r => r.Operator);
+            this.tagRules = this.SimplifyRules(rules).ToLookup(r => r.Operator);
 
             foreach (var rule in this.tagRules[TagOperator.Specialization])
             {
@@ -170,11 +176,17 @@ namespace MediaLibrary.Tagging
                 suggestedTags);
         }
 
+        public ImmutableHashSet<string> GetTagAliases(string tag) =>
+            this.aliasMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
+
         public ImmutableHashSet<string> GetTagAncestors(string tag) =>
             this.specializationParentTotalMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
 
         public ImmutableHashSet<string> GetTagDescendants(string tag) =>
             this.specializationChildTotalMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
+
+        public string Rename(string tag) =>
+            this.renameMap.TryGetValue(tag, out var renamed) ? renamed : tag;
 
         private static void AddParentToChild(string fromTag, string toTag, TagRule rule, Dictionary<string, ImmutableDictionary<string, TagRule>> map)
         {
@@ -186,6 +198,19 @@ namespace MediaLibrary.Tagging
             if (!parents.ContainsKey(toTag))
             {
                 map[fromTag] = parents.Add(toTag, rule);
+            }
+        }
+
+        private static void AddParentToChild(string fromTag, string toTag, Dictionary<string, ImmutableHashSet<string>> map)
+        {
+            if (!map.TryGetValue(fromTag, out var parents))
+            {
+                parents = ImmutableHashSet<string>.Empty;
+            }
+
+            if (!parents.Contains(toTag))
+            {
+                map[fromTag] = parents.Add(toTag);
             }
         }
 
@@ -231,13 +256,16 @@ namespace MediaLibrary.Tagging
             }
         }
 
-        private string Rename(string tag) =>
-            this.renameMap.TryGetValue(tag, out var renamed) ? renamed : tag;
-
         private IEnumerable<TagRule> SimplifyRules(IEnumerable<TagRule> rules)
         {
             foreach (var r in rules)
             {
+                if (r.Operator == TagOperator.Definition)
+                {
+                    yield return r;
+                    continue;
+                }
+
                 TagRule rule;
                 if (r.Left.Any(this.renameMap.ContainsKey) || r.Right.Any(this.renameMap.ContainsKey))
                 {
