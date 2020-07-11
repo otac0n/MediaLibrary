@@ -48,10 +48,10 @@ namespace MediaLibrary
             this.suggestedTags.Controls.Clear();
             var threshold = this.searchResults.Count / 2 + 1;
             var result = this.index.TagEngine.Analyze(this.tagCounts.Where(t => t.Value >= threshold).Select(t => t.Key));
-            var allMissingTags = new HashSet<string>(result.MissingTagSets.SelectMany(t => t.choices));
-            var missingTags = new HashSet<string>(result.MissingTagSets.Where(t => t.choices.Count == 1).SelectMany(t => t.choices));
+            var allMissingTags = new HashSet<string>(result.MissingTagSets.SelectMany(t => t.Result));
+            var missingTags = new HashSet<string>(result.MissingTagSets.Where(t => t.Result.Count == 1).SelectMany(t => t.Result));
 
-            foreach (var g in result.SuggestedTags.GroupBy(r => r.suggestion, r => r.rule))
+            foreach (var g in result.SuggestedTags.GroupBy(r => r.Result, r => r.Rule))
             {
                 var suggestion = g.Key;
                 if (!this.rejectedTags.Contains(suggestion))

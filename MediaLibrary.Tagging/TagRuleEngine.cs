@@ -100,7 +100,7 @@ namespace MediaLibrary.Tagging
                 }
             }
 
-            var missingTagSets = ImmutableList<(TagRule rule, ImmutableHashSet<string> choices)>.Empty;
+            var missingTagSets = ImmutableList<RuleResult<ImmutableHashSet<string>>>.Empty;
             var effectiveAndSingleMissingTags = new HashSet<string>(effectiveTags);
             var changed = true;
             while (changed)
@@ -117,7 +117,7 @@ namespace MediaLibrary.Tagging
                 {
                     foreach (var rule in firstGroup)
                     {
-                        missingTagSets = missingTagSets.Add((rule, rule.Right));
+                        missingTagSets = missingTagSets.Add(RuleResult.Create(rule, rule.Right));
                         if (rule.Right.Count == 1)
                         {
                             var right = rule.Right.Single();
@@ -136,12 +136,16 @@ namespace MediaLibrary.Tagging
                 }
             }
 
-            var suggestedTags = ImmutableHashSet.CreateRange(missingTagSets.SelectMany(s => s.choices.Select(c => (s.rule, c))));
+            var suggestedTags = ImmutableHashSet.CreateRange(missingTagSets.SelectMany(s =>
+                s.Result
+                .Select(c => RuleResult.Create(s.Rule, c))));
             foreach (var rule in ruleLookup[TagOperator.Suggestion])
             {
                 if (effectiveAndSingleMissingTags.IsSupersetOf(rule.Left) && !effectiveAndSingleMissingTags.Overlaps(rule.Right))
                 {
-                    suggestedTags = suggestedTags.Union(rule.Right.Select(c => (rule, c)));
+                    suggestedTags = suggestedTags.Union(
+                        rule.Right
+                        .Select(c => RuleResult.Create(rule, c)));
                 }
             }
 
@@ -155,7 +159,7 @@ namespace MediaLibrary.Tagging
                         from directParent in this.specializationParentRuleMap[child]
                         let parentTag = directParent.Key
                         where parentTag == tag || (this.specializationParentTotalMap.TryGetValue(parentTag, out var grandparents) && grandparents.Contains(tag))
-                        select (directParent.Value, child));
+                        select RuleResult.Create(directParent.Value, child));
                 }
             }
 
@@ -265,35 +269,6 @@ namespace MediaLibrary.Tagging
                     yield return rule;
                 }
             }
-        }
-
-        public class AnalysisResult
-        {
-            public static AnalysisResult Empty = new AnalysisResult(
-                ImmutableHashSet<string>.Empty,
-                ImmutableHashSet<string>.Empty,
-                ImmutableList<(TagRule, ImmutableHashSet<string>)>.Empty,
-                ImmutableHashSet<(TagRule, string)>.Empty);
-
-            public AnalysisResult(
-                ImmutableHashSet<string> normalizedTags,
-                ImmutableHashSet<string> effectiveTags,
-                ImmutableList<(TagRule rule, ImmutableHashSet<string> choices)> missingTagSets,
-                ImmutableHashSet<(TagRule rule, string suggestion)> suggestedTags)
-            {
-                this.NormalizedTags = normalizedTags;
-                this.EffectiveTags = effectiveTags;
-                this.MissingTagSets = missingTagSets;
-                this.SuggestedTags = suggestedTags;
-            }
-
-            public ImmutableHashSet<string> EffectiveTags { get; }
-
-            public ImmutableList<(TagRule rule, ImmutableHashSet<string> choices)> MissingTagSets { get; }
-
-            public ImmutableHashSet<string> NormalizedTags { get; }
-
-            public ImmutableHashSet<(TagRule rule, string suggestion)> SuggestedTags { get; }
         }
     }
 }
