@@ -101,9 +101,32 @@ namespace MediaLibrary.Tagging
             }
         }
 
+        public TagInfo this[string tag]
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(tag))
+                {
+                    throw new ArgumentNullException(nameof(tag));
+                }
+
+                tag = this.Rename(tag);
+                this.specializationParentTotalMap.TryGetValue(tag, out var ancestors);
+                this.specializationChildTotalMap.TryGetValue(tag, out var descendants);
+                this.aliasMap.TryGetValue(tag, out var aliases);
+                return new TagInfo(
+                    tag: tag,
+                    isAbstract: this.abstractTags.Contains(tag),
+                    aliases: aliases ?? ImmutableHashSet<string>.Empty,
+                    ancestors: ancestors ?? ImmutableHashSet<string>.Empty,
+                    descendants: descendants ?? ImmutableHashSet<string>.Empty,
+                    properties: ImmutableList.CreateRange(this.tagRules[TagOperator.Property].Where(t => t.Left.Contains(tag)).SelectMany(t => t.Right)));
+            }
+        }
+
         public AnalysisResult Analyze(IEnumerable<string> tags)
         {
-            var normalizedTags = ImmutableHashSet.CreateRange(tags.Select(tag => this.Rename(tag.TrimStart('#'))));
+            var normalizedTags = ImmutableHashSet.CreateRange(tags.Select(this.Rename));
             if (normalizedTags.Count == 0)
             {
                 return AnalysisResult.Empty;
