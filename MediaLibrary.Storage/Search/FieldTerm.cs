@@ -21,7 +21,7 @@ namespace MediaLibrary.Storage.Search
         }
 
         public FieldTerm(string field, string value)
-            : this(field, ":", value)
+            : this(field, EqualsOperator, value)
         {
         }
 

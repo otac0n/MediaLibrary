@@ -3,6 +3,7 @@
 namespace MediaLibrary.Storage.Search
 {
     using System;
+    using System.Collections.Immutable;
     using System.Linq;
     using System.Text;
     using MediaLibrary.Tagging;
@@ -92,17 +93,44 @@ namespace MediaLibrary.Storage.Search
                         $"FileType = {Literal(field.Value)}";
 
                 case "tag":
-                    if (field.Operator != FieldTerm.EqualsOperator)
-                    {
-                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
-                    }
-
-                    if (this.excludeHidden && (field.Value == "hidden" || this.tagEngine.GetTagAncestors(field.Value).Contains("hidden")))
+                    var tagInfo = this.tagEngine[field.Value];
+                    if (this.excludeHidden && (tagInfo.Tag == "hidden" || tagInfo.Ancestors.Contains("hidden")))
                     {
                         this.excludeHidden = false;
                     }
 
-                    var tags = this.tagEngine.GetTagDescendants(field.Value).Add(field.Value);
+                    var tags = ImmutableHashSet<string>.Empty;
+                    switch (field.Operator)
+                    {
+                        case FieldTerm.GreaterThanOperator:
+                        case FieldTerm.GreaterThanOrEqualOperator:
+
+                            tags = tags.Union(tagInfo.Ancestors);
+
+                            if (field.Operator == FieldTerm.GreaterThanOrEqualOperator)
+                            {
+                                goto case FieldTerm.EqualsOperator;
+                            }
+
+                            break;
+
+                        case FieldTerm.LessThanOperator:
+                        case FieldTerm.LessThanOrEqualOperator:
+
+                            tags = tags.Union(tagInfo.Descendants);
+
+                            if (field.Operator == FieldTerm.LessThanOrEqualOperator)
+                            {
+                                goto case FieldTerm.EqualsOperator;
+                            }
+
+                            break;
+
+                        case FieldTerm.EqualsOperator:
+                            tags = tags.Add(tagInfo.Tag);
+                            break;
+                    }
+
                     tags = tags.Union(tags.SelectMany(this.tagEngine.GetTagAliases));
                     return $"EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", tags.Select(Literal))}))";
 
