@@ -46,5 +46,10 @@ namespace MediaLibrary.Tagging
         /// The left side specializes the right side.
         /// </summary>
         Specialization = 7,
+
+        /// <summary>
+        /// The left side has properties specified by the right side.
+        /// </summary>
+        Property = 8,
     }
 }

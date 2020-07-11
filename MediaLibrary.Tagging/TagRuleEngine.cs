@@ -9,6 +9,7 @@ namespace MediaLibrary.Tagging
 
     public sealed class TagRuleEngine
     {
+        private readonly HashSet<string> abstractTags = new HashSet<string>();
         private readonly Dictionary<string, ImmutableHashSet<string>> aliasMap = new Dictionary<string, ImmutableHashSet<string>>();
         private readonly Dictionary<string, string> renameMap = new Dictionary<string, string>();
         private readonly Dictionary<string, ImmutableHashSet<string>> specializationChildTotalMap = new Dictionary<string, ImmutableHashSet<string>>();
@@ -75,6 +76,19 @@ namespace MediaLibrary.Tagging
             }
 
             this.tagRules = this.SimplifyRules(rules).ToLookup(r => r.Operator);
+
+            foreach (var rule in this.tagRules[TagOperator.Property])
+            {
+                foreach (var property in rule.Right)
+                {
+                    switch (property)
+                    {
+                        case "abstract":
+                            this.abstractTags.UnionWith(rule.Left);
+                            break;
+                    }
+                }
+            }
 
             foreach (var rule in this.tagRules[TagOperator.Specialization])
             {
@@ -267,12 +281,12 @@ namespace MediaLibrary.Tagging
                 }
 
                 TagRule rule;
-                if (r.Left.Any(this.renameMap.ContainsKey) || r.Right.Any(this.renameMap.ContainsKey))
+                if (r.Left.Any(this.renameMap.ContainsKey) || (r.Operator != TagOperator.Property && r.Right.Any(this.renameMap.ContainsKey)))
                 {
                     rule = new TagRule(
                         ImmutableHashSet.CreateRange(r.Left.Select(this.Rename)),
                         r.Operator,
-                        ImmutableHashSet.CreateRange(r.Right.Select(this.Rename)));
+                        r.Operator != TagOperator.Property ? ImmutableHashSet.CreateRange(r.Right.Select(this.Rename)) : r.Right);
                 }
                 else
                 {
