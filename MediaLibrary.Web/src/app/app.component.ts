@@ -24,6 +24,16 @@ export class AppComponent {
         private taggingService: TaggingService) {
     }
 
+    public searchKeyPress(event: KeyboardEvent) {
+        switch (event.which) {
+            case 13:
+                this.search();
+                event.preventDefault();
+                event.stopPropagation();
+                break;
+        }
+    }
+
     public search() {
         const version = ++this.searchVersion;
         this.resultsPage = [];
@@ -52,31 +62,16 @@ export class AppComponent {
         result.tags.splice(result.tags.indexOf('favorite'), 1);
     }
 
+    public close() {
+        this.previewItem = false;
+    }
+
     public previous() {
         this.move(-1);
     }
 
     public next() {
         this.move(1);
-    }
-
-    @HostListener('document:keydown', ['$event'])
-    private keyDown(event: KeyboardEvent) {
-        if (this.previewItem) {
-            switch (event.which) {
-                case 37:
-                    this.previous();
-                    event.preventDefault();
-                    event.stopPropagation();
-                    break;
-
-                case 39:
-                    this.next();
-                    event.preventDefault();
-                    event.stopPropagation();
-                    break;
-            }
-        }
     }
 
     private move(dir: number) {

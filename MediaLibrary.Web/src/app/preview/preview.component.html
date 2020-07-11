@@ -1,9 +1,10 @@
 <div id="preview" [style.display]="searchResult ? undefined : 'none'" (click)="onClick()">
   <img *ngIf="searchResult?.fileType == 'image' || searchResult?.fileType.startsWith('image/')" class="preview" src="files/{{searchResult?.hash | urlEncode}}" />
   <video *ngIf="searchResult?.fileType == 'video' || searchResult?.fileType.startsWith('video/')" class="preview" autoplay controls muted src="files/{{searchResult?.hash | urlEncode}}"></video>
-  <div>
+  <span class="close">&times;</span>
+  <div class="details">
     <app-heart [favorite]="searchResult?.tags?.indexOf('favorite') > -1" (favorited)="favorite()" (unfavorited)="unfavorite()"></app-heart>
     <app-person-list [people]="searchResult?.people"></app-person-list>
-    <app-tag-list [tags]="searchResult?.tags" [excludeFavorite]="true"></app-tag-list>
+    <app-tag-list [tags]="searchResult?.tags" [excludeFavorite]="true" [editable]="true" (addTag)="addTag($event)" (removeTag)="removeTag($event)"></app-tag-list>
   </div>
 </div>

@@ -1,0 +1,22 @@
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+
+    &.editable {
+        .tag {
+            cursor: pointer;
+
+            &:focus {
+                outline-style: dashed;
+                outline-offset: -5px;
+                outline-width: 2px;
+            }
+        }
+
+        input {
+            flex-grow: 1;
+            width: 75px;
+            max-width: min(50%, 500px);
+        }
+    }
+}

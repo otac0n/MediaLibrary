@@ -1,5 +1,5 @@
 <div id="searchbar">
-  <input type="text" [(ngModel)]="query" /><button (click)="search()" type="button">Search</button>
+  <input type="text" [(ngModel)]="query" (keypress)="searchKeyPress($event)" /><button (click)="search()" type="button">Search</button>
 </div>
 <div id="results">
   <div *ngFor="let result of resultsPage" [ngClass]="{ 'result': true, 'selected': result == selectedItem }" (click)="select(result)">
@@ -10,7 +10,7 @@
     <app-tag-list [tags]="result.tags" [excludeFavorite]="true"></app-tag-list>
   </div>
 </div>
-<app-preview [searchResult]="previewItem ? selectedItem : null" (requestClose)="previewItem = false" (requestPrevious)="previous()" (requestNext)="next()"></app-preview>
+<app-preview [searchResult]="previewItem ? selectedItem : null" (requestClose)="close()" (requestPrevious)="previous()" (requestNext)="next()"></app-preview>
 
 <script>
     function selectResult($result) {

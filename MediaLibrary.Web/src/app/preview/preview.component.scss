@@ -4,17 +4,35 @@
     height: 100%;
     left: 0;
     top: 0;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     background-color: rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-}
 
-.preview {
-    width: auto;
-    height: auto;
-    max-width: 90%;
-    max-height: 90%;
+    .close {
+        color: white;
+        font-size: 250%;
+        position: fixed;
+        right: 0;
+        top: 0;
+        box-sizing: border-box;
+        padding: 0 0.3em;
+        cursor: pointer;
+    }
+
+    .preview {
+        width: auto;
+        height: auto;
+        max-width: 90%;
+        max-height: 90%;
+    }
+
+    .details {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 0 5%;
+    }
 }

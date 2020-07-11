@@ -88,13 +88,25 @@ export class PreviewComponent implements OnInit {
     }
 
     public favorite() {
-        this.taggingService.addTag({ hash: this.searchResult.hash, tag: 'favorite' });
-        this.searchResult.tags.unshift('favorite');
+        this.addTag('favorite');
     }
 
     public unfavorite() {
-        this.taggingService.removeTag({ hash: this.searchResult.hash, tag: 'favorite' });
-        this.searchResult.tags.splice(this.searchResult.tags.indexOf('favorite'), 1);
+        this.removeTag('favorite');
+    }
+
+    public addTag(tag: string) {
+        this.taggingService.addTag({ hash: this.searchResult.hash, tag });
+        if (tag === 'favorite') {
+            this.searchResult.tags.unshift(tag);
+        } else {
+            this.searchResult.tags.push(tag);
+        }
+    }
+
+    public removeTag(tag: string) {
+        this.taggingService.removeTag({ hash: this.searchResult.hash, tag });
+        this.searchResult.tags.splice(this.searchResult.tags.indexOf(tag), 1);
     }
 
     @HostListener('touchstart', ['$event'])
@@ -108,5 +120,30 @@ export class PreviewComponent implements OnInit {
             left: () => this.requestNext.emit(),
             right: () => this.requestPrevious.emit(),
         });
+    }
+
+    @HostListener('document:keydown', ['$event'])
+    private keyDown(event: KeyboardEvent) {
+        if (this.searchResult) {
+            switch (event.which) {
+                case 27:
+                    this.requestClose.emit();
+                    event.preventDefault();
+                    event.stopPropagation();
+                    break;
+
+                case 37:
+                    this.requestPrevious.emit();
+                    event.preventDefault();
+                    event.stopPropagation();
+                    break;
+
+                case 39:
+                    this.requestNext.emit();
+                    event.preventDefault();
+                    event.stopPropagation();
+                    break;
+            }
+        }
     }
 }
