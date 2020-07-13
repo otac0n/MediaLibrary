@@ -5,6 +5,7 @@ import { filter } from 'rxjs/operators';
 import { SearchResult } from '../schema';
 import { SearchService } from './search.service';
 import { TaggingService } from './tagging.service';
+import { TagsService } from './tags.service';
 
 @Component({
     selector: 'app-root',
@@ -54,7 +55,9 @@ export class AppComponent {
 
     public favorite(result: SearchResult) {
         this.taggingService.addTag({ hash: result.hash, tag: 'favorite' });
-        result.tags.unshift('favorite');
+        if (result.tags.indexOf('favorite') > -1) {
+            result.tags.unshift('favorite');
+        }
     }
 
     public unfavorite(result: SearchResult) {

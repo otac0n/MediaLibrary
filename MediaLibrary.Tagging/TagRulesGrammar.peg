@@ -9,8 +9,9 @@ line <TagRule>
 op <TagOperator> = o:("<"? "->" / "<"? "~>" / "<"? "!>" / "::" / "=>") { TagRule.StringToOperatorLookup[o] }
 tagsL = tag<1,, _ "&" _>
 tagsR = tag<1,, _ "|" _>
-tagsP <IList<string>> = "[" _ p:tag<1,, _ "," _> _ "]" { p }
+tagsP <IList<string>> = "[" _ p:property<1,, _ "," _> _ "]" { p }
 tag = "" ([_/A-Za-z0-9][-_/A-Za-z0-9]*)<1,,WS>
+property = "" ([-#@$%^&*()=_/A-Za-z0-9]*)<1,,WS>
 
 EOF = !.
 EOL = "" (_ [\r\n\u2028\u2029])+

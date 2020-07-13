@@ -2,14 +2,15 @@
 
 namespace MediaLibrary.Http
 {
+    using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Net;
-    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using System.Web.Http;
     using MediaLibrary.Storage;
 
-    [RoutePrefix("files/{id}/tags")]
+    [RoutePrefix("tags")]
     public class TagsController : ApiController
     {
         private readonly MediaIndex index;
@@ -20,59 +21,30 @@ namespace MediaLibrary.Http
         }
 
         [Route("{tag}")]
-        [HttpPut]
-        public async Task<IHttpActionResult> AddTag(string id, string tag)
+        [HttpGet]
+        public IHttpActionResult Get(string tag)
         {
-            if (!Regex.IsMatch(id, @"[0-9a-fA-F]{64}"))
+            var tagInfo = this.index.TagEngine[tag];
+
+            if (tagInfo.Tag != tag)
             {
-                return this.BadRequest();
+                var uri = new UriBuilder(this.Request.RequestUri);
+                uri.Path = uri.Path.Substring(0, uri.Path.LastIndexOf('/') + 1) + Uri.EscapeDataString(tagInfo.Tag);
+                return this.Redirect(uri.Uri);
             }
 
-            var result = (await this.index.SearchIndex($"hash:{id}").ConfigureAwait(true)).SingleOrDefault();
-            if (result == null)
-            {
-                return this.NotFound();
-            }
-
-            await this.index.AddHashTag(new HashTag(id, tag)).ConfigureAwait(true);
-            return this.Content(HttpStatusCode.OK, new { });
+            return this.Content(HttpStatusCode.OK, tagInfo);
         }
 
         [Route("")]
         [HttpGet]
-        public async Task<IHttpActionResult> List(string id)
+        public async Task<IHttpActionResult> List()
         {
-            if (!Regex.IsMatch(id, @"[0-9a-fA-F]{64}"))
-            {
-                return this.BadRequest();
-            }
+            var engine = this.index.TagEngine;
+            var rawTags = await this.index.GetAllTags().ConfigureAwait(true);
+            var tags = new HashSet<string>(rawTags.Select(engine.Rename).Concat(engine.GetKnownTags()));
 
-            var result = (await this.index.SearchIndex($"hash:{id}").ConfigureAwait(true)).SingleOrDefault();
-            if (result == null)
-            {
-                return this.NotFound();
-            }
-
-            return this.Content(HttpStatusCode.OK, result.Tags);
-        }
-
-        [Route("{tag}")]
-        [HttpDelete]
-        public async Task<IHttpActionResult> RemoveTag(string id, string tag)
-        {
-            if (!Regex.IsMatch(id, @"[0-9a-fA-F]{64}"))
-            {
-                return this.BadRequest();
-            }
-
-            var result = (await this.index.SearchIndex($"hash:{id}").ConfigureAwait(true)).SingleOrDefault();
-            if (result == null)
-            {
-                return this.NotFound();
-            }
-
-            await this.index.RemoveHashTag(new HashTag(id, tag)).ConfigureAwait(true);
-            return this.Content(HttpStatusCode.OK, new { });
+            return this.Content(HttpStatusCode.OK, tags.OrderBy(t => t).Select(t => engine[t]));
         }
     }
 }

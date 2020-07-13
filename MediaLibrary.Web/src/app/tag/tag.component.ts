@@ -1,5 +1,9 @@
 import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
 
+import { ColorService } from '../color.service';
+import * as StaticData from '../static-data';
+import { TagsService } from '../tags.service';
+
 @Component({
     selector: 'app-tag',
     templateUrl: './tag.component.html',
@@ -21,21 +25,35 @@ export class TagComponent implements OnInit {
     @Output()
     public reject = new EventEmitter<void>();
 
-    constructor() {
+    public style;
+
+    constructor(
+        private colorService: ColorService) {
     }
 
     ngOnInit(): void {
+        const tag = StaticData.alltags[this.tag];
+        if (tag) {
+            const color = TagsService.getColor(tag);
+            if (color) {
+                const parsed = this.colorService.parseColor(color);
+                if (parsed) {
+                    const contrast = this.colorService.contrastColor(color);
+                    this.style = { 'background-color': color, color: contrast };
+                }
+            }
+        }
     }
 
     @HostListener('click', ['$event'])
-    click(event: MouseEvent) {
+    public click(event: MouseEvent) {
         if (this.allowDelete) {
             event.stopPropagation();
         }
     }
 
     @HostListener('dblclick', ['$event'])
-    dblclick(event: MouseEvent) {
+    public dblclick(event: MouseEvent) {
         if (this.allowDelete) {
             this.edit.emit();
             event.preventDefault();

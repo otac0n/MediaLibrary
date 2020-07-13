@@ -1,5 +1,5 @@
 import { HttpClientModule } from '@angular/common/http';
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 
@@ -10,8 +10,10 @@ import { HeartComponent } from './heart/heart.component';
 import { PersonListComponent } from './person-list/person-list.component';
 import { PersonComponent } from './person/person.component';
 import { PreviewComponent } from './preview/preview.component';
+import { staticDataInit } from './static-data';
 import { TagListComponent } from './tag-list/tag-list.component';
 import { TagComponent } from './tag/tag.component';
+import { TagsService } from './tags.service';
 import { UrlEncodePipe } from './url-encode.pipe';
 
 @NgModule({
@@ -32,7 +34,9 @@ import { UrlEncodePipe } from './url-encode.pipe';
         FormsModule,
         HttpClientModule,
     ],
-    providers: [],
+    providers: [
+        { provide: APP_INITIALIZER, useFactory: staticDataInit, deps: [TagsService], multi: true },
+    ],
     bootstrap: [AppComponent]
 })
 export class AppModule { }

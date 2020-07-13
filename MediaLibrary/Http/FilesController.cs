@@ -31,7 +31,7 @@ namespace MediaLibrary.Http
                 return this.BadRequest();
             }
 
-            var result = (await this.index.SearchIndex($"hash:{id}").ConfigureAwait(true)).SingleOrDefault();
+            var result = (await this.index.SearchIndex($"hash:{id}", excludeHidden: false).ConfigureAwait(true)).SingleOrDefault();
             var path = result?.Paths?.Select(MediaIndex.ExtendPath)?.FirstOrDefault(p => File.Exists(p));
 
             if (path == null)

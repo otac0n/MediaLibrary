@@ -12,6 +12,7 @@ namespace MediaLibrary.Tagging
         private readonly HashSet<string> abstractTags = new HashSet<string>();
         private readonly Dictionary<string, ImmutableHashSet<string>> aliasMap = new Dictionary<string, ImmutableHashSet<string>>();
         private readonly Dictionary<string, string> renameMap = new Dictionary<string, string>();
+        private readonly Dictionary<string, ImmutableHashSet<string>> specializationChildMap = new Dictionary<string, ImmutableHashSet<string>>();
         private readonly Dictionary<string, ImmutableHashSet<string>> specializationChildTotalMap = new Dictionary<string, ImmutableHashSet<string>>();
         private readonly Dictionary<string, ImmutableDictionary<string, TagRule>> specializationParentRuleMap = new Dictionary<string, ImmutableDictionary<string, TagRule>>();
         private readonly Dictionary<string, ImmutableHashSet<string>> specializationParentTotalMap = new Dictionary<string, ImmutableHashSet<string>>();
@@ -96,6 +97,7 @@ namespace MediaLibrary.Tagging
                 var toTag = rule.Right.Single();
 
                 AddParentToChild(fromTag, toTag, rule, this.specializationParentRuleMap);
+                AddParentToChild(toTag, fromTag, this.specializationChildMap);
                 AddParentToChildren(fromTag, toTag, this.specializationChildTotalMap, this.specializationParentTotalMap);
                 AddParentToChildren(toTag, fromTag, this.specializationParentTotalMap, this.specializationChildTotalMap);
             }
@@ -111,6 +113,8 @@ namespace MediaLibrary.Tagging
                 }
 
                 tag = this.Rename(tag);
+                this.specializationParentRuleMap.TryGetValue(tag, out var parentsWithRules);
+                this.specializationChildMap.TryGetValue(tag, out var children);
                 this.specializationParentTotalMap.TryGetValue(tag, out var ancestors);
                 this.specializationChildTotalMap.TryGetValue(tag, out var descendants);
                 this.aliasMap.TryGetValue(tag, out var aliases);
@@ -118,9 +122,11 @@ namespace MediaLibrary.Tagging
                     tag: tag,
                     isAbstract: this.abstractTags.Contains(tag),
                     aliases: aliases ?? ImmutableHashSet<string>.Empty,
+                    properties: ImmutableList.CreateRange(this.tagRules[TagOperator.Property].Where(t => t.Left.Contains(tag)).SelectMany(t => t.Right)),
+                    parents: ImmutableHashSet.CreateRange(parentsWithRules?.Keys ?? Enumerable.Empty<string>()),
+                    children: children ?? ImmutableHashSet<string>.Empty,
                     ancestors: ancestors ?? ImmutableHashSet<string>.Empty,
-                    descendants: descendants ?? ImmutableHashSet<string>.Empty,
-                    properties: ImmutableList.CreateRange(this.tagRules[TagOperator.Property].Where(t => t.Left.Contains(tag)).SelectMany(t => t.Right)));
+                    descendants: descendants ?? ImmutableHashSet<string>.Empty);
             }
         }
 
@@ -226,14 +232,23 @@ namespace MediaLibrary.Tagging
                 suggestedTags);
         }
 
+        public IEnumerable<string> GetKnownTags() =>
+            this.tagRules.SelectMany(g => g).SelectMany(r => r.Operator == TagOperator.Property ? r.Left : r.Left.Concat(r.Right)).Select(this.Rename).Distinct();
+
         public ImmutableHashSet<string> GetTagAliases(string tag) =>
             this.aliasMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
 
         public ImmutableHashSet<string> GetTagAncestors(string tag) =>
             this.specializationParentTotalMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
 
+        public ImmutableHashSet<string> GetTagChildren(string tag) =>
+            this.specializationChildMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
+
         public ImmutableHashSet<string> GetTagDescendants(string tag) =>
             this.specializationChildTotalMap.TryGetValue(this.Rename(tag), out var set) ? set : ImmutableHashSet<string>.Empty;
+
+        public ImmutableHashSet<string> GetTagParents(string tag) =>
+            this.specializationParentRuleMap.TryGetValue(this.Rename(tag), out var dict) ? ImmutableHashSet.CreateRange(dict.Keys) : ImmutableHashSet<string>.Empty;
 
         public string Rename(string tag) =>
             this.renameMap.TryGetValue(tag, out var renamed) ? renamed : tag;
