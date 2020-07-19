@@ -24,10 +24,10 @@ export class TagListComponent implements OnInit {
     @Output()
     public rejectTag = new EventEmitter<string>();
 
-    @ViewChild("tagInput")
+    @ViewChild('tagInput')
     public tagInput: ElementRef;
 
-    public inputValue = "";
+    public inputValue = '';
 
     constructor() {
     }
@@ -45,16 +45,16 @@ export class TagListComponent implements OnInit {
         switch (event.which) {
             case 8:
                 if (this.editable) {
-                    if (this.inputValue === "") {
+                    if (this.inputValue === '') {
                         if (this.tags.length > 0) {
                             this.inputValue = this.tags.pop();
                             event.preventDefault();
                             event.stopPropagation();
                         }
                     } else {
-                        let input = this.tagInput.nativeElement;
-                        let start = input.selectionStart;
-                        let end = input.selectionEnd;
+                        const input = this.tagInput.nativeElement;
+                        const start = input.selectionStart;
+                        const end = input.selectionEnd;
                         if (start === end && start === 0) {
                             input.select();
                             event.preventDefault();
@@ -72,10 +72,10 @@ export class TagListComponent implements OnInit {
             case 32:
                 // TODO: Handle different cursor positions.
                 if (this.editable) {
-                    let tags = this.inputValue.split(" ").filter(t => !!t).forEach(t => {
+                    const tags = this.inputValue.split(' ').filter(t => !!t).forEach(t => {
                         this.addTag.emit(t);
                     });
-                    this.inputValue = "";
+                    this.inputValue = '';
                     event.preventDefault();
                     event.stopPropagation();
                 }

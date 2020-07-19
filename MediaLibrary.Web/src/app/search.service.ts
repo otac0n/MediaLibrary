@@ -3,9 +3,9 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { TagsService } from './tags.service';
 import { SearchResult } from '../schema';
 import * as StaticData from './static-data';
+import { TagsService } from './tags.service';
 
 @Injectable({
     providedIn: 'root'
