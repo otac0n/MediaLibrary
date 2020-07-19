@@ -512,7 +512,7 @@ namespace MediaLibrary
 
         private void OpenSlideshow(bool shuffle = false, bool autoPlay = false)
         {
-            var searchResults = this.listView.SelectedItems.Count > 0
+            var searchResults = this.listView.SelectedItems.Count > 1
                 ? this.GetSelectedSearchResults()
                 : this.GetVisibleSearchResults();
             new SlideShowForm(this.index, searchResults, shuffle, autoPlay).Show(this);
