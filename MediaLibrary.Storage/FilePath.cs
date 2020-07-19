@@ -10,12 +10,12 @@ namespace MediaLibrary.Storage
         public FilePath(string path, string lastHash, long lastModifiedTime, long? missingSince)
             : this(path, null, lastHash, lastModifiedTime, missingSince)
         {
-            this.PathRaw = FilePath.GetPathRaw(path);
+            this.PathRaw = PathEncoder.GetPathRaw(path);
         }
 
         public FilePath(string path, byte[] pathRaw, string lastHash, long lastModifiedTime, long? missingSince)
         {
-            this.Path = pathRaw == null ? path : PathEncoder.Decode(pathRaw);
+            this.Path = PathEncoder.GetPath(path, pathRaw);
             this.PathRaw = pathRaw;
             this.LastHash = lastHash;
             this.LastModifiedTime = lastModifiedTime;
@@ -59,11 +59,6 @@ namespace MediaLibrary.Storage
                 this.LastHash,
                 this.LastModifiedTime,
                 missingSince);
-
-        internal static byte[] GetPathRaw(string path) =>
-            path != Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(path))
-                ? PathEncoder.Encode(path)
-                : null;
 
         internal static class Queries
         {

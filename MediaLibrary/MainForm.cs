@@ -381,7 +381,7 @@ namespace MediaLibrary
             {
                 foreach (var path in ((SearchResult)item.Tag).Paths)
                 {
-                    if (File.Exists(MediaIndex.ExtendPath(path)))
+                    if (File.Exists(PathEncoder.ExtendPath(path)))
                     {
                         yield return path;
                         break;

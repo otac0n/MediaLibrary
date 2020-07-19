@@ -104,7 +104,7 @@ namespace MediaLibrary
                 var url = displayedItem == null
                     ? null
                     : (from p in displayedItem.Paths
-                       let path = MediaIndex.ExtendPath(p)
+                       let path = PathEncoder.ExtendPath(p)
                        where File.Exists(path)
                        select path).FirstOrDefault();
                 if (url == null || IsImage(item))

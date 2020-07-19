@@ -2,9 +2,10 @@
 
 namespace MediaLibrary.Storage
 {
+    using System;
     using System.Text;
 
-    internal static class PathEncoder
+    public static class PathEncoder
     {
         public static string Decode(byte[] input)
         {
@@ -32,5 +33,33 @@ namespace MediaLibrary.Storage
 
             return result;
         }
+
+        public static string ExtendPath(string path)
+        {
+            if (path == null ||
+                path.Length < 260 ||
+                path.StartsWith(@"\\?\", StringComparison.Ordinal) ||
+                path.StartsWith(@"\\.\", StringComparison.Ordinal))
+            {
+                return path;
+            }
+
+            if (path.StartsWith(@"\\", StringComparison.Ordinal))
+            {
+                return @"\\?\UNC" + path.Substring(1);
+            }
+            else
+            {
+                return @"\\?\" + path;
+            }
+        }
+
+        public static string GetPath(string path, byte[] pathRaw) =>
+            pathRaw == null ? path : PathEncoder.Decode(pathRaw);
+
+        public static byte[] GetPathRaw(string path) =>
+            path != Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(path))
+                ? PathEncoder.Encode(path)
+                : null;
     }
 }

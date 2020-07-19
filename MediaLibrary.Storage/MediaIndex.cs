@@ -51,26 +51,6 @@ namespace MediaLibrary.Storage
 
         public TagRuleEngine TagEngine { get; private set; }
 
-        public static string ExtendPath(string path)
-        {
-            if (path == null ||
-                path.Length < 260 ||
-                path.StartsWith(@"\\?\", StringComparison.Ordinal) ||
-                path.StartsWith(@"\\.\", StringComparison.Ordinal))
-            {
-                return path;
-            }
-
-            if (path.StartsWith(@"\\", StringComparison.Ordinal))
-            {
-                return @"\\?\UNC" + path.Substring(1);
-            }
-            else
-            {
-                return @"\\?\" + path;
-            }
-        }
-
         public static async Task<HashInfo> HashFileAsync(string path)
         {
             var fileSize = 0L;
@@ -78,7 +58,7 @@ namespace MediaLibrary.Storage
             var recognized = false;
             byte[] hash;
             using (var hashAlgorithm = new SHA256Managed())
-            using (var file = File.OpenRead(ExtendPath(path)))
+            using (var file = File.OpenRead(PathEncoder.ExtendPath(path)))
             {
                 var buffer = new byte[4096];
                 hashAlgorithm.Initialize();
@@ -165,7 +145,17 @@ namespace MediaLibrary.Storage
 
         public async Task AddIndexedPath(string path, IProgress<RescanProgress> progress = null)
         {
-            await this.IndexWrite(conn => conn.Execute(Queries.AddIndexedPath, new { Path = path })).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            if (!Path.IsPathRooted(path))
+            {
+                throw new ArgumentOutOfRangeException(nameof(path));
+            }
+
+            await this.IndexWrite(conn => conn.Execute(Queries.AddIndexedPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) })).ConfigureAwait(false);
             await this.RescanIndexedPath(path, progress).ConfigureAwait(false);
             this.AddFileSystemWatcher(path);
         }
@@ -279,7 +269,7 @@ namespace MediaLibrary.Storage
 
         public Task RemoveFilePath(string path) =>
             this.IndexWrite(conn =>
-                conn.Execute(FilePath.Queries.RemoveFilePathByPath, new { Path = path, PathRaw = FilePath.GetPathRaw(path) }));
+                conn.Execute(FilePath.Queries.RemoveFilePathByPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) }));
 
         public async Task RemoveHashPerson(HashPerson hashPerson)
         {
@@ -322,7 +312,7 @@ namespace MediaLibrary.Storage
         public async Task RemoveIndexedPath(string path)
         {
             this.RemoveFileSystemWatcher(path);
-            await this.IndexWrite(conn => conn.Execute(Queries.RemoveIndexedPath, new { Path = path })).ConfigureAwait(false);
+            await this.IndexWrite(conn => conn.Execute(Queries.RemoveIndexedPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) })).ConfigureAwait(false);
         }
 
         public async Task Rescan(IProgress<RescanProgress> progress = null, bool forceRehash = false)
@@ -449,7 +439,7 @@ namespace MediaLibrary.Storage
 
         private Task<FilePath> GetFilePath(string path) =>
             this.IndexRead(conn =>
-                conn.QuerySingleOrDefault<FilePath>(FilePath.Queries.GetFilePathByPath, new { Path = path, PathRaw = FilePath.GetPathRaw(path) }));
+                conn.QuerySingleOrDefault<FilePath>(FilePath.Queries.GetFilePathByPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) }));
 
         private Task<FilePath> GetFilePaths(string hash) =>
             this.IndexRead(conn =>
@@ -461,7 +451,7 @@ namespace MediaLibrary.Storage
 
         private Task<List<string>> GetIndexedPaths() =>
             this.IndexRead(conn =>
-                conn.Query<string>(Queries.GetIndexedPaths, buffered: false).ToList());
+                conn.Query<string, byte[], string>(Queries.GetIndexedPaths, (path, pathRaw) => PathEncoder.GetPath(path, pathRaw), splitOn: "PathRaw", buffered: false).ToList());
 
         private Task<List<(FilePath filePath, HashInfo hashInfo, bool hasDetails)>> GetIndexInfoUnder(string path) =>
             this.IndexRead(conn =>
@@ -582,7 +572,7 @@ namespace MediaLibrary.Storage
                 filePath = await this.GetFilePath(path).ConfigureAwait(false);
             }
 
-            var fileInfo = new FileInfo(ExtendPath(path));
+            var fileInfo = new FileInfo(PathEncoder.ExtendPath(path));
             if (fileInfo.Exists)
             {
                 var modifiedTime = fileInfo.LastWriteTimeUtc.Ticks;
@@ -743,7 +733,7 @@ namespace MediaLibrary.Storage
             {
                 if (hashInfo.FileType == "image" || hashInfo.FileType.StartsWith("image/", StringComparison.Ordinal))
                 {
-                    using (var image = Image.FromFile(ExtendPath(filePath.Path)))
+                    using (var image = Image.FromFile(PathEncoder.ExtendPath(filePath.Path)))
                     {
                         details = ImageDetailRecognizer.Recognize(image);
                     }
@@ -827,13 +817,14 @@ namespace MediaLibrary.Storage
         private static class Queries
         {
             public static readonly string AddIndexedPath = @"
-                INSERT INTO IndexedPaths (Path) VALUES (@Path)
+                INSERT INTO IndexedPaths (Path, PathRaw) VALUES (@Path, @PathRaw)
             ";
 
             public static readonly string CreateSchema = @"
                 CREATE TABLE IF NOT EXISTS IndexedPaths
                 (
                     Path text NOT NULL,
+                    PathRaw blob NULL,
                     PRIMARY KEY (Path)
                 );
 
@@ -941,12 +932,15 @@ namespace MediaLibrary.Storage
 
             public static readonly string GetIndexedPaths = @"
                 SELECT
-                    Path
+                    Path,
+                    PathRaw
                 FROM IndexedPaths
             ";
 
             public static readonly string RemoveIndexedPath = @"
-                DELETE FROM IndexedPaths WHERE Path = @Path
+                DELETE FROM IndexedPaths
+                WHERE Path = @Path
+                AND ((@PathRaw IS NULL AND PathRaw IS NULL) OR (@PathRaw IS NOT NULL AND PathRaw = @PathRaw))
             ";
 
             public static readonly string UdateTagRules = @"
