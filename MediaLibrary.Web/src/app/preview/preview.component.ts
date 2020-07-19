@@ -97,7 +97,7 @@ export class PreviewComponent implements OnInit {
 
     public addTag(tag: string) {
         this.taggingService.addTag({ hash: this.searchResult.hash, tag });
-        if (this.searchResult.indexOf(tag) > -1) {
+        if (this.searchResult.tags.indexOf(tag) === -1) {
             if (tag === 'favorite') {
                 this.searchResult.tags.unshift(tag);
             } else {
