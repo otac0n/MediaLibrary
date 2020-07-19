@@ -8,6 +8,7 @@ namespace MediaLibrary.Storage
     using System.Collections.Immutable;
     using System.Data.SQLite;
     using System.Diagnostics;
+    using System.Drawing;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -24,12 +25,13 @@ namespace MediaLibrary.Storage
     {
         public static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
 
+        private readonly ReaderWriterLockSlim dbLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+        private readonly HashSet<string> detailsColumns = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+        private readonly Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
         private readonly string indexPath;
         private readonly WeakReferenceCache<long, Person> personCache = new WeakReferenceCache<long, Person>();
         private readonly WeakReferenceCache<string, SearchResult> searchResultsCache = new WeakReferenceCache<string, SearchResult>();
         private readonly TagRulesGrammar tagRuleGrammar;
-        private ReaderWriterLockSlim dbLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
-        private Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
 
         public MediaIndex(string indexPath)
         {
@@ -323,7 +325,7 @@ namespace MediaLibrary.Storage
             await this.IndexWrite(conn => conn.Execute(Queries.RemoveIndexedPath, new { Path = path })).ConfigureAwait(false);
         }
 
-        public async Task Rescan(IProgress<RescanProgress> progress = null)
+        public async Task Rescan(IProgress<RescanProgress> progress = null, bool forceRehash = false)
         {
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
 
@@ -340,17 +342,18 @@ namespace MediaLibrary.Storage
             for (var i = 0; i < indexedPaths.Count; i++)
             {
                 var p = i; // Closure copy.
-                tasks[p] = this.RescanIndexedPath(indexedPaths[p], progress == null ? null : OnProgress.Do<RescanProgress>(prog =>
+                var pathProgress = progress == null ? null : OnProgress.Do<RescanProgress>(prog =>
                 {
                     lock (progressSync)
                     {
                         progresses[p] = prog;
                         progress?.Report(RescanProgress.Aggregate(ref lastProgress, progresses));
                     }
-                }));
+                });
+                tasks[p] = this.RescanIndexedPath(indexedPaths[p], pathProgress, forceRehash);
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
         public async Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
@@ -446,23 +449,35 @@ namespace MediaLibrary.Storage
 
         private Task<FilePath> GetFilePath(string path) =>
             this.IndexRead(conn =>
-                conn.Query<FilePath>(FilePath.Queries.GetFilePathByPath, new { Path = path, PathRaw = FilePath.GetPathRaw(path) }).SingleOrDefault());
+                conn.QuerySingleOrDefault<FilePath>(FilePath.Queries.GetFilePathByPath, new { Path = path, PathRaw = FilePath.GetPathRaw(path) }));
 
         private Task<FilePath> GetFilePaths(string hash) =>
             this.IndexRead(conn =>
-                conn.Query<FilePath>(FilePath.Queries.GetFilePathsByHash, new { Hash = hash }).SingleOrDefault());
-
-        private Task<List<FilePath>> GetFilePathsUnder(string path) =>
-            this.IndexRead(conn =>
-                conn.Query<FilePath>(FilePath.Queries.GetFilePathsUnder, new { Path = QueryBuilder.EscapeLike(path) }).ToList());
+                conn.QuerySingleOrDefault<FilePath>(FilePath.Queries.GetFilePathsByHash, new { Hash = hash }));
 
         private Task<HashInfo> GetHashInfo(string hash) =>
             this.IndexRead(conn =>
-                conn.Query<HashInfo>(HashInfo.Queries.GetHashInfo, new { Hash = hash }).SingleOrDefault());
+                conn.QuerySingleOrDefault<HashInfo>(HashInfo.Queries.GetHashInfo, new { Hash = hash }));
 
         private Task<List<string>> GetIndexedPaths() =>
             this.IndexRead(conn =>
-                conn.Query<string>(Queries.GetIndexedPaths).ToList());
+                conn.Query<string>(Queries.GetIndexedPaths, buffered: false).ToList());
+
+        private Task<List<(FilePath filePath, HashInfo hashInfo, bool hasDetails)>> GetIndexInfoUnder(string path) =>
+            this.IndexRead(conn =>
+            {
+                var reader = conn.QueryMultiple(FilePath.Queries.GetFilePathsUnder, new { Path = QueryBuilder.EscapeLike(path) });
+                var hashInfo = reader.Read<HashInfo, long, (HashInfo, bool)>((hash, hasDetails) => (hash, hasDetails != 0), splitOn: "HasHashDetails", buffered: false).ToDictionary(h => h.Item1.Hash);
+                return reader.Read<FilePath>(buffered: false).Select(p =>
+                {
+                    if (hashInfo.TryGetValue(p.LastHash, out var hash))
+                    {
+                        return (p, hash.Item1, hash.Item2);
+                    }
+
+                    return (p, null, false);
+                }).ToList();
+            });
 
         private async Task<T> IndexRead<T>(Func<SQLiteConnection, T> query)
         {
@@ -553,31 +568,59 @@ namespace MediaLibrary.Storage
             }
         }
 
-        private async Task<string> RescanFile(string path, FilePath filePath = null)
+        private async Task<string> RescanFile(string path, FilePath filePath = null, HashInfo hashInfo = null, bool? hasDetails = null, bool forceRehash = false)
         {
-            filePath = filePath ?? await this.GetFilePath(path).ConfigureAwait(false);
+            if (filePath != null)
+            {
+                if (filePath.Path != path)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(filePath));
+                }
+            }
+            else
+            {
+                filePath = await this.GetFilePath(path).ConfigureAwait(false);
+            }
 
             var fileInfo = new FileInfo(ExtendPath(path));
             if (fileInfo.Exists)
             {
                 var modifiedTime = fileInfo.LastWriteTimeUtc.Ticks;
 
-                HashInfo hashInfo = null;
                 if (filePath != null && filePath.LastModifiedTime == modifiedTime)
                 {
-                    hashInfo = await this.GetHashInfo(filePath.LastHash).ConfigureAwait(false);
+                    if (hashInfo == null)
+                    {
+                        hasDetails = null;
+                    }
+                    else if (hashInfo.Hash != filePath.LastHash)
+                    {
+                        hashInfo = null;
+                        hasDetails = null;
+                    }
+
+                    hashInfo = hashInfo ?? await this.GetHashInfo(filePath.LastHash).ConfigureAwait(false); // TODO: Get hasDetails here.
                     if (hashInfo != null && hashInfo.FileSize != fileInfo.Length)
                     {
                         hashInfo = null;
+                        hasDetails = null;
                     }
                 }
-
-                if (hashInfo == null)
+                else
                 {
+                    hashInfo = null;
+                    hasDetails = null;
+                }
+
+                if (hashInfo == null || forceRehash || !(hasDetails ?? false))
+                {
+                    // TODO: We need to exclusively lock the file to avoid the file chainging while we hash it or between when we hash and when we update the details.
                     hashInfo = await HashFileAsync(path).ConfigureAwait(false);
-                    await this.IndexWrite(conn => conn.Execute(HashInfo.Queries.AddHashInfo, hashInfo)).ConfigureAwait(false);
+                    await this.IndexWrite(conn => conn.Execute(HashInfo.Queries.AddHashInfo, hashInfo)).ConfigureAwait(false); // TODO: Get hasDetails here.
                     filePath = new FilePath(path, hashInfo.Hash, modifiedTime, missingSince: null);
                     await this.AddFilePath(filePath).ConfigureAwait(false);
+
+                    await this.UpdateHashDetails(hashInfo, filePath).ConfigureAwait(false);
                 }
                 else if (filePath.MissingSince != null)
                 {
@@ -609,14 +652,14 @@ namespace MediaLibrary.Storage
             }
         }
 
-        private async Task RescanIndexedPath(string path, IProgress<RescanProgress> progress = null)
+        private async Task RescanIndexedPath(string path, IProgress<RescanProgress> progress = null, bool forceRehash = false)
         {
             var sync = new object();
             var lastProgress = 0.0;
             var discoveryComplete = false;
             var discovered = 0;
             var processed = 0;
-            var queue = new ConcurrentQueue<(string path, FilePath filePath)>();
+            var queue = new ConcurrentQueue<(string path, FilePath filePath, HashInfo hashInfo, bool? hasDetails)>();
             var pendingTasks = new List<Task>();
 
             var progressTimer = Stopwatch.StartNew();
@@ -637,11 +680,11 @@ namespace MediaLibrary.Storage
                 try
                 {
                     var seen = new HashSet<string>();
-                    foreach (var filePath in await this.GetFilePathsUnder(path).ConfigureAwait(false))
+                    foreach (var (filePath, hashInfo, hasDetails) in await this.GetIndexInfoUnder(path).ConfigureAwait(false))
                     {
                         seen.Add(filePath.Path);
                         Interlocked.Increment(ref discovered);
-                        queue.Enqueue((filePath.Path, filePath));
+                        queue.Enqueue((filePath.Path, filePath, hashInfo, hasDetails));
                         ReportProgress();
                     }
 
@@ -650,7 +693,7 @@ namespace MediaLibrary.Storage
                         if (seen.Add(file))
                         {
                             Interlocked.Increment(ref discovered);
-                            queue.Enqueue((file, null));
+                            queue.Enqueue((file, null, null, null));
                             ReportProgress();
                         }
                     }
@@ -680,7 +723,7 @@ namespace MediaLibrary.Storage
                         }
                     }
 
-                    pendingTasks.Add(this.RescanFile(file.path, file.filePath).ContinueWith(result =>
+                    pendingTasks.Add(this.RescanFile(file.path, file.filePath, file.hashInfo, file.hasDetails, forceRehash).ContinueWith(result =>
                     {
                         Interlocked.Increment(ref processed);
                         ReportProgress();
@@ -691,6 +734,73 @@ namespace MediaLibrary.Storage
             await Task.WhenAll(enumerateTask, populateTask).ConfigureAwait(false);
             await Task.WhenAll(pendingTasks).ConfigureAwait(false);
             ReportProgress(force: true);
+        }
+
+        private async Task UpdateHashDetails(HashInfo hashInfo, FilePath filePath)
+        {
+            Dictionary<string, object> details = null;
+            try
+            {
+                if (hashInfo.FileType == "image" || hashInfo.FileType.StartsWith("image/", StringComparison.Ordinal))
+                {
+                    using (var image = Image.FromFile(ExtendPath(filePath.Path)))
+                    {
+                        details = ImageDetailRecognizer.Recognize(image);
+                    }
+                }
+                else
+                {
+                    details = new Dictionary<string, object>();
+                }
+            }
+            catch (IOException)
+            {
+            }
+
+            if (details == null)
+            {
+                return;
+            }
+
+            details.Remove("Hash");
+
+            string EscapeKey(string key) => $"[{key.Replace("]", "]]")}]";
+            var keys = details.Keys.ToList();
+            var detailsColumns = string.Concat(keys.Select(k => $", {EscapeKey(k)}"));
+            var parameterNames = string.Concat(Enumerable.Range(0, keys.Count).Select(i => $", @p{i}"));
+            var param = new DynamicParameters();
+            param.Add("Hash", hashInfo.Hash);
+            for (var i = 0; i < keys.Count; i++)
+            {
+                param.Add($"p{i}", details[keys[i]]);
+            }
+
+            await this.IndexWrite(conn =>
+            {
+                if (this.detailsColumns.Count == 0)
+                {
+                    this.detailsColumns.UnionWith(
+                        conn.Query<string>("SELECT name FROM pragma_table_info('HashDetails')"));
+
+                    if (this.detailsColumns.Count == 0)
+                    {
+                        conn.Execute($"CREATE TABLE HashDetails (Hash text NOT NULL{detailsColumns}, PRIMARY KEY (Hash), FOREIGN KEY (Hash) REFERENCES HashInfo (Hash) ON DELETE CASCADE)");
+                        this.detailsColumns.Add("Hash");
+                        this.detailsColumns.UnionWith(keys);
+                    }
+                }
+
+                foreach (var key in keys)
+                {
+                    if (!this.detailsColumns.Contains(key))
+                    {
+                        conn.Execute($"ALTER TABLE HashDetails ADD COLUMN {EscapeKey(key)}");
+                        this.detailsColumns.Add(key);
+                    }
+                }
+
+                conn.Execute($"INSERT OR REPLACE INTO HashDetails (Hash{detailsColumns}) VALUES (@Hash{parameterNames})", param);
+            }).ConfigureAwait(false);
         }
 
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
@@ -750,6 +860,13 @@ namespace MediaLibrary.Storage
 
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_HashInfo_Hash ON HashInfo (Hash);
                 CREATE INDEX IF NOT EXISTS IX_HashInfo_FileType ON HashInfo (FileType);
+
+                CREATE TABLE IF NOT EXISTS HashDetails
+                (
+                    Hash text NOT NULL,
+                    PRIMARY KEY (Hash),
+                    FOREIGN KEY (Hash) REFERENCES HashInfo (Hash) ON DELETE CASCADE
+                );
 
                 CREATE TABLE IF NOT EXISTS HashTag
                 (

@@ -95,6 +95,9 @@ namespace MediaLibrary.Storage
             ";
 
             public static readonly string GetFilePathsUnder = @"
+                DROP TABLE IF EXISTS temp.GetFilePathsUnder;
+                CREATE TEMP TABLE temp.GetFilePathsUnder (Path text, PathRaw blob, LastHash text, LastModifiedTime INTEGER, MissingSince INTEGER);
+                INSERT INTO temp.GetFilePathsUnder (Path, PathRaw, LastHash, LastModifiedTime, MissingSince)
                 SELECT
                     Path,
                     PathRaw,
@@ -102,7 +105,18 @@ namespace MediaLibrary.Storage
                     LastModifiedTime,
                     MissingSince
                 FROM Paths
-                WHERE Path LIKE @Path || '%' ESCAPE '\'
+                WHERE Path LIKE @Path || '%' ESCAPE '\';
+
+                SELECT
+                    Hash,
+                    FileSize,
+                    FileType,
+                    CASE WHEN Hash IN (SELECT Hash FROM HashDetails) THEN TRUE ELSE FALSE END AS HasHashDetails
+                FROM HashInfo
+                WHERE Hash IN (SELECT LastHash FROM temp.GetFilePathsUnder);
+
+                SELECT * FROM temp.GetFilePathsUnder;
+                DROP TABLE temp.GetFilePathsUnder
             ";
 
             public static readonly string RemoveFilePathByPath = @"
