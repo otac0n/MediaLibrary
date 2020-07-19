@@ -53,36 +53,60 @@ namespace MediaLibrary.Storage
 
         public static async Task<HashInfo> HashFileAsync(string path)
         {
-            var fileSize = 0L;
-            var recognizerState = FileTypeRecognizer.Initialize();
-            var recognized = false;
-            byte[] hash;
-            using (var hashAlgorithm = new SHA256Managed())
-            using (var file = File.OpenRead(PathEncoder.ExtendPath(path)))
+            using (var file = File.Open(PathEncoder.ExtendPath(path), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                var buffer = new byte[4096];
-                hashAlgorithm.Initialize();
-                while (true)
+                return await HashFileAsync(file).ConfigureAwait(false);
+            }
+        }
+
+        public static async Task<HashInfo> HashFileAsync(FileStream file)
+        {
+            if (file == null)
+            {
+                throw new ArgumentNullException(nameof(file));
+            }
+
+            var position = file.Position;
+
+            byte[] hash;
+            var fileSize = 0L;
+
+            var recognizerState = FileTypeRecognizer.Initialize();
+            try
+            {
+                file.Seek(0, SeekOrigin.Begin);
+
+                var recognized = false;
+                using (var hashAlgorithm = new SHA256Managed())
                 {
-                    var count = await file.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
-                    if (count == 0)
+                    var buffer = new byte[4096];
+                    hashAlgorithm.Initialize();
+                    while (true)
                     {
-                        hashAlgorithm.TransformFinalBlock(buffer, 0, 0);
-                        hash = hashAlgorithm.Hash;
-                        break;
-                    }
-                    else
-                    {
-                        hashAlgorithm.TransformBlock(buffer, 0, count, buffer, 0);
-
-                        if (!recognized)
+                        var count = await file.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+                        if (count == 0)
                         {
-                            recognized = FileTypeRecognizer.Advance(recognizerState, buffer, 0, count);
+                            hashAlgorithm.TransformFinalBlock(buffer, 0, 0);
+                            hash = hashAlgorithm.Hash;
+                            break;
                         }
+                        else
+                        {
+                            hashAlgorithm.TransformBlock(buffer, 0, count, buffer, 0);
 
-                        fileSize += count;
+                            if (!recognized)
+                            {
+                                recognized = FileTypeRecognizer.Advance(recognizerState, buffer, 0, count);
+                            }
+
+                            fileSize += count;
+                        }
                     }
                 }
+            }
+            finally
+            {
+                file.Seek(position, SeekOrigin.Begin);
             }
 
             var sb = new StringBuilder(hash.Length * 2);
@@ -572,7 +596,8 @@ namespace MediaLibrary.Storage
                 filePath = await this.GetFilePath(path).ConfigureAwait(false);
             }
 
-            var fileInfo = new FileInfo(PathEncoder.ExtendPath(path));
+            var extendedPath = PathEncoder.ExtendPath(path);
+            var fileInfo = new FileInfo(extendedPath);
             if (fileInfo.Exists)
             {
                 var modifiedTime = fileInfo.LastWriteTimeUtc.Ticks;
@@ -604,13 +629,15 @@ namespace MediaLibrary.Storage
 
                 if (hashInfo == null || forceRehash || !(hasDetails ?? false))
                 {
-                    // TODO: We need to exclusively lock the file to avoid the file chainging while we hash it or between when we hash and when we update the details.
-                    hashInfo = await HashFileAsync(path).ConfigureAwait(false);
-                    await this.IndexWrite(conn => conn.Execute(HashInfo.Queries.AddHashInfo, hashInfo)).ConfigureAwait(false); // TODO: Get hasDetails here.
-                    filePath = new FilePath(path, hashInfo.Hash, modifiedTime, missingSince: null);
-                    await this.AddFilePath(filePath).ConfigureAwait(false);
+                    using (var file = File.Open(extendedPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        hashInfo = await HashFileAsync(file).ConfigureAwait(false);
+                        await this.IndexWrite(conn => conn.Execute(HashInfo.Queries.AddHashInfo, hashInfo)).ConfigureAwait(false); // TODO: Get hasDetails here.
+                        filePath = new FilePath(path, hashInfo.Hash, modifiedTime, missingSince: null);
+                        await this.AddFilePath(filePath).ConfigureAwait(false);
 
-                    await this.UpdateHashDetails(hashInfo, filePath).ConfigureAwait(false);
+                        await this.UpdateHashDetails(hashInfo, file).ConfigureAwait(false);
+                    }
                 }
                 else if (filePath.MissingSince != null)
                 {
@@ -726,14 +753,14 @@ namespace MediaLibrary.Storage
             ReportProgress(force: true);
         }
 
-        private async Task UpdateHashDetails(HashInfo hashInfo, FilePath filePath)
+        private async Task UpdateHashDetails(HashInfo hashInfo, FileStream file)
         {
             Dictionary<string, object> details = null;
             try
             {
                 if (hashInfo.FileType == "image" || hashInfo.FileType.StartsWith("image/", StringComparison.Ordinal))
                 {
-                    using (var image = Image.FromFile(PathEncoder.ExtendPath(filePath.Path)))
+                    using (var image = Image.FromStream(file))
                     {
                         details = ImageDetailRecognizer.Recognize(image);
                     }
