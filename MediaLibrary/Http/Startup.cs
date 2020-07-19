@@ -3,6 +3,7 @@
 namespace MediaLibrary.Http
 {
     using System.Net.Http.Formatting;
+    using System.Text;
     using System.Web.Http;
     using MediaLibrary.Storage;
     using Newtonsoft.Json;
@@ -31,14 +32,18 @@ namespace MediaLibrary.Http
 
             config.DependencyResolver = new UnityHierarchicalDependencyResolver(container);
 
-            config.Formatters.Clear();
-            config.Formatters.Add(new JsonMediaTypeFormatter
+            var formatter = new JsonMediaTypeFormatter
             {
                 SerializerSettings = new JsonSerializerSettings
                 {
                     ContractResolver = new CamelCaseExceptDictionaryKeysResolver(),
                 },
-            });
+            };
+            formatter.SupportedEncodings.Clear();
+            formatter.SupportedEncodings.Add(new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+            config.Formatters.Clear();
+            config.Formatters.Add(formatter);
             config.Formatters.JsonFormatter.SerializerSettings.Converters.Add(new StringEnumConverter());
 
             config.MapHttpAttributeRoutes();
