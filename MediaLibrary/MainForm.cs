@@ -502,6 +502,14 @@ namespace MediaLibrary
             });
         }
 
+        private void MergePeopleMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var mergePeopleForm = new MergePeopleForm(this.index))
+            {
+                mergePeopleForm.ShowDialog(this);
+            }
+        }
+
         private void OpenMenuItem_Click(object sender, EventArgs e)
         {
             foreach (var path in this.GetSelectedPaths())

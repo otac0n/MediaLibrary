@@ -61,6 +61,41 @@ namespace MediaLibrary.Storage
                 WHERE PersonId = @PersonId;
             ";
 
+            public static readonly string MergePeople = @"
+                INSERT OR REPLACE INTO Alias (PersonId, Site, Name)
+                SELECT
+                    @TargetId PersonId,
+                    Site,
+                    Name
+                FROM Alias
+                WHERE PersonId = @DuplicateId;
+
+                INSERT OR REPLACE INTO Alias (PersonId, Site, Name)
+                SELECT
+                    @TargetId PersonId,
+                    NULL Site,
+                    Name
+                FROM Person
+                WHERE PersonId = @DuplicateId
+                AND NOT (Name = (SELECT Name FROM Person WHERE PersonId = @TargetId));
+
+                DELETE FROM Alias
+                WHERE PersonId = @DuplicateId;
+
+                INSERT OR REPLACE INTO HashPerson (Hash, PersonId)
+                SELECT
+                    Hash,
+                    @TargetId PersonId
+                FROM HashPerson
+                WHERE PersonId = @DuplicateId;
+
+                DELETE FROM HashPerson
+                WHERE PersonId = @DuplicateId;
+
+                DELETE FROM Person
+                WHERE PersonId = @DuplicateId
+            ";
+
             public static readonly string RemovePerson = @"
                 DELETE FROM Person WHERE PersonId = @PersonId
             ";

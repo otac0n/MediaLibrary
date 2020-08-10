@@ -289,6 +289,16 @@ namespace MediaLibrary.Storage
             }
         }
 
+        public async Task MergePeople(int targetId, int duplicateId)
+        {
+            if (targetId == duplicateId)
+            {
+                throw new ArgumentOutOfRangeException(nameof(duplicateId));
+            }
+
+            await this.IndexWrite(conn => conn.Execute(Person.Queries.MergePeople, new { TargetId = targetId, DuplicateId = duplicateId })).ConfigureAwait(false);
+        }
+
         public Task RemoveAlias(Alias alias) => this.IndexWrite(conn => conn.Execute(Alias.Queries.RemoveAlias, alias));
 
         public Task RemoveFilePath(string path) =>
@@ -981,6 +991,8 @@ namespace MediaLibrary.Storage
                     Site text NULL,
                     FOREIGN KEY (PersonId) REFERENCES Person (PersonId) ON DELETE CASCADE
                 );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_Alias_Site_Name ON Alias (Site, Name);
 
                 CREATE VIEW IF NOT EXISTS Names AS
                 SELECT DISTINCT PersonId, Name FROM (

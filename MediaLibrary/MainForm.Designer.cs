@@ -38,6 +38,7 @@ namespace MediaLibrary
             this.findDuplicatesMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editPeopleMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editTagRulesMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mergePeopleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.favoriteMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editTagsMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -142,7 +143,7 @@ namespace MediaLibrary
             // 
             this.addIndexedFolderMainMenuItem.Image = global::MediaLibrary.Properties.Resources.folder_add;
             this.addIndexedFolderMainMenuItem.Name = "addIndexedFolderMainMenuItem";
-            this.addIndexedFolderMainMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.addIndexedFolderMainMenuItem.Size = new System.Drawing.Size(186, 22);
             this.addIndexedFolderMainMenuItem.Text = "Add &Indexed Folder...";
             this.addIndexedFolderMainMenuItem.Click += new System.EventHandler(this.AddIndexedFolderToolStripMenuItem_Click);
             // 
@@ -150,7 +151,7 @@ namespace MediaLibrary
             // 
             this.aboutMainMenuItem.Image = global::MediaLibrary.Properties.Resources.information_circle;
             this.aboutMainMenuItem.Name = "aboutMainMenuItem";
-            this.aboutMainMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.aboutMainMenuItem.Size = new System.Drawing.Size(186, 22);
             this.aboutMainMenuItem.Text = "Ab&out...";
             this.aboutMainMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
             // 
@@ -159,16 +160,17 @@ namespace MediaLibrary
             this.toolsMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.findDuplicatesMainMenuItem,
             this.editPeopleMainMenuItem,
-            this.editTagRulesMainMenuItem});
+            this.editTagRulesMainMenuItem,
+            this.mergePeopleToolStripMenuItem});
             this.toolsMenuItem.Name = "toolsMenuItem";
-            this.toolsMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.toolsMenuItem.Size = new System.Drawing.Size(46, 20);
             this.toolsMenuItem.Text = "Tools";
             // 
             // findDuplicatesMainMenuItem
             // 
             this.findDuplicatesMainMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_stack;
             this.findDuplicatesMainMenuItem.Name = "findDuplicatesMainMenuItem";
-            this.findDuplicatesMainMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.findDuplicatesMainMenuItem.Size = new System.Drawing.Size(180, 22);
             this.findDuplicatesMainMenuItem.Text = "Find &Duplicates...";
             this.findDuplicatesMainMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
             // 
@@ -176,7 +178,7 @@ namespace MediaLibrary
             // 
             this.editPeopleMainMenuItem.Image = global::MediaLibrary.Properties.Resources.multiple_actions_edit_1;
             this.editPeopleMainMenuItem.Name = "editPeopleMainMenuItem";
-            this.editPeopleMainMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.editPeopleMainMenuItem.Size = new System.Drawing.Size(180, 22);
             this.editPeopleMainMenuItem.Text = "Edit &People...";
             this.editPeopleMainMenuItem.Click += new System.EventHandler(this.EditPeopleMenuItem_Click);
             // 
@@ -184,9 +186,17 @@ namespace MediaLibrary
             // 
             this.editTagRulesMainMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_settings;
             this.editTagRulesMainMenuItem.Name = "editTagRulesMainMenuItem";
-            this.editTagRulesMainMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.editTagRulesMainMenuItem.Size = new System.Drawing.Size(180, 22);
             this.editTagRulesMainMenuItem.Text = "Edit &Tag Rules...";
             this.editTagRulesMainMenuItem.Click += new System.EventHandler(this.EditTagRulesMenuItem_Click);
+            // 
+            // mergePeopleToolStripMenuItem
+            // 
+            this.mergePeopleToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("mergePeopleToolStripMenuItem.Image")));
+            this.mergePeopleToolStripMenuItem.Name = "mergePeopleToolStripMenuItem";
+            this.mergePeopleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.mergePeopleToolStripMenuItem.Text = "Mer&ge People...";
+            this.mergePeopleToolStripMenuItem.Click += new System.EventHandler(this.MergePeopleMenuItem_Click);
             // 
             // editMenuItem
             // 
@@ -720,13 +730,13 @@ namespace MediaLibrary
             this.openContextMenuItem,
             this.copyContextMenuItem});
             this.itemContextMenu.Name = "itemContextMenu";
-            this.itemContextMenu.Size = new System.Drawing.Size(181, 142);
+            this.itemContextMenu.Size = new System.Drawing.Size(145, 120);
             // 
             // favoriteContextMenuItem
             // 
             this.favoriteContextMenuItem.Image = global::MediaLibrary.Properties.Resources.love_it;
             this.favoriteContextMenuItem.Name = "favoriteContextMenuItem";
-            this.favoriteContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.favoriteContextMenuItem.Size = new System.Drawing.Size(144, 22);
             this.favoriteContextMenuItem.Text = "&Favorite";
             this.favoriteContextMenuItem.Click += new System.EventHandler(this.FavoriteToolStripMenuItem_Click);
             // 
@@ -734,7 +744,7 @@ namespace MediaLibrary
             // 
             this.editTagsContextMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_edit;
             this.editTagsContextMenuItem.Name = "editTagsContextMenuItem";
-            this.editTagsContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editTagsContextMenuItem.Size = new System.Drawing.Size(144, 22);
             this.editTagsContextMenuItem.Text = "Edit &Tags...";
             this.editTagsContextMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
             // 
@@ -742,19 +752,19 @@ namespace MediaLibrary
             // 
             this.addPeopleContextMenuItem.Image = global::MediaLibrary.Properties.Resources.single_neutral;
             this.addPeopleContextMenuItem.Name = "addPeopleContextMenuItem";
-            this.addPeopleContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addPeopleContextMenuItem.Size = new System.Drawing.Size(144, 22);
             this.addPeopleContextMenuItem.Text = "Add &People...";
             this.addPeopleContextMenuItem.Click += new System.EventHandler(this.AddPeopleMenuItem_Click);
             // 
             // toolStripActionSeparator
             // 
             this.toolStripActionSeparator.Name = "toolStripActionSeparator";
-            this.toolStripActionSeparator.Size = new System.Drawing.Size(177, 6);
+            this.toolStripActionSeparator.Size = new System.Drawing.Size(141, 6);
             // 
             // openContextMenuItem
             // 
             this.openContextMenuItem.Name = "openContextMenuItem";
-            this.openContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openContextMenuItem.Size = new System.Drawing.Size(144, 22);
             this.openContextMenuItem.Text = "&Open...";
             this.openContextMenuItem.Click += new System.EventHandler(this.OpenMenuItem_Click);
             // 
@@ -762,7 +772,7 @@ namespace MediaLibrary
             // 
             this.copyContextMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_double;
             this.copyContextMenuItem.Name = "copyContextMenuItem";
-            this.copyContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.copyContextMenuItem.Size = new System.Drawing.Size(144, 22);
             this.copyContextMenuItem.Text = "&Copy";
             this.copyContextMenuItem.Click += new System.EventHandler(this.CopyMenuItem_Click);
             // 
@@ -948,5 +958,6 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem openContextMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem copyMainMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mergePeopleToolStripMenuItem;
     }
 }
