@@ -14,7 +14,7 @@
     <Touch Files="node_modules\.msbuild" AlwaysCreate="true" />
   </Target>
   <Target Name="AngularBuild" DependsOnTargets="EnsureAngular;NpmRestore" Inputs="@(None);$(MSBuildThisFile)" Outputs="obj\dist\index.html">
-    <Exec Command="$(AngularCommand) build" IgnoreStandardErrorWarningFormat="true" CustomErrorRegularExpression="^(?:An unhandled exception occurred:|(?:ERROR in )?(?'FILENAME'[^\r\n*?:]+):(?'LINE'\d+):(?'COLUMN'\d+) - (?'CATEGORY'error|warning) (?'CODE'\w+): (?'TEXT'.*)|ERROR in )" />
+    <AngularBuildTask AngularCommand="$(AngularCommand)" />
   </Target>
   <Target Name="IncludeDistributables" DependsOnTargets="AngularBuild" AfterTargets="PreBuildEvent">
     <Exec Command="$(AngularCommand) lint --format=msbuild" IgnoreExitCode="true" />
@@ -27,4 +27,96 @@
       </EmbeddedResource>
     </ItemGroup>
   </Target>
+  <UsingTask TaskName="AngularBuildTask" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <AngularCommand ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Diagnostics" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+var errorRegex = new Regex(
+    @"\AAn unhandled exception occurred:(?'MESSAGE'.*)|\A(?'MESSAGE'The build command requires to be run in an Angular project, but a project definition could not be found\.)\z|\G(?:(?:\r?\n|\r)*ERROR in )?(?'FILENAME'[^\r\n*?:]+):(?'LINE'\d+):(?'COLUMN'\d+) - (?'CATEGORY'error|warning) (?'CODE'\w+): (?'MESSAGE'[^\r\n]+)(?:(?:\r?\n|\r){2})(?:(?:(?'LASTLINE'\d+) (?:[^\r\n]+)?(?:\r?\n|\r))+)(?:(?'UNDERLINE' +~+)?(?:\r?\n|\r))",
+    RegexOptions.Singleline | RegexOptions.Multiline);
+
+var where = new Func<string, IEnumerable<string>>(file =>
+{
+    var paths = Environment.GetEnvironmentVariable("PATH").Split(';');
+    var extensions = Environment.GetEnvironmentVariable("PATHEXT").Split(';');
+    return from p in new[] { Environment.CurrentDirectory }.Concat(paths)
+           from e in new[] { string.Empty }.Concat(extensions)
+           let path = Path.Combine(p.Trim(), file + e.ToLower())
+           where File.Exists(path)
+           select path;
+});
+
+var command = AngularCommand;
+var arguments = "build --no-progress";
+if (!File.Exists(command))
+{
+    command = where(command).Where(p => p.EndsWith(".cmd") || p.EndsWith(".exe")).FirstOrDefault();
+}
+
+var startInfo = new ProcessStartInfo
+{
+    FileName = command,
+    Arguments = arguments,
+    RedirectStandardError = true,
+    UseShellExecute = false,
+};
+
+using (var process = Process.Start(startInfo))
+{
+    var errors = new StringBuilder();
+    process.ErrorDataReceived += (s, e) => errors.AppendLine(e.Data);
+    process.BeginErrorReadLine();
+    process.WaitForExit();
+    var errorsText = Regex.Replace(errors.ToString(), @"\x1b\[[0-9;]*m", string.Empty);
+    foreach (Match error in errorRegex.Matches(errorsText))
+    {
+        var category = error.Groups["CATEGORY"].Value;
+        category = string.IsNullOrEmpty(category) ? null : category;
+        var code = error.Groups["CODE"].Value;
+        code = string.IsNullOrEmpty(code) ? null : code;
+        var message = error.Groups["MESSAGE"].Value.Replace("{", "{{").Replace("}", "}}");
+        var fileName = error.Groups["FILENAME"].Value;
+        fileName = string.IsNullOrEmpty(fileName) ? null : fileName;
+        int lineNumber, column, toLineNumber, toColumn;
+        int.TryParse(error.Groups["LINE"].Value, out lineNumber);
+        int.TryParse(error.Groups["COLUMN"].Value, out column);
+        var lastLine = error.Groups["LASTLINE"].Value;
+        var underline = error.Groups["UNDERLINE"].Value;
+        toColumn = toLineNumber = 0;
+        if (!string.IsNullOrWhiteSpace(underline))
+        {
+            toLineNumber = int.Parse(lastLine);
+            toColumn = underline.Length - (lastLine.Length + 1);
+        }
+
+        switch (category)
+        {
+            case "error":
+                Log.LogError(null, code, null, fileName, lineNumber, column, toLineNumber, toColumn, message);
+                break;
+            case "warning":
+                Log.LogWarning(null, code, null, fileName, lineNumber, column, toLineNumber, toColumn, message);
+                break;
+        }
+    }
+
+    if (process.ExitCode != 0)
+    {
+        if (!Log.HasLoggedErrors)
+        {
+            Log.LogError(null, null, null, null, 0, 0, 0, 0, errorsText);
+        }
+
+        return false;
+    }
+}
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
 </Project>

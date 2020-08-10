@@ -14,7 +14,7 @@ namespace MediaLibrary.Web
         public static Stream GetContent(string path = null)
         {
             path = path ?? "index.html";
-            path = path.ToLower(CultureInfo.InvariantCulture).Replace('\\', '.').Replace('/', '.');
+            path = path.ToLowerInvariant().Replace('\\', '.').Replace('/', '.');
             return ContentAssembly.GetManifestResourceStream($"MediaLibrary.Web.{path}");
         }
     }
