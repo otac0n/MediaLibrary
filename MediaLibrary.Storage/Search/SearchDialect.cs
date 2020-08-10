@@ -15,6 +15,7 @@ namespace MediaLibrary.Storage.Search
         private int depth = 0;
         private bool excludeHidden;
         private bool joinCopies = false;
+        private bool joinTagCount = false;
 
         public SearchDialect(TagRuleEngine tagEngine, bool excludeHidden = true)
         {
@@ -32,6 +33,7 @@ namespace MediaLibrary.Storage.Search
                 if (originalDepth == 0)
                 {
                     this.joinCopies = false;
+                    this.joinTagCount = false;
                     return this.FinalizeQuery(base.Compile(term));
                 }
                 else
@@ -142,6 +144,15 @@ namespace MediaLibrary.Storage.Search
                     }
 
                     return $"COALESCE(c.Copies, 0) {ConvertOperator(field.Operator)} {copies}";
+
+                case "tags":
+                    this.joinTagCount = true;
+                    if (!int.TryParse(field.Value, out var tagCount))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return $"COALESCE(tc.TagCount, 0) {ConvertOperator(field.Operator)} {tagCount}";
 
                 case "hash":
                     return $"Hash {ConvertOperator(field.Operator)} {Literal(field.Value)}";
@@ -255,6 +266,16 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine("    WHERE MissingSince IS NULL")
                     .AppendLine("    GROUP BY Hash")
                     .AppendLine(") c ON h.Hash = c.Hash");
+            }
+
+            if (this.joinTagCount)
+            {
+                sb
+                    .AppendLine("LEFT JOIN (")
+                    .AppendLine("    SELECT Hash, COUNT(*) TagCount")
+                    .AppendLine("    FROM HashTag")
+                    .AppendLine("    GROUP BY Hash")
+                    .AppendLine(") tc ON h.Hash = tc.Hash");
             }
 
             sb
