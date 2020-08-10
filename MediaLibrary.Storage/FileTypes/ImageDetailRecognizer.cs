@@ -5,10 +5,7 @@ namespace MediaLibrary.Storage.FileTypes
     using System;
     using System.Collections.Generic;
     using System.Drawing;
-    using System.Drawing.Drawing2D;
-    using System.Drawing.Imaging;
     using System.Globalization;
-    using System.Runtime.InteropServices;
     using System.Text;
 
     public static class ImageDetailRecognizer
@@ -34,58 +31,7 @@ namespace MediaLibrary.Storage.FileTypes
             { "Height", img => img.Height },
             {
                 "AverageIntensityHash",
-                img =>
-                {
-                    const int HashWidth = 8;
-                    const int HashHeight = 8;
-                    var gamma = GetGamma(img);
-
-                    var squash = new Bitmap(HashWidth, HashHeight);
-                    var bounds = new Rectangle(0, 0, HashWidth, HashHeight);
-                    using (var g = Graphics.FromImage(squash))
-                    {
-                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                        g.SmoothingMode = SmoothingMode.HighQuality;
-                        g.DrawImage(img, bounds);
-                    }
-
-                    var data = squash.LockBits(bounds, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-
-                    double v(int value)
-                    {
-                        var b = (value >> (8 * 0)) & 0xFF;
-                        var g = (value >> (8 * 1)) & 0xFF;
-                        var r = (value >> (8 * 2)) & 0xFF;
-                        return Math.Pow(b, gamma) + Math.Pow(g, gamma) + Math.Pow(r, gamma);
-                    }
-
-                    var total = 0.0;
-                    var row = new int[HashWidth];
-                    for (var y = 0; y < HashHeight; y++)
-                    {
-                        Marshal.Copy(data.Scan0 + y * data.Stride, row, 0, HashWidth);
-                        for (var x = 0; x < HashWidth; x++)
-                        {
-                            total += v(row[x]);
-                        }
-                    }
-
-                    var target = total / (HashWidth * HashHeight);
-
-                    var hash = 0UL;
-                    for (var y = HashHeight - 1; y >= 0; y--)
-                    {
-                        Marshal.Copy(data.Scan0 + y * data.Stride, row, 0, HashWidth);
-                        for (var x = HashWidth - 1; x >= 0; x--)
-                        {
-                            hash = (hash << 1) | (v(row[x]) >= target ? 1UL : 0UL);
-                        }
-                    }
-
-                    squash.UnlockBits(data);
-                    return hash;
-                }
+                AverageIntensityHash.GetImageHash
             },
         };
 
@@ -185,21 +131,7 @@ namespace MediaLibrary.Storage.FileTypes
             return result;
         }
 
-        /// <remarks>
-        /// Kernighan's Algorithm for counting set bits.
-        /// </remarks>
-        private static int CountBits(ulong value)
-        {
-            var count = 0;
-            for (; value != 0; count++)
-            {
-                value = value & (value - 1);
-            }
-
-            return count;
-        }
-
-        private static double GetGamma(Image img)
+        internal static double GetGamma(Image img)
         {
             if (Array.IndexOf(img.PropertyIdList, (int)PropertyTag.Gamma) > -1)
             {
