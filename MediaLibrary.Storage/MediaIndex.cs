@@ -452,13 +452,32 @@ namespace MediaLibrary.Storage
 
         private void AddFileSystemWatcher(string path)
         {
-            var watcher = new FileSystemWatcher(path);
-            this.fileSystemWatchers.Add(path, watcher);
-            watcher.Changed += this.Watcher_Changed;
-            watcher.Deleted += this.Watcher_Deleted;
-            watcher.Created += this.Watcher_Created;
-            watcher.Renamed += this.Watcher_Renamed;
-            watcher.EnableRaisingEvents = true;
+            FileSystemWatcher watcher = null;
+            try
+            {
+                try
+                {
+                    watcher = new FileSystemWatcher(path);
+                }
+                catch (ArgumentException)
+                {
+                    // TODO: Poll for existence.
+                    return;
+                }
+
+                watcher.IncludeSubdirectories = true;
+                watcher.Changed += this.Watcher_Changed;
+                watcher.Deleted += this.Watcher_Deleted;
+                watcher.Created += this.Watcher_Created;
+                watcher.Renamed += this.Watcher_Renamed;
+                watcher.EnableRaisingEvents = true;
+                this.fileSystemWatchers.Add(path, watcher);
+                watcher = null;
+            }
+            finally
+            {
+                watcher?.Dispose();
+            }
         }
 
         private Task<FilePath> GetFilePath(string path) =>
@@ -753,6 +772,42 @@ namespace MediaLibrary.Storage
             ReportProgress(force: true);
         }
 
+        private async Task TouchFile(string fullPath)
+        {
+            // TODO: This should act as a queue that shares resources with full-Rescans.
+            // TODO: This should detect if the path is inside some indexed folder.
+            var delay = TimeSpan.FromSeconds(1);
+            var attempts = 0;
+            while (true)
+            {
+                // Avoid attempting to hash a newly created directory.
+                if (!File.Exists(fullPath))
+                {
+                    break;
+                }
+
+                try
+                {
+                    await this.RescanFile(fullPath).ConfigureAwait(false);
+                    break;
+                }
+                catch (IOException)
+                {
+                    attempts += 1;
+                    delay += delay;
+                }
+
+                if (attempts < 4)
+                {
+                    await Task.Delay(delay).ConfigureAwait(false);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
         private async Task UpdateHashDetails(HashInfo hashInfo, FileStream file)
         {
             Dictionary<string, object> details = null;
@@ -820,14 +875,14 @@ namespace MediaLibrary.Storage
             }).ConfigureAwait(false);
         }
 
-        private void Watcher_Changed(object sender, FileSystemEventArgs e)
+        private async void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            ////await this.RescanFile(e.FullPath).ConfigureAwait(false);
+            await this.TouchFile(e.FullPath).ConfigureAwait(false);
         }
 
-        private void Watcher_Created(object sender, FileSystemEventArgs e)
+        private async void Watcher_Created(object sender, FileSystemEventArgs e)
         {
-            ////await this.RescanFile(e.FullPath).ConfigureAwait(false);
+            await this.TouchFile(e.FullPath).ConfigureAwait(false);
         }
 
         private async void Watcher_Deleted(object sender, FileSystemEventArgs e)
@@ -837,8 +892,9 @@ namespace MediaLibrary.Storage
 
         private async void Watcher_Renamed(object sender, RenamedEventArgs e)
         {
+            // TODO: Race condition. Better is to set missing-since and rescan the file.
             await this.RemoveFilePath(e.OldFullPath).ConfigureAwait(false);
-            ////await this.RescanFile(e.OldFullPath).ConfigureAwait(false);
+            await this.TouchFile(e.FullPath).ConfigureAwait(false);
         }
 
         private static class Queries
