@@ -235,6 +235,7 @@ namespace MediaLibrary
             // 
             // copyMainMenuItem
             // 
+            this.copyMainMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_double;
             this.copyMainMenuItem.Name = "copyMainMenuItem";
             this.copyMainMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C)));
             this.copyMainMenuItem.Size = new System.Drawing.Size(185, 22);
@@ -759,6 +760,7 @@ namespace MediaLibrary
             // 
             // copyContextMenuItem
             // 
+            this.copyContextMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_double;
             this.copyContextMenuItem.Name = "copyContextMenuItem";
             this.copyContextMenuItem.Size = new System.Drawing.Size(180, 22);
             this.copyContextMenuItem.Text = "&Copy";
