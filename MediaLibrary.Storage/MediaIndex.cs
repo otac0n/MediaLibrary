@@ -349,6 +349,10 @@ namespace MediaLibrary.Storage
             await this.IndexWrite(conn => conn.Execute(Queries.RemoveIndexedPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) })).ConfigureAwait(false);
         }
 
+        public Task RemoveSavedSearch(SavedSearch savedSearch) =>
+            this.IndexWrite(conn =>
+                conn.Execute(SavedSearch.Queries.RemoveSavedSearch, new { savedSearch.SearchId }));
+
         public async Task Rescan(IProgress<RescanProgress> progress = null, bool forceRehash = false)
         {
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
@@ -448,6 +452,10 @@ namespace MediaLibrary.Storage
 
         public Task UpdatePerson(Person person) =>
             this.IndexWrite(conn => conn.Execute(Person.Queries.UpdatePerson, new { person.PersonId, person.Name }));
+
+        public Task UpdateSavedSearch(SavedSearch savedSearch) =>
+            this.IndexWrite(conn =>
+                conn.Execute(SavedSearch.Queries.UpdateSavedSearch, savedSearch));
 
         public async Task UpdateTagRules(string rules)
         {

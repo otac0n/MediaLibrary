@@ -161,13 +161,47 @@ namespace MediaLibrary
         {
             var searchItem = new ToolStripMenuItem
             {
-                Name = "savedSearchMenuItem",
-                Size = new System.Drawing.Size(206, 22),
                 Text = savedSearch.Name,
                 Tag = savedSearch,
             };
 
-            searchItem.Click += new System.EventHandler(this.SavedSearchMenuItem_Click);
+            var editItem = new ToolStripMenuItem
+            {
+                Text = "Edit...",
+            };
+
+            var deleteItem = new ToolStripMenuItem
+            {
+                Text = "Delete...",
+            };
+
+            searchItem.Click += this.SavedSearchMenuItem_Click;
+
+            editItem.Click += async (sender, args) =>
+            {
+                using (var editSavedSearchForm = new EditSavedSearchForm(savedSearch))
+                {
+                    if (editSavedSearchForm.ShowDialog(this) == DialogResult.OK)
+                    {
+                        savedSearch = editSavedSearchForm.SavedSearch;
+                        await this.index.UpdateSavedSearch(savedSearch).ConfigureAwait(true);
+                        searchItem.Text = savedSearch.Name;
+                        searchItem.Tag = savedSearch;
+                    }
+                }
+            };
+
+            deleteItem.Click += async (sender, args) =>
+            {
+                var result = MessageBox.Show($"This will delete the saved search {savedSearch.Name} (ID: {savedSearch.SearchId}). This is a destructive operation and cannot be undone. Are you sure you want to delete this search?", "Are you sure?", MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    await this.index.RemoveSavedSearch(savedSearch).ConfigureAwait(true);
+                    this.savedSearchesMenuItem.DropDownItems.Remove(searchItem);
+                }
+            };
+
+            searchItem.DropDownItems.AddRange(new[] { editItem, deleteItem });
 
             this.savedSearchesSeparator.Visible = true;
             this.savedSearchesMenuItem.DropDownItems.Add(searchItem);
@@ -540,6 +574,7 @@ namespace MediaLibrary
         {
             var savedSearch = (SavedSearch)((ToolStripMenuItem)sender).Tag;
             this.searchBox.Text = savedSearch.Query;
+            this.viewButton.HideDropDown();
         }
 
         private async void SaveThisSearchMenuItem_Click(object sender, EventArgs e)

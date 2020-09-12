@@ -170,7 +170,7 @@ namespace MediaLibrary
             // 
             this.findDuplicatesMainMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_stack;
             this.findDuplicatesMainMenuItem.Name = "findDuplicatesMainMenuItem";
-            this.findDuplicatesMainMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.findDuplicatesMainMenuItem.Size = new System.Drawing.Size(164, 22);
             this.findDuplicatesMainMenuItem.Text = "Find &Duplicates...";
             this.findDuplicatesMainMenuItem.Click += new System.EventHandler(this.FindDuplicatesMenuItem_Click);
             // 
@@ -178,7 +178,7 @@ namespace MediaLibrary
             // 
             this.editPeopleMainMenuItem.Image = global::MediaLibrary.Properties.Resources.multiple_actions_edit_1;
             this.editPeopleMainMenuItem.Name = "editPeopleMainMenuItem";
-            this.editPeopleMainMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editPeopleMainMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editPeopleMainMenuItem.Text = "Edit &People...";
             this.editPeopleMainMenuItem.Click += new System.EventHandler(this.EditPeopleMenuItem_Click);
             // 
@@ -186,7 +186,7 @@ namespace MediaLibrary
             // 
             this.editTagRulesMainMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_settings;
             this.editTagRulesMainMenuItem.Name = "editTagRulesMainMenuItem";
-            this.editTagRulesMainMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editTagRulesMainMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editTagRulesMainMenuItem.Text = "Edit &Tag Rules...";
             this.editTagRulesMainMenuItem.Click += new System.EventHandler(this.EditTagRulesMenuItem_Click);
             // 
@@ -194,7 +194,7 @@ namespace MediaLibrary
             // 
             this.mergePeopleToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("mergePeopleToolStripMenuItem.Image")));
             this.mergePeopleToolStripMenuItem.Name = "mergePeopleToolStripMenuItem";
-            this.mergePeopleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.mergePeopleToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.mergePeopleToolStripMenuItem.Text = "Mer&ge People...";
             this.mergePeopleToolStripMenuItem.Click += new System.EventHandler(this.MergePeopleMenuItem_Click);
             // 
@@ -635,14 +635,14 @@ namespace MediaLibrary
             this.showPreviewMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.showPreviewMenuItem.Image = global::MediaLibrary.Properties.Resources.view_square;
             this.showPreviewMenuItem.Name = "showPreviewMenuItem";
-            this.showPreviewMenuItem.Size = new System.Drawing.Size(154, 22);
+            this.showPreviewMenuItem.Size = new System.Drawing.Size(180, 22);
             this.showPreviewMenuItem.Text = "Show Preview";
             this.showPreviewMenuItem.CheckedChanged += new System.EventHandler(this.ShowPreviewMenuItem_CheckedChanged);
             // 
             // toolStripSeparator8
             // 
             this.toolStripSeparator8.Name = "toolStripSeparator8";
-            this.toolStripSeparator8.Size = new System.Drawing.Size(151, 6);
+            this.toolStripSeparator8.Size = new System.Drawing.Size(177, 6);
             // 
             // detailsMenuItem
             // 
@@ -651,7 +651,7 @@ namespace MediaLibrary
             this.detailsMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.detailsMenuItem.Image = global::MediaLibrary.Properties.Resources.list_bullets_1;
             this.detailsMenuItem.Name = "detailsMenuItem";
-            this.detailsMenuItem.Size = new System.Drawing.Size(154, 22);
+            this.detailsMenuItem.Size = new System.Drawing.Size(180, 22);
             this.detailsMenuItem.Text = "Details";
             this.detailsMenuItem.Click += new System.EventHandler(this.DetailsMenuItem_Click);
             // 
@@ -660,14 +660,14 @@ namespace MediaLibrary
             this.thumbnailsMenuItem.CheckOnClick = true;
             this.thumbnailsMenuItem.Image = global::MediaLibrary.Properties.Resources.picture_landscape;
             this.thumbnailsMenuItem.Name = "thumbnailsMenuItem";
-            this.thumbnailsMenuItem.Size = new System.Drawing.Size(154, 22);
+            this.thumbnailsMenuItem.Size = new System.Drawing.Size(180, 22);
             this.thumbnailsMenuItem.Text = "Thumbnails";
             this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
             // 
             // toolStripSeparator9
             // 
             this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(151, 6);
+            this.toolStripSeparator9.Size = new System.Drawing.Size(177, 6);
             // 
             // savedSearchesMenuItem
             // 
@@ -675,7 +675,7 @@ namespace MediaLibrary
             this.saveThisSearchMenuItem,
             this.savedSearchesSeparator});
             this.savedSearchesMenuItem.Name = "savedSearchesMenuItem";
-            this.savedSearchesMenuItem.Size = new System.Drawing.Size(154, 22);
+            this.savedSearchesMenuItem.Size = new System.Drawing.Size(180, 22);
             this.savedSearchesMenuItem.Text = "&Saved Searches";
             // 
             // saveThisSearchMenuItem
@@ -844,7 +844,6 @@ namespace MediaLibrary
             this.preview.Dock = System.Windows.Forms.DockStyle.Fill;
             this.preview.Location = new System.Drawing.Point(0, 0);
             this.preview.Name = "preview";
-            this.preview.PreviewItems = null;
             this.preview.Size = new System.Drawing.Size(334, 379);
             this.preview.TabIndex = 5;
             // 

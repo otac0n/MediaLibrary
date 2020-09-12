@@ -43,6 +43,10 @@ namespace MediaLibrary.Storage
             public static readonly string RemoveSavedSearch = @"
                 DELETE FROM SavedSearch WHERE SearchId = @SearchId
             ";
+
+            public static readonly string UpdateSavedSearch = @"
+                UPDATE SavedSearch SET Name = @Name, Query = @Query WHERE SearchId = @SearchId
+            ";
         }
     }
 }
