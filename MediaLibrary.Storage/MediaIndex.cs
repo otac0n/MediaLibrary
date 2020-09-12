@@ -1000,7 +1000,7 @@ namespace MediaLibrary.Storage
                     FOREIGN KEY (PersonId) REFERENCES Person (PersonId) ON DELETE CASCADE
                 );
 
-                CREATE UNIQUE INDEX IF NOT EXISTS IX_Alias_Site_Name ON Alias (Site, Name);
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_Alias_Site_Name ON Alias (Site, Name) WHERE Site NOT NULL;
 
                 CREATE VIEW IF NOT EXISTS Names AS
                 SELECT DISTINCT PersonId, Name FROM (
