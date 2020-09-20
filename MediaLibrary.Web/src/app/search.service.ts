@@ -24,8 +24,39 @@ export class SearchService {
                     const bTag = StaticData.alltags[b];
                     return TagsService.sort(aTag, bTag);
                 });
+                r.paths.sort(SearchService.sortPaths);
             });
             return results;
         }));
+    }
+
+    public static sortPaths(a: string, b: string): number {
+        if (a == b) {
+            return 0;
+        } else if (a == null) {
+            return -1;
+        } else if (b == null) {
+            return 1;
+        }
+
+        var aParts = a.toUpperCase().split(/[\\/]+/g);
+        var bParts = b.toUpperCase().split(/[\\/]+/g);
+
+        for (var j = 0; j < aParts.length && j < bParts.length; j++) {
+            if (aParts.length != bParts.length) {
+                if (j == aParts.length - 1) {
+                    return 1;
+                } else if (j == bParts.length - 1) {
+                    return -1;
+                }
+            }
+
+            var num;
+            if ((num = aParts[j].localeCompare(bParts[j])) != 0) {
+                return num;
+            }
+        }
+
+        return 0;
     }
 }

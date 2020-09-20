@@ -47,7 +47,7 @@ namespace MediaLibrary.Http
         public async Task<IEnumerable<SearchResult>> Search(string q = null)
         {
             var results = await this.index.SearchIndex(q).ConfigureAwait(true);
-            return results.OrderBy(r => r.Paths.FirstOrDefault(), PathComparer.Instance).Take(1000);
+            return results.OrderBy(r => r.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault(), PathComparer.Instance).Take(1000);
         }
     }
 }

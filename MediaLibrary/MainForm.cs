@@ -296,7 +296,7 @@ namespace MediaLibrary
 
         private ListViewItem CreateListItem(SearchResult searchResult)
         {
-            var firstPath = searchResult.Paths.OrderBy(p => p.Length).FirstOrDefault();
+            var firstPath = searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
 
             var columns = new ListViewItem.ListViewSubItem[5];
 
