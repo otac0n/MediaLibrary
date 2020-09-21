@@ -287,11 +287,20 @@ namespace MediaLibrary
 
         private void CopyMenuItem_Click(object sender, EventArgs e)
         {
+            // HACK: Exclude one text box, to avoid clobbering the clipboard.
+            if (this.searchBox.Focused)
+            {
+                return;
+            }
+
             var paths = this.GetSelectedPaths().ToArray();
-            var dataObject = new DataObject();
-            dataObject.SetData(DataFormats.FileDrop, autoConvert: true, paths);
-            dataObject.SetText(string.Join(Environment.NewLine, paths));
-            Clipboard.SetDataObject(dataObject, copy: true);
+            if (paths.Length > 0)
+            {
+                var dataObject = new DataObject();
+                dataObject.SetData(DataFormats.FileDrop, autoConvert: true, paths);
+                dataObject.SetText(string.Join(Environment.NewLine, paths));
+                Clipboard.SetDataObject(dataObject, copy: true);
+            }
         }
 
         private ListViewItem CreateListItem(SearchResult searchResult)
