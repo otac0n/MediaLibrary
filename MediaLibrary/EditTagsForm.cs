@@ -69,6 +69,7 @@ namespace MediaLibrary
         {
             var tagControl = new TagControl { Text = tag, Tag = tag, Indeterminate = indeterminate };
             tagControl.DeleteClick += this.TagControl_DeleteClick;
+            tagControl.ContextMenuStrip = this.tagContextMenu;
             this.existingTags.Controls.Add(this.tagControls[tag] = tagControl);
             return tagControl;
         }
@@ -112,6 +113,7 @@ namespace MediaLibrary
                     Tag = toolTip,
                     Indeterminate = !isMissing, // TODO: Third state for !isInMissingGroups,
                     AllowDelete = true,
+                    ContextMenuStrip = this.suggestionContextMenu,
                 };
                 suggestionControl.MouseClick += this.SuggestionControl_MouseClick;
                 suggestionControl.DeleteClick += this.SuggestionControl_DeleteClick;
@@ -188,6 +190,34 @@ namespace MediaLibrary
             this.suggestedTags.ResumeLayout();
         }
 
+        private void RejectSuggestionMenuItem_Click(object sender, EventArgs e)
+        {
+            var context = ((sender as ToolStripMenuItem)?.Owner as ContextMenuStrip)?.SourceControl;
+            this.SuggestionControl_DeleteClick(context, e);
+        }
+
+        private async void RejectTagMenuItem_Click(object sender, EventArgs e)
+        {
+            var tagControl = (TagControl)((sender as ToolStripMenuItem)?.Owner as ContextMenuStrip)?.SourceControl;
+
+            var tag = tagControl.Text;
+            this.RemoveTagControl(tagControl, destroy: true);
+
+            if (this.suggestionControls.TryGetValue(tag, out tagControl))
+            {
+                this.RemoveSuggestionControl(tagControl, destroy: true);
+            }
+
+            foreach (var searchResult in this.searchResults)
+            {
+                await this.index.RemoveHashTag(new HashTag(searchResult.Hash, tag), rejectTag: true).ConfigureAwait(true);
+            }
+
+            this.tagCounts.Remove(tag);
+            this.rejectedTags.Add(tag);
+            this.RefreshSuggestions();
+        }
+
         private void RemoveSuggestionControl(TagControl tagControl, bool destroy = false)
         {
             this.suggestedTags.Controls.Remove(tagControl);
@@ -215,6 +245,12 @@ namespace MediaLibrary
                 this.tagControls.Remove(tag);
                 tagControl.Dispose();
             }
+        }
+
+        private void RemoveTagMenuItem_Click(object sender, EventArgs e)
+        {
+            var context = ((sender as ToolStripMenuItem)?.Owner as ContextMenuStrip)?.SourceControl;
+            this.TagControl_DeleteClick(context, e);
         }
 
         private async void SuggestionControl_DeleteClick(object sender, EventArgs e)

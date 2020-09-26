@@ -35,7 +35,14 @@ namespace MediaLibrary
             this.suggestedTags = new System.Windows.Forms.FlowLayoutPanel();
             this.existingTags = new System.Windows.Forms.FlowLayoutPanel();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.tagContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.removeTagMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.rejectTagMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.suggestionContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.rejectSuggestionMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tagLayoutPanel.SuspendLayout();
+            this.tagContextMenu.SuspendLayout();
+            this.suggestionContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // tagCombo
@@ -100,6 +107,42 @@ namespace MediaLibrary
             this.toolTip.InitialDelay = 500;
             this.toolTip.ReshowDelay = 0;
             // 
+            // tagContextMenu
+            // 
+            this.tagContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.removeTagMenuItem,
+            this.rejectTagMenuItem});
+            this.tagContextMenu.Name = "tagContextMenu";
+            this.tagContextMenu.Size = new System.Drawing.Size(139, 48);
+            // 
+            // removeTagMenuItem
+            // 
+            this.removeTagMenuItem.Name = "removeTagMenuItem";
+            this.removeTagMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.removeTagMenuItem.Text = "Remove Tag";
+            this.removeTagMenuItem.Click += new System.EventHandler(this.RemoveTagMenuItem_Click);
+            // 
+            // rejectTagMenuItem
+            // 
+            this.rejectTagMenuItem.Name = "rejectTagMenuItem";
+            this.rejectTagMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.rejectTagMenuItem.Text = "Reject Tag";
+            this.rejectTagMenuItem.Click += new System.EventHandler(this.RejectTagMenuItem_Click);
+            // 
+            // suggestionContextMenu
+            // 
+            this.suggestionContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.rejectSuggestionMenuItem});
+            this.suggestionContextMenu.Name = "suggestionContextMenu";
+            this.suggestionContextMenu.Size = new System.Drawing.Size(169, 26);
+            // 
+            // rejectSuggestionMenuItem
+            // 
+            this.rejectSuggestionMenuItem.Name = "rejectSuggestionMenuItem";
+            this.rejectSuggestionMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.rejectSuggestionMenuItem.Text = "Reject Suggestion";
+            this.rejectSuggestionMenuItem.Click += new System.EventHandler(this.RejectSuggestionMenuItem_Click);
+            // 
             // EditTagsForm
             // 
             this.AcceptButton = this.addButton;
@@ -121,6 +164,8 @@ namespace MediaLibrary
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.AddTagsForm_KeyDown);
             this.tagLayoutPanel.ResumeLayout(false);
             this.tagLayoutPanel.PerformLayout();
+            this.tagContextMenu.ResumeLayout(false);
+            this.suggestionContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -133,5 +178,10 @@ namespace MediaLibrary
         private System.Windows.Forms.FlowLayoutPanel suggestedTags;
         private System.Windows.Forms.FlowLayoutPanel existingTags;
         private System.Windows.Forms.ToolTip toolTip;
+        private System.Windows.Forms.ContextMenuStrip tagContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem removeTagMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem rejectTagMenuItem;
+        private System.Windows.Forms.ContextMenuStrip suggestionContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem rejectSuggestionMenuItem;
     }
 }
