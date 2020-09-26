@@ -4,9 +4,9 @@ namespace MediaLibrary
 {
     using System.Windows.Forms;
 
-    public partial class SaveSearchForm : Form
+    public partial class NameInputForm : Form
     {
-        public SaveSearchForm()
+        public NameInputForm()
         {
             this.InitializeComponent();
         }

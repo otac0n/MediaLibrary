@@ -6,7 +6,6 @@ namespace MediaLibrary
     using System.Collections;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Collections.Specialized;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
@@ -14,6 +13,7 @@ namespace MediaLibrary
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using ByteSizeLib;
+    using MediaLibrary.Properties;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
 
@@ -23,8 +23,8 @@ namespace MediaLibrary
         private const int NameColumnIndex = 0;
         private const int PathColumnIndex = 1;
         private const int PeopleColumnIndex = 2;
+        private const int RatingColumnIndex = 5;
         private const int TagsColumnIndex = 3;
-
         private readonly MediaIndex index;
         private readonly Dictionary<string, ListViewItem> items = new Dictionary<string, ListViewItem>();
         private readonly List<InProgressTask> tasks = new List<InProgressTask>();
@@ -48,6 +48,7 @@ namespace MediaLibrary
             this.index.HashTagRemoved += this.Index_HashTagRemoved;
             this.index.HashPersonAdded += this.Index_HashPersonAdded;
             this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
+            this.index.RatingUpdated += this.Index_RatingUpdated;
             this.ApplySettings();
         }
 
@@ -92,14 +93,6 @@ namespace MediaLibrary
             }
         }
 
-        private static void UpdateListItem(ListViewItem item, SearchResult searchResult)
-        {
-            item.Tag = searchResult;
-            UpdateListItemPath(item, searchResult);
-            UpdateListItemPeople(item, searchResult);
-            UpdateListItemTags(item, searchResult);
-        }
-
         private static void UpdateListItemPath(ListViewItem item, SearchResult searchResult)
         {
             var firstPath = searchResult.Paths.FirstOrDefault();
@@ -113,6 +106,13 @@ namespace MediaLibrary
         {
             item.SubItems[PeopleColumnIndex].Text = string.Join("; ", searchResult.People.Select(p => p.Name));
             item.SubItems[PeopleColumnIndex].Tag = searchResult.People;
+        }
+
+        private static void UpdateListItemRating(ListViewItem item, SearchResult searchResult)
+        {
+            var rating = searchResult.Rating;
+            item.SubItems[RatingColumnIndex].Text = rating != null ? $"{Math.Round(rating.Value)}{(rating.Count < 15 ? "?" : string.Empty)}" : string.Empty;
+            item.SubItems[RatingColumnIndex].Tag = rating;
         }
 
         private static void UpdateListItemTags(ListViewItem item, SearchResult searchResult)
@@ -155,6 +155,21 @@ namespace MediaLibrary
                     addPeopleForm.ShowDialog(this);
                 }
             }
+        }
+
+        private ToolStripMenuItem AddRatingCategoryMenuItem(string ratingCategory)
+        {
+            var categoryItem = new ToolStripMenuItem
+            {
+                Text = ratingCategory,
+                Tag = ratingCategory,
+                Image = Resources.antique_axe,
+            };
+
+            categoryItem.Click += this.RatingCategoryMenuItem_Click;
+
+            this.rateAllButton.DropDownItems.Insert(this.rateAllButton.DropDownItems.Count - 2, categoryItem);
+            return categoryItem;
         }
 
         private void AddSavedSearchMenuItem(SavedSearch savedSearch)
@@ -307,40 +322,26 @@ namespace MediaLibrary
         {
             var firstPath = searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
 
-            var columns = new ListViewItem.ListViewSubItem[5];
+            var columns = new ListViewItem.ListViewSubItem[6];
+            for (var i = 0; i < columns.Length; i++)
+            {
+                columns[i] = new ListViewItem.ListViewSubItem();
+            }
 
-            columns[NameColumnIndex] = new ListViewItem.ListViewSubItem
-            {
-                Text = searchResult.Paths.Count > 0 ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash,
-                Tag = firstPath,
-            };
-
-            columns[PathColumnIndex] = new ListViewItem.ListViewSubItem
-            {
-                Text = searchResult.Paths.Count > 0 ? Path.GetDirectoryName(firstPath) : string.Empty,
-                Tag = firstPath,
-            };
-
-            columns[TagsColumnIndex] = new ListViewItem.ListViewSubItem
-            {
-                Text = string.Join("; ", searchResult.Tags),
-                Tag = searchResult.Tags,
-            };
-            columns[FileSizeColumnIndex] = new ListViewItem.ListViewSubItem
-            {
-                Text = ByteSize.FromBytes(searchResult.FileSize).ToString(),
-                Tag = searchResult.FileSize,
-            };
-            columns[PeopleColumnIndex] = new ListViewItem.ListViewSubItem
-            {
-                Text = string.Join("; ", searchResult.People.Select(p => p.Name)),
-                Tag = searchResult.People,
-            };
-
-            return this.items[searchResult.Hash] = new ListViewItem(columns, GetImageKey(searchResult.FileType))
+            var item = new ListViewItem(columns, GetImageKey(searchResult.FileType))
             {
                 Tag = searchResult,
             };
+
+            UpdateListItemPath(item, searchResult);
+            UpdateListItemPeople(item, searchResult);
+            UpdateListItemTags(item, searchResult);
+            UpdateListItemRating(item, searchResult);
+
+            columns[FileSizeColumnIndex].Text = ByteSize.FromBytes(searchResult.FileSize).ToString();
+            columns[FileSizeColumnIndex].Tag = searchResult.FileSize;
+
+            return this.items[searchResult.Hash] = item;
         }
 
         private void DetailsMenuItem_Click(object sender, EventArgs e)
@@ -457,6 +458,11 @@ namespace MediaLibrary
             this.UpdateSearchResult(e.Item.Hash, UpdateListItemTags);
         }
 
+        private void Index_RatingUpdated(object sender, ItemUpdatedEventArgs<Rating> e)
+        {
+            this.UpdateSearchResult(e.Item.Hash, UpdateListItemRating);
+        }
+
         private void ListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             var column = this.listView.Columns[e.Column];
@@ -530,6 +536,7 @@ namespace MediaLibrary
         private async void MainForm_Load(object sender, EventArgs e)
         {
             this.savedSearchesMenuItem.Enabled = false;
+            this.rateAllButton.Enabled = false;
             await this.index.Initialize().ConfigureAwait(true);
 
             foreach (var savedSearch in await this.index.GetAllSavedSearches().ConfigureAwait(true))
@@ -538,6 +545,13 @@ namespace MediaLibrary
             }
 
             this.savedSearchesMenuItem.Enabled = true;
+
+            foreach (var ratingCategory in await this.index.GetAllRatingCategories().ConfigureAwait(true))
+            {
+                this.AddRatingCategoryMenuItem(ratingCategory);
+            }
+
+            this.rateAllButton.Enabled = true;
 
             this.TrackTaskProgress(async progress =>
             {
@@ -550,6 +564,19 @@ namespace MediaLibrary
             using (var mergePeopleForm = new MergePeopleForm(this.index))
             {
                 mergePeopleForm.ShowDialog(this);
+            }
+        }
+
+        private void NewCategoryMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var nameInputForm = new NameInputForm())
+            {
+                nameInputForm.Text = "New Category";
+                if (nameInputForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    var menuItem = this.AddRatingCategoryMenuItem(nameInputForm.SelectedName);
+                    menuItem.PerformClick();
+                }
             }
         }
 
@@ -579,6 +606,19 @@ namespace MediaLibrary
             this.OpenSlideshow();
         }
 
+        private void RatingCategoryMenuItem_Click(object sender, EventArgs e)
+        {
+            var category = (sender as ToolStripItem)?.Tag as string ?? string.Empty;
+
+            var searchResults = this.listView.SelectedItems.Count > 1
+                ? this.GetSelectedSearchResults()
+                : this.GetVisibleSearchResults();
+            if (searchResults.Count > 2)
+            {
+                new CompareForm(this.index, category, searchResults).Show(this);
+            }
+        }
+
         private void SavedSearchMenuItem_Click(object sender, EventArgs e)
         {
             var savedSearch = (SavedSearch)((ToolStripMenuItem)sender).Tag;
@@ -589,11 +629,12 @@ namespace MediaLibrary
         private async void SaveThisSearchMenuItem_Click(object sender, EventArgs e)
         {
             var searchText = this.searchBox.Text;
-            using (var saveSearchForm = new SaveSearchForm())
+            using (var nameInputForm = new NameInputForm())
             {
-                if (saveSearchForm.ShowDialog(this) == DialogResult.OK)
+                nameInputForm.Text = "Save Search";
+                if (nameInputForm.ShowDialog(this) == DialogResult.OK)
                 {
-                    var savedSearch = await this.index.AddSavedSearch(saveSearchForm.SelectedName, searchText).ConfigureAwait(true);
+                    var savedSearch = await this.index.AddSavedSearch(nameInputForm.SelectedName, searchText).ConfigureAwait(true);
                     this.AddSavedSearchMenuItem(savedSearch);
                 }
             }
@@ -812,6 +853,19 @@ namespace MediaLibrary
 
                     case PeopleColumnIndex:
                         value = ((ImmutableHashSet<Person>)a.SubItems[PeopleColumnIndex].Tag).Count.CompareTo(((ImmutableHashSet<Person>)b.SubItems[PeopleColumnIndex].Tag).Count);
+                        break;
+
+                    case RatingColumnIndex:
+                        {
+                            var aRating = (Rating)a.SubItems[RatingColumnIndex].Tag;
+                            var bRating = (Rating)b.SubItems[RatingColumnIndex].Tag;
+                            value = (bRating?.Value ?? Rating.DefaultRating).CompareTo(aRating?.Value ?? Rating.DefaultRating);
+                            if (value == 0)
+                            {
+                                value = (bRating?.Count ?? 0).CompareTo(aRating?.Count ?? 0);
+                            }
+                        }
+
                         break;
 
                     default:

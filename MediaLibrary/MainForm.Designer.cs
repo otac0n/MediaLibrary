@@ -51,6 +51,10 @@ namespace MediaLibrary
             this.playButton = new System.Windows.Forms.ToolStripButton();
             this.playAllButton = new System.Windows.Forms.ToolStripButton();
             this.shuffleAllButton = new System.Windows.Forms.ToolStripButton();
+            this.rateAllButton = new System.Windows.Forms.ToolStripSplitButton();
+            this.defaultRatingMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator10 = new System.Windows.Forms.ToolStripSeparator();
+            this.newCategoryMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.homeButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
@@ -106,6 +110,7 @@ namespace MediaLibrary
             this.peopleColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tagsColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.fileSizeColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.ratingColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.preview = new MediaLibrary.PreviewControl();
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -277,6 +282,7 @@ namespace MediaLibrary
             this.playButton,
             this.playAllButton,
             this.shuffleAllButton,
+            this.rateAllButton,
             this.toolStripSeparator1,
             this.homeButton,
             this.toolStripSeparator2,
@@ -323,6 +329,41 @@ namespace MediaLibrary
             this.shuffleAllButton.Size = new System.Drawing.Size(23, 22);
             this.shuffleAllButton.Text = "Shuffle all";
             this.shuffleAllButton.Click += new System.EventHandler(this.ShuffleAllButton_Click);
+            // 
+            // rateAllButton
+            // 
+            this.rateAllButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.rateAllButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.defaultRatingMenuItem,
+            this.toolStripSeparator10,
+            this.newCategoryMenuItem});
+            this.rateAllButton.Image = global::MediaLibrary.Properties.Resources.antique_swords;
+            this.rateAllButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.rateAllButton.Name = "rateAllButton";
+            this.rateAllButton.Size = new System.Drawing.Size(32, 22);
+            this.rateAllButton.Text = "Rate all";
+            this.rateAllButton.ButtonClick += new System.EventHandler(this.RatingCategoryMenuItem_Click);
+            // 
+            // defaultRatingMenuItem
+            // 
+            this.defaultRatingMenuItem.Image = global::MediaLibrary.Properties.Resources.antique_axe;
+            this.defaultRatingMenuItem.Name = "defaultRatingMenuItem";
+            this.defaultRatingMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.defaultRatingMenuItem.Text = "Default";
+            this.defaultRatingMenuItem.Click += new System.EventHandler(this.RatingCategoryMenuItem_Click);
+            // 
+            // toolStripSeparator10
+            // 
+            this.toolStripSeparator10.Name = "toolStripSeparator10";
+            this.toolStripSeparator10.Size = new System.Drawing.Size(177, 6);
+            // 
+            // newCategoryMenuItem
+            // 
+            this.newCategoryMenuItem.Image = global::MediaLibrary.Properties.Resources.antique_axe;
+            this.newCategoryMenuItem.Name = "newCategoryMenuItem";
+            this.newCategoryMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newCategoryMenuItem.Text = "New...";
+            this.newCategoryMenuItem.Click += new System.EventHandler(this.NewCategoryMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
@@ -635,14 +676,14 @@ namespace MediaLibrary
             this.showPreviewMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.showPreviewMenuItem.Image = global::MediaLibrary.Properties.Resources.view_square;
             this.showPreviewMenuItem.Name = "showPreviewMenuItem";
-            this.showPreviewMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.showPreviewMenuItem.Size = new System.Drawing.Size(154, 22);
             this.showPreviewMenuItem.Text = "Show Preview";
             this.showPreviewMenuItem.CheckedChanged += new System.EventHandler(this.ShowPreviewMenuItem_CheckedChanged);
             // 
             // toolStripSeparator8
             // 
             this.toolStripSeparator8.Name = "toolStripSeparator8";
-            this.toolStripSeparator8.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator8.Size = new System.Drawing.Size(151, 6);
             // 
             // detailsMenuItem
             // 
@@ -651,7 +692,7 @@ namespace MediaLibrary
             this.detailsMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.detailsMenuItem.Image = global::MediaLibrary.Properties.Resources.list_bullets_1;
             this.detailsMenuItem.Name = "detailsMenuItem";
-            this.detailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.detailsMenuItem.Size = new System.Drawing.Size(154, 22);
             this.detailsMenuItem.Text = "Details";
             this.detailsMenuItem.Click += new System.EventHandler(this.DetailsMenuItem_Click);
             // 
@@ -660,14 +701,14 @@ namespace MediaLibrary
             this.thumbnailsMenuItem.CheckOnClick = true;
             this.thumbnailsMenuItem.Image = global::MediaLibrary.Properties.Resources.picture_landscape;
             this.thumbnailsMenuItem.Name = "thumbnailsMenuItem";
-            this.thumbnailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.thumbnailsMenuItem.Size = new System.Drawing.Size(154, 22);
             this.thumbnailsMenuItem.Text = "Thumbnails";
             this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
             // 
             // toolStripSeparator9
             // 
             this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator9.Size = new System.Drawing.Size(151, 6);
             // 
             // savedSearchesMenuItem
             // 
@@ -675,7 +716,7 @@ namespace MediaLibrary
             this.saveThisSearchMenuItem,
             this.savedSearchesSeparator});
             this.savedSearchesMenuItem.Name = "savedSearchesMenuItem";
-            this.savedSearchesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.savedSearchesMenuItem.Size = new System.Drawing.Size(154, 22);
             this.savedSearchesMenuItem.Text = "&Saved Searches";
             // 
             // saveThisSearchMenuItem
@@ -801,7 +842,8 @@ namespace MediaLibrary
             this.pathColumn,
             this.peopleColumn,
             this.tagsColumn,
-            this.fileSizeColumn});
+            this.fileSizeColumn,
+            this.ratingColumn});
             this.listView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listView.FullRowSelect = true;
             this.listView.HideSelection = false;
@@ -838,12 +880,19 @@ namespace MediaLibrary
             // fileSizeColumn
             // 
             this.fileSizeColumn.Text = "File Size";
+            this.fileSizeColumn.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // ratingColumn
+            // 
+            this.ratingColumn.Text = "Rating";
+            this.ratingColumn.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // preview
             // 
             this.preview.Dock = System.Windows.Forms.DockStyle.Fill;
             this.preview.Location = new System.Drawing.Point(0, 0);
             this.preview.Name = "preview";
+            this.preview.PreviewItems = null;
             this.preview.Size = new System.Drawing.Size(334, 379);
             this.preview.TabIndex = 5;
             // 
@@ -958,5 +1007,10 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem copyMainMenuItem;
         private System.Windows.Forms.ToolStripMenuItem mergePeopleToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSplitButton rateAllButton;
+        private System.Windows.Forms.ToolStripMenuItem defaultRatingMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator10;
+        private System.Windows.Forms.ToolStripMenuItem newCategoryMenuItem;
+        private System.Windows.Forms.ColumnHeader ratingColumn;
     }
 }

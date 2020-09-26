@@ -49,6 +49,8 @@ namespace MediaLibrary.Storage
 
         public event EventHandler<ItemRemovedEventArgs<HashTag>> HashTagRemoved;
 
+        public event EventHandler<ItemUpdatedEventArgs<Rating>> RatingUpdated;
+
         public TagRuleEngine TagEngine { get; private set; }
 
         public static async Task<HashInfo> HashFileAsync(string path)
@@ -221,6 +223,10 @@ namespace MediaLibrary.Storage
         public Task<List<Person>> GetAllPeople() =>
             this.IndexRead(conn => this.ReadPeople(conn.QueryMultiple(Person.Queries.GetAllPeople)).ToList());
 
+        public Task<List<string>> GetAllRatingCategories() =>
+            this.IndexRead(conn =>
+                conn.Query<string>(Rating.Queries.GetRatingCategories).ToList());
+
         public Task<List<SavedSearch>> GetAllSavedSearches() =>
             this.IndexRead(conn =>
                 conn.Query<SavedSearch>(SavedSearch.Queries.GetSavedSearches).ToList());
@@ -270,6 +276,10 @@ namespace MediaLibrary.Storage
                 var reader = conn.QueryMultiple(Person.Queries.GetPersonById, new { PersonId = personId });
                 return this.ReadPeople(reader).SingleOrDefault();
             });
+
+        public Task<Rating> GetRating(string hash, string category) =>
+            this.IndexRead(conn =>
+                conn.QuerySingleOrDefault<Rating>(Rating.Queries.GetRating, new { Hash = hash, Category = category ?? string.Empty }));
 
         public Task<List<HashTag>> GetRejectedTags(string hash) =>
             this.IndexRead(conn =>
@@ -396,6 +406,7 @@ namespace MediaLibrary.Storage
                 ILookup<string, FilePath> fileNames;
                 Dictionary<int, Person> people;
                 ILookup<string, HashPerson> hashPeople;
+                ILookup<string, Rating> hashRatings;
                 IList<HashInfo> hashes;
                 try
                 {
@@ -405,6 +416,7 @@ namespace MediaLibrary.Storage
                     fileNames = reader.Read<FilePath>(buffered: false).ToLookup(f => f.LastHash);
                     people = this.ReadPeople(reader).ToDictionary(p => p.PersonId);
                     hashPeople = reader.Read<HashPerson>(buffered: false).ToLookup(f => f.Hash);
+                    hashRatings = reader.Read<Rating>(buffered: false).ToLookup(r => r.Hash);
                     hashes = reader.Read<HashInfo>(buffered: false).ToList();
                 }
                 finally
@@ -418,17 +430,24 @@ namespace MediaLibrary.Storage
                     var updatedTags = tags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet();
                     var updatedPaths = fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet();
                     var updatedPeople = hashPeople[hash.Hash].Select(p => people[p.PersonId]).ToImmutableHashSet();
+                    var updatedRating = hashRatings[hash.Hash].Where(p => string.IsNullOrEmpty(p.Category)).SingleOrDefault();
                     results.Add(this.searchResultsCache.AddOrUpdate(
                         hash.Hash,
                         key => new SearchResult(
                             key,
                             hash.FileType,
                             hash.FileSize,
+                            updatedRating,
                             updatedTags,
                             updatedPaths,
                             updatedPeople),
                         (key, searchResult) =>
                         {
+                            if (searchResult.Rating != updatedRating)
+                            {
+                                searchResult.Rating = updatedRating;
+                            }
+
                             if (!searchResult.Tags.SetEquals(updatedTags))
                             {
                                 searchResult.Tags = updatedTags;
@@ -452,6 +471,23 @@ namespace MediaLibrary.Storage
 
         public Task UpdatePerson(Person person) =>
             this.IndexWrite(conn => conn.Execute(Person.Queries.UpdatePerson, new { person.PersonId, person.Name }));
+
+        public async Task UpdateRating(Rating rating)
+        {
+            await this.IndexWrite(conn => conn.Execute(Rating.Queries.UpdateRating, rating)).ConfigureAwait(false);
+
+            if (string.IsNullOrEmpty(rating.Category))
+            {
+                var hash = rating.Hash;
+                if (this.searchResultsCache.TryGetValue(hash, out var searchResult))
+                {
+                    searchResult.Rating = rating;
+                }
+
+                this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
+                this.RatingUpdated?.Invoke(this, new ItemUpdatedEventArgs<Rating>(rating));
+            }
+        }
 
         public Task UpdateSavedSearch(SavedSearch savedSearch) =>
             this.IndexWrite(conn =>
@@ -1024,6 +1060,15 @@ namespace MediaLibrary.Storage
                     Name text NOT NULL,
                     Query text NOT NULL,
                     PRIMARY KEY (SearchId)
+                );
+
+                CREATE TABLE IF NOT EXISTS Rating
+                (
+                    Hash text NOT NULL,
+                    Category text NOT NULL,
+                    Value real NOT NULL,
+                    Count integer NOT NULL,
+                    PRIMARY KEY (Hash, Category)
                 );
             ";
 

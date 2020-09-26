@@ -15,6 +15,7 @@ namespace MediaLibrary.Storage.Search
         private int depth = 0;
         private bool excludeHidden;
         private bool joinCopies = false;
+        private bool joinStars = false;
         private bool joinTagCount = false;
 
         public SearchDialect(TagRuleEngine tagEngine, bool excludeHidden = true)
@@ -147,12 +148,34 @@ namespace MediaLibrary.Storage.Search
 
                 case "tags":
                     this.joinTagCount = true;
-                    if (!int.TryParse(field.Value, out var tagCount))
+                    if (!double.TryParse(field.Value, out var tagCount))
                     {
                         throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
                     }
 
                     return $"COALESCE(tc.TagCount, 0) {ConvertOperator(field.Operator)} {tagCount}";
+
+                case "rating":
+                    this.joinStars = true;
+                    if (!double.TryParse(field.Value, out var rating))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return $"COALESCE(s.Rating, {Rating.DefaultRating}) {ConvertOperator(field.Operator)} {rating}";
+
+                case "stars":
+                    this.joinStars = true;
+                    if (!int.TryParse(field.Value, out var stars))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+                    else if (stars < 1 || stars > 5)
+                    {
+                        throw new NotSupportedException($"Field '{field.Field}' expects a value between 1 and 5.");
+                    }
+
+                    return $"COALESCE(s.Stars, 3) {ConvertOperator(field.Operator)} {stars}";
 
                 case "hash":
                     return $"Hash {ConvertOperator(field.Operator)} {Literal(field.Value)}";
@@ -241,7 +264,8 @@ namespace MediaLibrary.Storage.Search
             var fetchPaths = true;
             var fetchPeople = true;
             var fetchAliases = true && fetchPeople;
-            var fetchAny = fetchTags || fetchPaths || fetchPeople;
+            var fetchRatings = true;
+            var fetchAny = fetchTags || fetchPaths || fetchPeople || fetchRatings;
 
             var sb = new StringBuilder();
 
@@ -276,6 +300,18 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine("    FROM HashTag")
                     .AppendLine("    GROUP BY Hash")
                     .AppendLine(") tc ON h.Hash = tc.Hash");
+            }
+
+            if (this.joinStars)
+            {
+                sb
+                    .AppendLine("LEFT JOIN (")
+                    .AppendLine("    SELECT Hash, CASE WHEN NTile < 2 THEN 1 WHEN NTile < 4 THEN 2 WHEN NTile < 8 THEN 3 WHEN NTile < 10 THEN 4 ELSE 5 END AS Stars FROM (")
+                    .AppendLine("        SELECT Hash, NTILE(10) OVER (PARTITION BY Category ORDER BY Value) NTile")
+                    .AppendLine("        FROM Rating")
+                    .AppendLine("        WHERE Category = ''")
+                    .AppendLine("    ) z")
+                    .AppendLine(") s ON h.Hash = s.Hash");
             }
 
             sb
@@ -320,6 +356,16 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine("SELECT PersonId, Name FROM Person WHERE PersonId IN (SELECT PersonId FROM temp.SearchHashPerson);")
                     .AppendLine("SELECT * FROM temp.SearchHashPerson;")
                     .AppendLine("DROP TABLE temp.SearchHashPerson;");
+            }
+
+            if (fetchRatings)
+            {
+                sb
+                    .AppendLine("SELECT r.Hash, r.Category, r.Value, r.Count")
+                    .AppendLine("FROM temp.SearchHashInfo h")
+                    .AppendLine("INNER JOIN Rating r")
+                    .AppendLine("ON h.Hash = r.Hash")
+                    .AppendLine("WHERE Category = '';");
             }
 
             if (fetchAny)

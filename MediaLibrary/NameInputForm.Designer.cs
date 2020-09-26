@@ -1,6 +1,6 @@
 namespace MediaLibrary
 {
-    partial class SaveSearchForm
+    partial class NameInputForm
     {
         /// <summary>
         /// Required designer variable.
@@ -77,7 +77,7 @@ namespace MediaLibrary
             this.folderLabel.TabIndex = 0;
             this.folderLabel.Text = "&Name";
             // 
-            // SaveSearchForm
+            // NameInputForm
             // 
             this.AcceptButton = this.finishButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -91,10 +91,10 @@ namespace MediaLibrary
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "SaveSearchForm";
+            this.Name = "NameInputForm";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Save Search";
+            this.Text = "Name Input";
             this.ResumeLayout(false);
             this.PerformLayout();
 
