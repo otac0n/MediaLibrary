@@ -190,7 +190,7 @@ namespace MediaLibrary
                     this.EnterUpdate();
                     try
                     {
-                        if (!string.IsNullOrWhiteSpace(previousName) && !aliases.Any(a => IsGeneric(a) && a.Name == previousName))
+                        if (!string.IsNullOrWhiteSpace(previousName) && !aliases.Any(a => a.Name == previousName))
                         {
                             var alias = new Alias(person.PersonId, null, previousName);
                             await this.index.AddAlias(alias).ConfigureAwait(true);

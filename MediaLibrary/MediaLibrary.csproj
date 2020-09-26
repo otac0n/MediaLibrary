@@ -64,9 +64,7 @@
       <Lcid>0</Lcid>
       <Isolated>false</Isolated>
     </COMReference>
-    <Compile Update="EditSavedSearchForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Update="EditSavedSearchForm.cs" />
     <AdditionalFiles Include="MediaLibrary.ruleset" />
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
     <COMReference Include="WMPLib.dll">
