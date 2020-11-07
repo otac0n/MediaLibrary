@@ -30,19 +30,23 @@ namespace MediaLibrary.Tagging
             var renameMap = new Dictionary<string, ImmutableHashSet<string>>();
             foreach (var rule in rules)
             {
-                if (rule.Operator == TagOperator.Definition || rule.Operator == TagOperator.Specialization)
+                if (rule.Operator == TagOperator.Definition)
                 {
                     if (rule.Left.Count > 1 || rule.Right.Count > 1)
                     {
                         throw new ArgumentOutOfRangeException(nameof(rules), $"The operator '{rule.Operator}' requires a single tag on both the left and right hand sides in rule '{rule}'");
                     }
 
-                    if (rule.Operator == TagOperator.Definition)
-                    {
-                        var fromTag = rule.Left.Single();
-                        var toTag = rule.Right.Single();
+                    var fromTag = rule.Left.Single();
+                    var toTag = rule.Right.Single();
 
-                        AddParentToChild(fromTag, toTag, renameMap);
+                    AddParentToChild(fromTag, toTag, renameMap);
+                }
+                else if (rule.Operator == TagOperator.Specialization)
+                {
+                    if (rule.Right.Count > 1)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(rules), $"The operator '{rule.Operator}' requires a single tag on the right hand side in rule '{rule}'");
                     }
                 }
             }
@@ -95,13 +99,15 @@ namespace MediaLibrary.Tagging
 
             foreach (var rule in this.tagRules[TagOperator.Specialization])
             {
-                var fromTag = rule.Left.Single();
-                var toTag = rule.Right.Single();
+                foreach (var fromTag in rule.Left)
+                {
+                    var toTag = rule.Right.Single();
 
-                AddParentToChild(fromTag, toTag, rule, this.specializationParentRuleMap);
-                AddParentToChild(toTag, fromTag, this.specializationChildMap);
-                AddParentToChildren(fromTag, toTag, this.specializationChildTotalMap, this.specializationParentTotalMap);
-                AddParentToChildren(toTag, fromTag, this.specializationParentTotalMap, this.specializationChildTotalMap);
+                    AddParentToChild(fromTag, toTag, rule, this.specializationParentRuleMap);
+                    AddParentToChild(toTag, fromTag, this.specializationChildMap);
+                    AddParentToChildren(fromTag, toTag, this.specializationChildTotalMap, this.specializationParentTotalMap);
+                    AddParentToChildren(toTag, fromTag, this.specializationParentTotalMap, this.specializationChildTotalMap);
+                }
             }
         }
 
