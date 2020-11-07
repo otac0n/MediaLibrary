@@ -63,7 +63,8 @@ export class TagsService {
 
         const aOrder = TagsService.getOrder(a);
         const bOrder = TagsService.getOrder(b);
-        if ((comp = aOrder - bOrder) !== 0) {
+        comp = aOrder - bOrder;
+        if (comp !== 0) {
             return comp;
         }
 
@@ -71,7 +72,8 @@ export class TagsService {
         const bColor = TagsService.getColor(b);
 
         if (aColor && bColor) {
-            if ((comp = aColor.localeCompare(bColor)) !== 0) {
+            comp = aColor.localeCompare(bColor);
+            if (comp !== 0) {
                 return comp;
             }
         } else if (aColor && !bColor) {
@@ -82,7 +84,8 @@ export class TagsService {
 
         const aDescendants = a && a.descendants.length || 0;
         const bDescendants = b && b.descendants.length || 0;
-        if ((comp = bDescendants - aDescendants) !== 0) {
+        comp = bDescendants - aDescendants;
+        if (comp !== 0) {
             return comp;
         }
 

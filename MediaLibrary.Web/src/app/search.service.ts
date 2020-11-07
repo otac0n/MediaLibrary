@@ -16,6 +16,36 @@ export class SearchService {
         private tagsService: TagsService) {
     }
 
+    public static sortPaths(a: string, b: string): number {
+        if (a === b) {
+            return 0;
+        } else if (a === null) {
+            return -1;
+        } else if (b === null) {
+            return 1;
+        }
+
+        const aParts = a.toUpperCase().split(/[\\/]+/g);
+        const bParts = b.toUpperCase().split(/[\\/]+/g);
+
+        for (let j = 0; j < aParts.length && j < bParts.length; j++) {
+            if (aParts.length !== bParts.length) {
+                if (j === aParts.length - 1) {
+                    return 1;
+                } else if (j === bParts.length - 1) {
+                    return -1;
+                }
+            }
+
+            const num = aParts[j].localeCompare(bParts[j]);
+            if (num !== 0) {
+                return num;
+            }
+        }
+
+        return 0;
+    }
+
     public search(q: string): Observable<SearchResult[]> {
         return this.http.get<SearchResult[]>(`files?q=${encodeURIComponent(q)}`).pipe(map(results => {
             results.forEach(r => {
@@ -28,35 +58,5 @@ export class SearchService {
             });
             return results;
         }));
-    }
-
-    public static sortPaths(a: string, b: string): number {
-        if (a == b) {
-            return 0;
-        } else if (a == null) {
-            return -1;
-        } else if (b == null) {
-            return 1;
-        }
-
-        var aParts = a.toUpperCase().split(/[\\/]+/g);
-        var bParts = b.toUpperCase().split(/[\\/]+/g);
-
-        for (var j = 0; j < aParts.length && j < bParts.length; j++) {
-            if (aParts.length != bParts.length) {
-                if (j == aParts.length - 1) {
-                    return 1;
-                } else if (j == bParts.length - 1) {
-                    return -1;
-                }
-            }
-
-            var num;
-            if ((num = aParts[j].localeCompare(bParts[j])) != 0) {
-                return num;
-            }
-        }
-
-        return 0;
     }
 }
