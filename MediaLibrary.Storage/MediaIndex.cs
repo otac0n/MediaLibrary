@@ -27,6 +27,7 @@ namespace MediaLibrary.Storage
 
         private readonly ReaderWriterLockSlim dbLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
         private readonly HashSet<string> detailsColumns = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+        private readonly CancellationTokenSource disposeCancel = new CancellationTokenSource();
         private readonly Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
         private readonly string indexPath;
         private readonly WeakReferenceCache<long, Person> personCache = new WeakReferenceCache<long, Person>();
@@ -194,14 +195,17 @@ namespace MediaLibrary.Storage
 
         public void Dispose()
         {
+            this.disposeCancel.Cancel();
+
             lock (this.fileSystemWatchers)
             {
                 foreach (var watcher in this.fileSystemWatchers.Values)
                 {
-                    watcher.EnableRaisingEvents = false;
                     watcher.Dispose();
                 }
             }
+
+            this.disposeCancel.Dispose();
         }
 
         public Task<List<Alias>> GetAliases(int personId) =>
