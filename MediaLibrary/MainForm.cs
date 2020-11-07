@@ -106,7 +106,7 @@ namespace MediaLibrary
 
         private static void UpdateListItemPath(ListViewItem item, SearchResult searchResult)
         {
-            var firstPath = searchResult.Paths.FirstOrDefault();
+            var firstPath = searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
             item.SubItems[PathColumnIndex].Text = firstPath != null ? Path.GetDirectoryName(firstPath) : string.Empty;
             item.SubItems[PathColumnIndex].Tag = firstPath;
             item.SubItems[NameColumnIndex].Text = firstPath != null ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash;
