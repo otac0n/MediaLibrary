@@ -100,13 +100,16 @@ namespace MediaLibrary
             // ratingBar
             // 
             this.controlLayoutTable.SetColumnSpan(this.ratingBar, 2);
-            this.ratingBar.LargeChange = 1;
+            this.ratingBar.LargeChange = 200;
             this.ratingBar.Location = new System.Drawing.Point(228, 3);
+            this.ratingBar.Maximum = 1000;
             this.ratingBar.Name = "ratingBar";
             this.ratingBar.Size = new System.Drawing.Size(344, 45);
+            this.ratingBar.SmallChange = 100;
             this.ratingBar.TabIndex = 0;
-            this.ratingBar.TickStyle = System.Windows.Forms.TickStyle.Both;
-            this.ratingBar.Value = 5;
+            this.ratingBar.TickFrequency = 0;
+            this.ratingBar.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
+            this.ratingBar.Value = 500;
             // 
             // CompareForm
             // 
