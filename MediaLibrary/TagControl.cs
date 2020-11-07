@@ -10,6 +10,7 @@ namespace MediaLibrary
     public partial class TagControl : UserControl
     {
         private bool indeterminate;
+        private Color? tagColor;
 
         public TagControl()
         {
@@ -41,16 +42,18 @@ namespace MediaLibrary
             set
             {
                 this.indeterminate = value;
-                if (this.indeterminate)
-                {
-                    this.BackColor = SystemColors.ControlLightLight;
-                    this.ForeColor = SystemColors.GrayText;
-                }
-                else
-                {
-                    this.BackColor = SystemColors.Info;
-                    this.ForeColor = SystemColors.InfoText;
-                }
+                this.RefreshColor();
+            }
+        }
+
+        public Color? TagColor
+        {
+            get => this.tagColor;
+
+            set
+            {
+                this.tagColor = value;
+                this.RefreshColor();
             }
         }
 
@@ -68,6 +71,20 @@ namespace MediaLibrary
         private void DeleteButton_Click(object sender, EventArgs e)
         {
             this.DeleteClick?.Invoke(this, e);
+        }
+
+        private void RefreshColor()
+        {
+            if (this.indeterminate)
+            {
+                this.BackColor = SystemColors.ControlLightLight;
+                this.ForeColor = SystemColors.GrayText;
+            }
+            else
+            {
+                this.BackColor = this.tagColor ?? SystemColors.Info;
+                this.ForeColor = ColorService.ContrastColor(this.BackColor);
+            }
         }
 
         private void TagName_Click(object sender, EventArgs e)

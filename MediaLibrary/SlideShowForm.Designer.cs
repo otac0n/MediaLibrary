@@ -37,7 +37,6 @@ namespace MediaLibrary
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
             this.favoriteButton = new System.Windows.Forms.ToolStripButton();
-            this.preview = new MediaLibrary.PreviewControl();
             this.toolStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -132,25 +131,12 @@ namespace MediaLibrary
             this.favoriteButton.Text = "favoriteButton";
             this.favoriteButton.Click += new System.EventHandler(this.FavoriteButton_Click);
             // 
-            // preview
-            // 
-            this.preview.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.preview.Location = new System.Drawing.Point(0, 25);
-            this.preview.Name = "preview";
-            this.preview.Size = new System.Drawing.Size(800, 425);
-            this.preview.TabIndex = 0;
-            this.preview.Finished += new System.EventHandler(this.Preview_Finished);
-            this.preview.Paused += new System.EventHandler(this.Preview_PausedOrScannedBackward);
-            this.preview.ScannedBackward += new System.EventHandler(this.Preview_PausedOrScannedBackward);
-            this.preview.Stopped += new System.EventHandler(this.Preview_Stopped);
-            // 
             // SlideShowForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.preview);
             this.Controls.Add(this.toolStrip);
             this.ForeColor = System.Drawing.Color.White;
             this.Name = "SlideShowForm";
@@ -168,7 +154,6 @@ namespace MediaLibrary
 
         #endregion
 
-        private PreviewControl preview;
         private System.Windows.Forms.ToolStrip toolStrip;
         private System.Windows.Forms.ToolStripButton previousButton;
         private System.Windows.Forms.ToolStripButton playPauseButton;

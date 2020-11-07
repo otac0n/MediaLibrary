@@ -1,0 +1,33 @@
+@namespace MediaLibrary
+@classname ColorParser
+@ignorecase true
+@using System.Drawing
+@members
+{
+    private static int Clamp(int value) =>
+        value < 0 ? 0 :
+        value > 255 ? 255 :
+        value;
+
+    private static Color Clamp(int r, int g, int b) =>
+        Color.FromArgb(Clamp(r), Clamp(g), Clamp(b));
+}
+
+color <Color> = c:(hexColor / rgbColor) EOF { c }
+
+hexColor <Color>
+    = "#" r:hex2 g:hex2 b:hex2 { Color.FromArgb(r, g, b) }
+    / "#" r:hex1 g:hex1 b:hex1 { Color.FromArgb(r, g, b) }
+
+rgbColor <Color>
+    = "rgb(" _ r:int _ "," _ g:int _ "," _ b:int _ ")" { Clamp(r, g, b) }
+    / "rgb(" _ r:percent _ "," _ g:percent _ "," _ b:percent _ ")" { Clamp(r, g, b) }
+
+hex2 <int> = i:([a-f0-9] [a-f0-9]) { Convert.ToInt32(i, 16) }
+hex1 <int> = i:[a-f0-9] { Convert.ToInt32(i + i, 16) }
+int <int> = i:("-"? [0-9]+) { int.Parse(i) }
+percent <int> = i:int "%" { (int)Math.Round((i / 100.0) * 255.0) }
+
+EOF = !.
+WS = "" [ \t]+
+_ -memoize = "" WS?

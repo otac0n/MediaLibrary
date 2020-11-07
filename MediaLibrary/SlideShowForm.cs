@@ -19,6 +19,7 @@ namespace MediaLibrary
         private readonly Dictionary<string, SearchResult> searchResults;
         private bool advanceOnNextStop;
         private CancellationTokenSource playPauseCancel = new CancellationTokenSource();
+        private PreviewControl preview;
 
         public SlideShowForm(MediaIndex index, IEnumerable<SearchResult> searchResults, bool shuffle = false, bool autoPlay = false)
         {
@@ -26,6 +27,19 @@ namespace MediaLibrary
             var searchResultsList = searchResults.ToList();
             this.searchResults = searchResultsList.ToDictionary(r => r.Hash);
             this.playlistManager = PlaylistManager.Create(searchResultsList.Select(r => r.Hash));
+
+            this.preview = new PreviewControl(index)
+            {
+                Dock = DockStyle.Fill,
+                Name = "preview",
+                TabIndex = 0,
+            };
+            this.preview.Finished += this.Preview_Finished;
+            this.preview.Paused += this.Preview_PausedOrScannedBackward;
+            this.preview.ScannedBackward += this.Preview_PausedOrScannedBackward;
+            this.preview.Stopped += this.Preview_Stopped;
+            this.Controls.Add(this.preview);
+
             this.InitializeComponent();
 
             this.LastMouseMove = Stopwatch.StartNew();

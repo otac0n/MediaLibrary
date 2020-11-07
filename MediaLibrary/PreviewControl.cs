@@ -16,11 +16,19 @@ namespace MediaLibrary
     public partial class PreviewControl : UserControl
     {
         private SearchResult displayedItem;
+        private SearchResultsTags existingTags;
         private ImmutableList<SearchResult> previewItems;
 
-        public PreviewControl()
+        public PreviewControl(MediaIndex index)
         {
             this.InitializeComponent();
+
+            this.existingTags = new SearchResultsTags(index);
+            this.existingTags.Dock = DockStyle.Bottom;
+            this.existingTags.Name = "existingTags";
+            this.existingTags.TabIndex = 2;
+            this.Controls.Add(this.existingTags);
+
             this.ResetMediaPlayer();
         }
 
@@ -96,6 +104,7 @@ namespace MediaLibrary
 
         private void UpdatePreview()
         {
+            this.existingTags.SearchResults = this.previewItems;
             var item = this.previewItems?.Count == 1 ? this.previewItems.Single() : null;
             var displayedItem = this.Visible ? item : null;
             if (!object.ReferenceEquals(displayedItem, this.displayedItem))

@@ -9,6 +9,8 @@ namespace MediaLibrary.Tagging
 
     public sealed class TagRuleEngine
     {
+        public const string AbstractProperty = "abstract";
+
         private readonly HashSet<string> abstractTags = new HashSet<string>();
         private readonly Dictionary<string, ImmutableHashSet<string>> aliasMap = new Dictionary<string, ImmutableHashSet<string>>();
         private readonly Dictionary<string, string> renameMap = new Dictionary<string, string>();
@@ -84,7 +86,7 @@ namespace MediaLibrary.Tagging
                 {
                     switch (property)
                     {
-                        case "abstract":
+                        case AbstractProperty:
                             this.abstractTags.UnionWith(rule.Left);
                             break;
                     }
@@ -232,6 +234,54 @@ namespace MediaLibrary.Tagging
                 suggestedTags);
         }
 
+        public IEnumerable<string> GetAllTagProperties(string tag) =>
+            this.GetTagProperties(tag).Concat(this.GetInheritedTagProperties(tag));
+
+        public IEnumerable<string> GetInheritedTagProperties(string tag)
+        {
+            tag = this.Rename(tag);
+
+            var visited = new HashSet<string>() { tag };
+            var queue = new Queue<string>();
+            this.specializationParentRuleMap.TryGetValue(tag, out var parentsWithRules);
+            if (parentsWithRules == null)
+            {
+                yield break;
+            }
+
+            foreach (var parent in parentsWithRules)
+            {
+                if (visited.Add(parent.Key))
+                {
+                    queue.Enqueue(parent.Key);
+                }
+            }
+
+            while (queue.Count > 0)
+            {
+                var next = queue.Dequeue();
+                foreach (var property in this.GetTagProperties(next))
+                {
+                    if (property != AbstractProperty)
+                    {
+                        yield return property;
+                    }
+                }
+
+                this.specializationParentRuleMap.TryGetValue(next, out parentsWithRules);
+                if (parentsWithRules != null)
+                {
+                    foreach (var parent in parentsWithRules)
+                    {
+                        if (visited.Add(parent.Key))
+                        {
+                            queue.Enqueue(parent.Key);
+                        }
+                    }
+                }
+            }
+        }
+
         public IEnumerable<string> GetKnownTags() =>
             this.tagRules.SelectMany(g => g).SelectMany(r => r.Operator == TagOperator.Property ? r.Left : r.Left.Concat(r.Right)).Select(this.Rename).Distinct();
 
@@ -249,6 +299,12 @@ namespace MediaLibrary.Tagging
 
         public ImmutableHashSet<string> GetTagParents(string tag) =>
             this.specializationParentRuleMap.TryGetValue(this.Rename(tag), out var dict) ? ImmutableHashSet.CreateRange(dict.Keys) : ImmutableHashSet<string>.Empty;
+
+        public IEnumerable<string> GetTagProperties(string tag)
+        {
+            tag = this.Rename(tag);
+            return this.tagRules[TagOperator.Property].Where(t => t.Left.Contains(tag)).SelectMany(t => t.Right);
+        }
 
         public string Rename(string tag) =>
             this.renameMap.TryGetValue(tag, out var renamed) ? renamed : tag;

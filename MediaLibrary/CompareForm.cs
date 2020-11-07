@@ -16,6 +16,8 @@ namespace MediaLibrary
         private readonly Dictionary<string, long> ratingsInverseFrequency;
         private readonly List<SearchResult> searchResults;
         private (ItemInfo left, ItemInfo right)? compareInfo;
+        private PreviewControl leftPreview;
+        private PreviewControl rightPreview;
 
         public CompareForm(MediaIndex index, string category, IEnumerable<SearchResult> searchResults)
         {
@@ -26,7 +28,28 @@ namespace MediaLibrary
                 ? this.searchResults.ToDictionary(r => r.Hash, r => (r.Rating?.Count ?? 0) + 1)
                 : this.searchResults.ToDictionary(r => r.Hash, r => 1L);
             this.random = new Random();
+
             this.InitializeComponent();
+
+            this.leftPreview = new PreviewControl(index)
+            {
+                BackColor = System.Drawing.Color.Black,
+                Dock = DockStyle.Fill,
+                Name = "leftPreview",
+                TabIndex = 0,
+            };
+
+            this.rightPreview = new PreviewControl(index)
+            {
+                BackColor = System.Drawing.Color.Black,
+                Dock = DockStyle.Fill,
+                Name = "rightPreview",
+                TabIndex = 1,
+            };
+
+            this.previewTable.Controls.Add(this.leftPreview, 0, 0);
+            this.previewTable.Controls.Add(this.rightPreview, 1, 0);
+
             this.LoadNextComparison();
         }
 

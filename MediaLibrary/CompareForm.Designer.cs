@@ -29,8 +29,6 @@ namespace MediaLibrary
         private void InitializeComponent()
         {
             this.previewTable = new System.Windows.Forms.TableLayoutPanel();
-            this.rightPreview = new MediaLibrary.PreviewControl();
-            this.leftPreview = new MediaLibrary.PreviewControl();
             this.rateButton = new System.Windows.Forms.Button();
             this.skipButton = new System.Windows.Forms.Button();
             this.controlLayoutTable = new System.Windows.Forms.TableLayoutPanel();
@@ -46,8 +44,6 @@ namespace MediaLibrary
             this.previewTable.ColumnCount = 2;
             this.previewTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
             this.previewTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.previewTable.Controls.Add(this.rightPreview, 1, 0);
-            this.previewTable.Controls.Add(this.leftPreview, 0, 0);
             this.previewTable.Dock = System.Windows.Forms.DockStyle.Fill;
             this.previewTable.Location = new System.Drawing.Point(0, 0);
             this.previewTable.Name = "previewTable";
@@ -55,24 +51,6 @@ namespace MediaLibrary
             this.previewTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.previewTable.Size = new System.Drawing.Size(800, 370);
             this.previewTable.TabIndex = 3;
-            // 
-            // rightPreview
-            // 
-            this.rightPreview.BackColor = System.Drawing.Color.Black;
-            this.rightPreview.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.rightPreview.Location = new System.Drawing.Point(403, 3);
-            this.rightPreview.Name = "rightPreview";
-            this.rightPreview.Size = new System.Drawing.Size(394, 364);
-            this.rightPreview.TabIndex = 1;
-            // 
-            // leftPreview
-            // 
-            this.leftPreview.BackColor = System.Drawing.Color.Black;
-            this.leftPreview.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.leftPreview.Location = new System.Drawing.Point(3, 3);
-            this.leftPreview.Name = "leftPreview";
-            this.leftPreview.Size = new System.Drawing.Size(394, 364);
-            this.leftPreview.TabIndex = 0;
             // 
             // rateButton
             // 
@@ -152,8 +130,6 @@ namespace MediaLibrary
         #endregion
 
         private System.Windows.Forms.TableLayoutPanel previewTable;
-        private PreviewControl leftPreview;
-        private PreviewControl rightPreview;
         private System.Windows.Forms.Button rateButton;
         private System.Windows.Forms.Button skipButton;
         private System.Windows.Forms.TableLayoutPanel controlLayoutTable;

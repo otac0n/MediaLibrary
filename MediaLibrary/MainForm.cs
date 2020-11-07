@@ -30,6 +30,7 @@ namespace MediaLibrary
         private readonly List<InProgressTask> tasks = new List<InProgressTask>();
         private bool columnsAutoSized = false;
         private double lastProgress;
+        private PreviewControl preview;
         private int searchVersion;
         private MainFormListSorter sorter;
         private int taskVersion;
@@ -38,6 +39,15 @@ namespace MediaLibrary
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.InitializeComponent();
+
+            this.preview = new PreviewControl(index)
+            {
+                Dock = System.Windows.Forms.DockStyle.Fill,
+                Name = "preview",
+                TabIndex = 5,
+            };
+            this.splitContainer.Panel2.Controls.Add(this.preview);
+
             this.nameColumn.Name = "Name";
             this.pathColumn.Name = "Path";
             this.peopleColumn.Name = "People";
@@ -49,6 +59,7 @@ namespace MediaLibrary
             this.index.HashPersonAdded += this.Index_HashPersonAdded;
             this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
             this.index.RatingUpdated += this.Index_RatingUpdated;
+
             this.ApplySettings();
         }
 

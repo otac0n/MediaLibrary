@@ -111,14 +111,12 @@ namespace MediaLibrary
             this.tagsColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.fileSizeColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.ratingColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.preview = new MediaLibrary.PreviewControl();
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
             this.itemContextMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
-            this.splitContainer.Panel2.SuspendLayout();
             this.splitContainer.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -348,20 +346,20 @@ namespace MediaLibrary
             // 
             this.defaultRatingMenuItem.Image = global::MediaLibrary.Properties.Resources.antique_axe;
             this.defaultRatingMenuItem.Name = "defaultRatingMenuItem";
-            this.defaultRatingMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.defaultRatingMenuItem.Size = new System.Drawing.Size(112, 22);
             this.defaultRatingMenuItem.Text = "Default";
             this.defaultRatingMenuItem.Click += new System.EventHandler(this.RatingCategoryMenuItem_Click);
             // 
             // toolStripSeparator10
             // 
             this.toolStripSeparator10.Name = "toolStripSeparator10";
-            this.toolStripSeparator10.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator10.Size = new System.Drawing.Size(109, 6);
             // 
             // newCategoryMenuItem
             // 
             this.newCategoryMenuItem.Image = global::MediaLibrary.Properties.Resources.antique_axe;
             this.newCategoryMenuItem.Name = "newCategoryMenuItem";
-            this.newCategoryMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newCategoryMenuItem.Size = new System.Drawing.Size(112, 22);
             this.newCategoryMenuItem.Text = "New...";
             this.newCategoryMenuItem.Click += new System.EventHandler(this.NewCategoryMenuItem_Click);
             // 
@@ -826,10 +824,6 @@ namespace MediaLibrary
             // splitContainer.Panel1
             // 
             this.splitContainer.Panel1.Controls.Add(this.listView);
-            // 
-            // splitContainer.Panel2
-            // 
-            this.splitContainer.Panel2.Controls.Add(this.preview);
             this.splitContainer.Size = new System.Drawing.Size(800, 379);
             this.splitContainer.SplitterDistance = 462;
             this.splitContainer.TabIndex = 6;
@@ -887,15 +881,6 @@ namespace MediaLibrary
             this.ratingColumn.Text = "Rating";
             this.ratingColumn.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
-            // preview
-            // 
-            this.preview.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.preview.Location = new System.Drawing.Point(0, 0);
-            this.preview.Name = "preview";
-            this.preview.PreviewItems = null;
-            this.preview.Size = new System.Drawing.Size(334, 379);
-            this.preview.TabIndex = 5;
-            // 
             // MainForm
             // 
             this.AllowDrop = true;
@@ -920,7 +905,6 @@ namespace MediaLibrary
             this.toolStrip.PerformLayout();
             this.itemContextMenu.ResumeLayout(false);
             this.splitContainer.Panel1.ResumeLayout(false);
-            this.splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
             this.splitContainer.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -991,7 +975,6 @@ namespace MediaLibrary
         private System.Windows.Forms.ColumnHeader tagsColumn;
         private System.Windows.Forms.ColumnHeader fileSizeColumn;
         private System.Windows.Forms.ColumnHeader peopleColumn;
-        private PreviewControl preview;
         private System.Windows.Forms.ToolStripMenuItem editPeopleMainMenuItem;
         private System.Windows.Forms.ColumnHeader pathColumn;
         private System.Windows.Forms.ToolStripMenuItem editTagRulesMainMenuItem;
