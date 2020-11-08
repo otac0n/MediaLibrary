@@ -2,30 +2,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\SharedAssemblyInfo.props" />
   <PropertyGroup>
-    <CodeAnalysisRuleSet>MediaLibrary.Storage.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>MediaLibrary.Search.ruleset</CodeAnalysisRuleSet>
     <DebugType>Full</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <TargetFrameworks>net461</TargetFrameworks>
+    <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/otac0n/MediaLibrary</PackageProjectUrl>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.0.30" />
     <PackageReference Include="FixMe" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="GitVersionTask" Version="4.0.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8" PrivateAssets="All" />
     <PackageReference Include="Pegasus" Version="4.1.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All" />
     <PackageReference Include="System.Collections.Immutable" Version="1.7.0" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MediaLibrary.Search\MediaLibrary.Search.csproj" />
-    <ProjectReference Include="..\MediaLibrary.Tagging\MediaLibrary.Tagging.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <AdditionalFiles Include="MediaLibrary.Storage.ruleset" />
+    <AdditionalFiles Include="MediaLibrary.Search.ruleset" />
+    <PegGrammar Include="SearchGrammar.peg" />
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 </Project>

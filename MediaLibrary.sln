@@ -20,6 +20,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediaLibrary", "MediaLibrary\MediaLibrary.csproj", "{70A42842-36E3-4144-A0DD-9D45B2208E66}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediaLibrary.Search", "MediaLibrary.Search\MediaLibrary.Search.csproj", "{52332382-628A-4624-B562-918C0B9696C2}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediaLibrary.Storage", "MediaLibrary.Storage\MediaLibrary.Storage.csproj", "{712FA0E1-1412-43E0-A8A7-280720178715}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediaLibrary.Tagging", "MediaLibrary.Tagging\MediaLibrary.Tagging.csproj", "{411ABEF4-A76F-4A79-A5D0-4E89C0D18217}"
@@ -38,6 +40,10 @@ Global
 		{70A42842-36E3-4144-A0DD-9D45B2208E66}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70A42842-36E3-4144-A0DD-9D45B2208E66}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70A42842-36E3-4144-A0DD-9D45B2208E66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52332382-628A-4624-B562-918C0B9696C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52332382-628A-4624-B562-918C0B9696C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52332382-628A-4624-B562-918C0B9696C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52332382-628A-4624-B562-918C0B9696C2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{712FA0E1-1412-43E0-A8A7-280720178715}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{712FA0E1-1412-43E0-A8A7-280720178715}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{712FA0E1-1412-43E0-A8A7-280720178715}.Release|Any CPU.ActiveCfg = Release|Any CPU

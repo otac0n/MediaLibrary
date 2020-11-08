@@ -6,8 +6,10 @@ namespace MediaLibrary.Storage.Search
     using System.Collections.Immutable;
     using System.Linq;
     using System.Text;
+    using MediaLibrary.Search;
+    using MediaLibrary.Search.Sql;
     using MediaLibrary.Tagging;
-    using static QueryBuilder;
+    using static MediaLibrary.Search.Sql.QueryBuilder;
 
     public class SearchDialect : AnsiSqlCompiler
     {
