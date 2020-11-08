@@ -75,6 +75,7 @@ namespace MediaLibrary
         private void UpdateTags()
         {
             var searchResults = this.searchResults;
+            var tagComparer = Comparer<string>.Create(this.index.TagEngine.GetTagComparison());
 
             var tagCounts = new Dictionary<string, int>();
             foreach (var tag in searchResults.SelectMany(r => r.Tags))
@@ -84,32 +85,26 @@ namespace MediaLibrary
 
             this.SuspendLayout();
 
-            for (var i = 0; i < this.Controls.Count; i++)
-            {
-                var tagControl = (TagControl)this.Controls[i];
-                var tag = tagControl.Text;
-                if (tagCounts.TryGetValue(tag, out var count))
-                {
-                    tagControl.Indeterminate = count != searchResults.Count;
-                    tagControl.TagColor = this.index.TagEngine.GetTagColor(tag);
-                    tagCounts.Remove(tag);
-                }
-                else
-                {
-                    this.Controls.RemoveAt(i--);
-                    tagControl.Dispose();
-                }
-            }
+            this.Controls.Clear();
 
-            foreach (var tag in tagCounts)
+            foreach (var tag in tagCounts.OrderBy(t => t.Key, tagComparer))
             {
-                this.Controls.Add(new TagControl
+                TagControl tagControl = null;
+                try
                 {
-                    AllowDelete = false,
-                    Text = tag.Key,
-                    TagColor = this.index.TagEngine.GetTagColor(tag.Key),
-                    Indeterminate = tag.Value != searchResults.Count,
-                });
+                    tagControl = new TagControl();
+                    tagControl.AllowDelete = false;
+                    tagControl.Text = tag.Key;
+                    tagControl.TagColor = this.index.TagEngine.GetTagColor(tag.Key);
+                    tagControl.Indeterminate = tag.Value != searchResults.Count;
+
+                    this.Controls.Add(tagControl);
+                    tagControl = null;
+                }
+                finally
+                {
+                    tagControl?.Dispose();
+                }
             }
 
             this.ResumeLayout();

@@ -3,8 +3,6 @@ namespace MediaLibrary
     using System;
     using System.Collections.Generic;
     using System.Drawing;
-    using System.Linq;
-    using MediaLibrary.Tagging;
 
     public static class ColorService
     {
@@ -36,17 +34,13 @@ namespace MediaLibrary
             return whiteR > blackR ? Color.White : Color.Black;
         }
 
-        public static Color? GetTagColor(this TagRuleEngine tagEngine, string tag)
-        {
-            const string Prefix = "color=";
-            return (from p in tagEngine.GetAllTagProperties(tag)
-                    where p.StartsWith(Prefix, StringComparison.Ordinal)
-                    let color = p.Substring(Prefix.Length)
-                    select ParseColor(color)).FirstOrDefault();
-        }
-
         public static Color? ParseColor(string color)
         {
+            if (string.IsNullOrEmpty(color))
+            {
+                return null;
+            }
+
             lock (cache)
             {
                 if (cache.TryGetValue(color, out var cached))
@@ -58,7 +52,7 @@ namespace MediaLibrary
             Color? value;
             try
             {
-                value = new ColorParser().Parse(color);
+                value = new ColorParser().Parse(color.Trim());
             }
             catch (FormatException)
             {
