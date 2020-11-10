@@ -1,5 +1,13 @@
 <div id="searchbar">
-  <input type="text" [(ngModel)]="query" (keypress)="searchKeyPress($event)" /><button (click)="search()" type="button">Search</button>
+  <div class="input-group">
+    <div class="input-group-prepend">
+      <div class="input-group-text">🔍</div>
+    </div>
+    <input class="form-control" type="text" [(ngModel)]="query" (keypress)="searchKeyPress($event)" />
+    <div class="input-group-append">
+      <button class="btn btn-primary" type="button" (click)="search()">Search</button>
+    </div>
+  </div>
 </div>
 <div id="results">
   <div *ngFor="let result of resultsPage" [ngClass]="{ 'result': true, 'selected': result == selectedItem }" (click)="select(result)">
