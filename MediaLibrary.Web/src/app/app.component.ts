@@ -1,8 +1,9 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
-import { SearchResult } from '../schema';
+import { SavedSearch, SearchResult } from '../schema';
+import { SavedSearchService } from './saved-search.service';
 import { SearchService } from './search.service';
 import { TaggingService } from './tagging.service';
 import { TagsService } from './tags.service';
@@ -12,7 +13,8 @@ import { TagsService } from './tags.service';
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
+    public savedSearches: SavedSearch[];
     public previewItem: boolean;
     public query = '';
     public selectedItem: SearchResult;
@@ -21,8 +23,15 @@ export class AppComponent {
     private searchVersion = 0;
 
     constructor(
+        private savedSearchService: SavedSearchService,
         private searchService: SearchService,
         private taggingService: TaggingService) {
+    }
+
+    public ngOnInit() {
+        this.savedSearchService.list().then(data => {
+            this.savedSearches = data;
+        });
     }
 
     public searchKeyPress(event: KeyboardEvent) {

@@ -22,6 +22,12 @@ export interface Alias {
     site?: string;
 }
 
+export interface SavedSearch {
+    searchId: number;
+    name: string;
+    query: string;
+}
+
 export interface TagInfo {
     tag: string;
     aliases: string[];

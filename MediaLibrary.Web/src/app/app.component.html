@@ -1,7 +1,13 @@
 <div id="searchbar">
   <div class="input-group">
-    <div class="input-group-prepend">
+    <div class="input-group-prepend btn-group" ngbDropdown role="group">
       <div class="input-group-text">🔍</div>
+      <button class="btn btn-outline-secondary dropdown-toggle-split" ngbDropdownToggle></button>
+      <div class="dropdown-menu" ngbDropdownMenu>
+        <ng-container *ngFor="let savedSearch of savedSearches">
+          <button ngbDropdownItem (click)="query = savedSearch.query; search()">{{savedSearch.name}}</button>
+        </ng-container>
+      </div>
     </div>
     <input class="form-control" type="text" [(ngModel)]="query" (keypress)="searchKeyPress($event)" />
     <div class="input-group-append">
