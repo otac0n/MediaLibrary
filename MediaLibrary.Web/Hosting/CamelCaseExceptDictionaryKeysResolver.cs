@@ -1,6 +1,6 @@
 // Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
-namespace MediaLibrary.Http
+namespace MediaLibrary.Web.Hosting
 {
     using System;
     using Newtonsoft.Json.Serialization;

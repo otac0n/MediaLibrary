@@ -6,8 +6,8 @@ namespace MediaLibrary
     using System.IO;
     using System.Windows.Forms;
     using CommandLine;
-    using MediaLibrary.Http;
     using MediaLibrary.Storage;
+    using MediaLibrary.Web.Hosting;
     using Microsoft.Owin.Hosting;
     using static System.Environment;
 

@@ -1,8 +1,7 @@
 // Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
-namespace MediaLibrary.Http
+namespace MediaLibrary.Web.Controllers
 {
-    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -11,6 +10,7 @@ namespace MediaLibrary.Http
     using System.Web.Http;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
+    using MediaLibrary.Web.Hosting;
 
     [RoutePrefix("files")]
     public class FilesController : ApiController
