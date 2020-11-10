@@ -16,7 +16,7 @@
   <Target Name="AngularBuild" DependsOnTargets="EnsureAngular;NpmRestore" Inputs="@(None);$(MSBuildThisFile)" Outputs="obj\dist\index.html">
     <AngularBuildTask AngularCommand="$(AngularCommand)" />
   </Target>
-  <Target Name="IncludeDistributables" DependsOnTargets="AngularBuild" AfterTargets="PreBuildEvent">
+  <Target Name="IncludeDistributables" DependsOnTargets="AngularBuild" AfterTargets="BeforeBuild">
     <Exec Command="$(AngularCommand) lint --format=msbuild" IgnoreExitCode="true" />
     <ItemGroup>
       <AngularDistributable Include="obj\dist\**\*.*" />
