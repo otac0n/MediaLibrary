@@ -42,3 +42,8 @@
 .selected {
     background-color: whitesmoke;
 }
+
+.saved-searches {
+    overflow-y: scroll;
+    max-height: 400px;
+}
