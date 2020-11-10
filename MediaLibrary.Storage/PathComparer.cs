@@ -1,12 +1,11 @@
 // Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
-namespace MediaLibrary
+namespace MediaLibrary.Storage
 {
     using System;
     using System.Collections.Generic;
-    using MediaLibrary.Storage;
 
-    internal class PathComparer : IComparer<string>
+    public class PathComparer : IComparer<string>
     {
         private PathComparer()
         {
