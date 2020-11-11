@@ -44,7 +44,7 @@ namespace MediaLibrary
 
             this.preview = new PreviewControl(index)
             {
-                Dock = System.Windows.Forms.DockStyle.Fill,
+                Dock = DockStyle.Fill,
                 Name = "preview",
                 TabIndex = 5,
             };
@@ -68,7 +68,7 @@ namespace MediaLibrary
             }
         }
 
-        private void AddIndexedFolderToolStripMenuItem_Click(object sender, System.EventArgs e)
+        private void AddIndexedFolderToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (var addIndexedPathForm = new AddIndexedPathForm(this.index))
             {
@@ -175,7 +175,7 @@ namespace MediaLibrary
 
         private void ApplySettings()
         {
-            var settings = Properties.Settings.Default;
+            var settings = Settings.Default;
             void Save()
             {
                 // TODO: Throttle.
