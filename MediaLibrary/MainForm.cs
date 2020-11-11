@@ -499,11 +499,6 @@ namespace MediaLibrary
             }
         }
 
-        private void ListView_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
-        {
-            this.UpdatePreview();
-        }
-
         private void ListView_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right && e.Clicks == 1)

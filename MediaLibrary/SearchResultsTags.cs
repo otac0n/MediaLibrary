@@ -85,25 +85,66 @@ namespace MediaLibrary
 
             this.SuspendLayout();
 
-            this.Controls.Clear();
-
-            foreach (var tag in tagCounts.OrderBy(t => t.Key, tagComparer))
+            if (tagCounts.Count == 0)
             {
-                TagControl tagControl = null;
-                try
+                foreach (var control in this.Controls)
                 {
-                    tagControl = new TagControl();
-                    tagControl.AllowDelete = false;
-                    tagControl.Text = tag.Key;
-                    tagControl.TagColor = this.index.TagEngine.GetTagColor(tag.Key);
-                    tagControl.Indeterminate = tag.Value != searchResults.Count;
-
-                    this.Controls.Add(tagControl);
-                    tagControl = null;
+                    (control as IDisposable)?.Dispose();
                 }
-                finally
+
+                this.Controls.Clear();
+            }
+            else
+            {
+                var write = 0;
+                foreach (var tag in tagCounts.OrderBy(t => t.Key, tagComparer))
                 {
-                    tagControl?.Dispose();
+                    TagControl tagControl;
+
+                    var updated = false;
+                    while (write < this.Controls.Count)
+                    {
+                        tagControl = (TagControl)this.Controls[write];
+                        var comp = tagComparer.Compare(tagControl.Text, tag.Key);
+                        if (comp < 0)
+                        {
+                            this.Controls.RemoveAt(write);
+                            tagControl.Dispose();
+                        }
+                        else if (comp == 0)
+                        {
+                            tagControl.TagColor = this.index.TagEngine.GetTagColor(tag.Key);
+                            tagControl.Indeterminate = tag.Value != searchResults.Count;
+                            write++;
+                            updated = true;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    if (!updated)
+                    {
+                        tagControl = null;
+                        try
+                        {
+                            tagControl = new TagControl();
+                            tagControl.AllowDelete = false;
+                            tagControl.Text = tag.Key;
+                            tagControl.TagColor = this.index.TagEngine.GetTagColor(tag.Key);
+                            tagControl.Indeterminate = tag.Value != searchResults.Count;
+
+                            this.Controls.Add(tagControl);
+                            this.Controls.SetChildIndex(tagControl, write++);
+                            tagControl = null;
+                        }
+                        finally
+                        {
+                            tagControl?.Dispose();
+                        }
+                    }
                 }
             }
 
