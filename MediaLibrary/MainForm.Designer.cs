@@ -104,13 +104,6 @@ namespace MediaLibrary
             this.openContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
-            this.listView = new System.Windows.Forms.ListView();
-            this.nameColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.pathColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.peopleColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.tagsColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.fileSizeColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.ratingColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
@@ -820,65 +813,9 @@ namespace MediaLibrary
             this.splitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer.Location = new System.Drawing.Point(0, 49);
             this.splitContainer.Name = "splitContainer";
-            // 
-            // splitContainer.Panel1
-            // 
-            this.splitContainer.Panel1.Controls.Add(this.listView);
             this.splitContainer.Size = new System.Drawing.Size(800, 379);
             this.splitContainer.SplitterDistance = 462;
             this.splitContainer.TabIndex = 6;
-            // 
-            // listView
-            // 
-            this.listView.AllowColumnReorder = true;
-            this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.nameColumn,
-            this.pathColumn,
-            this.peopleColumn,
-            this.tagsColumn,
-            this.fileSizeColumn,
-            this.ratingColumn});
-            this.listView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listView.FullRowSelect = true;
-            this.listView.HideSelection = false;
-            this.listView.Location = new System.Drawing.Point(0, 0);
-            this.listView.Margin = new System.Windows.Forms.Padding(0);
-            this.listView.Name = "listView";
-            this.listView.Size = new System.Drawing.Size(462, 379);
-            this.listView.SmallImageList = this.fileTypeImages;
-            this.listView.TabIndex = 4;
-            this.listView.UseCompatibleStateImageBehavior = false;
-            this.listView.View = System.Windows.Forms.View.Details;
-            this.listView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.ListView_ColumnClick);
-            this.listView.SelectedIndexChanged += new System.EventHandler(this.ListView_SelectedIndexChanged);
-            this.listView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ListView_MouseClick);
-            this.listView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListView_DoubleClick);
-            // 
-            // nameColumn
-            // 
-            this.nameColumn.Text = "Name";
-            // 
-            // pathColumn
-            // 
-            this.pathColumn.Text = "Path";
-            // 
-            // peopleColumn
-            // 
-            this.peopleColumn.Text = "People";
-            // 
-            // tagsColumn
-            // 
-            this.tagsColumn.Text = "Tags";
-            // 
-            // fileSizeColumn
-            // 
-            this.fileSizeColumn.Text = "File Size";
-            this.fileSizeColumn.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // ratingColumn
-            // 
-            this.ratingColumn.Text = "Rating";
-            this.ratingColumn.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // MainForm
             // 
@@ -969,13 +906,7 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem editTagsMainMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addPeopleMainMenuItem;
         private System.Windows.Forms.SplitContainer splitContainer;
-        private System.Windows.Forms.ListView listView;
-        private System.Windows.Forms.ColumnHeader nameColumn;
-        private System.Windows.Forms.ColumnHeader tagsColumn;
-        private System.Windows.Forms.ColumnHeader fileSizeColumn;
-        private System.Windows.Forms.ColumnHeader peopleColumn;
         private System.Windows.Forms.ToolStripMenuItem editPeopleMainMenuItem;
-        private System.Windows.Forms.ColumnHeader pathColumn;
         private System.Windows.Forms.ToolStripMenuItem editTagRulesMainMenuItem;
         private System.Windows.Forms.ToolStripTextBox searchBox;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
@@ -993,6 +924,5 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem defaultRatingMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator10;
         private System.Windows.Forms.ToolStripMenuItem newCategoryMenuItem;
-        private System.Windows.Forms.ColumnHeader ratingColumn;
     }
 }

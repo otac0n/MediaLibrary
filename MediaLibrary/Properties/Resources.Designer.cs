@@ -271,6 +271,15 @@ namespace MediaLibrary.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to File Size.
+        /// </summary>
+        internal static string FileSizeColumn {
+            get {
+                return ResourceManager.GetString("FileSizeColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap floppy_disk {
@@ -461,6 +470,33 @@ namespace MediaLibrary.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        internal static string NameColumn {
+            get {
+                return ResourceManager.GetString("NameColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path.
+        /// </summary>
+        internal static string PathColumn {
+            get {
+                return ResourceManager.GetString("PathColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to People.
+        /// </summary>
+        internal static string PeopleColumn {
+            get {
+                return ResourceManager.GetString("PeopleColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap picture_landscape {
@@ -477,6 +513,15 @@ namespace MediaLibrary.Properties {
             get {
                 object obj = ResourceManager.GetObject("rating_star", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rating.
+        /// </summary>
+        internal static string RatingColumn {
+            get {
+                return ResourceManager.GetString("RatingColumn", resourceCulture);
             }
         }
         
@@ -587,6 +632,15 @@ namespace MediaLibrary.Properties {
             get {
                 object obj = ResourceManager.GetObject("tags_settings", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tags.
+        /// </summary>
+        internal static string TagsColumn {
+            get {
+                return ResourceManager.GetString("TagsColumn", resourceCulture);
             }
         }
         
