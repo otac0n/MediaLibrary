@@ -86,7 +86,7 @@ namespace MediaLibrary
 
         private void AddPeopleMenuItem_Click(object sender, EventArgs e)
         {
-            var searchResults = (((ToolStripMenuItem)sender).Tag as IList<SearchResult>) ?? this.GetSelectedSearchResults();
+            var searchResults = (((ToolStripMenuItem)sender).Tag as IList<SearchResult>) ?? this.listView.SelectedResults;
             if (searchResults.Count > 0)
             {
                 using (var addPeopleForm = new AddPeopleForm(this.index, searchResults))
@@ -163,7 +163,7 @@ namespace MediaLibrary
 
         private void AddTagsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var searchResults = (((ToolStripMenuItem)sender).Tag as IList<SearchResult>) ?? this.GetSelectedSearchResults();
+            var searchResults = (((ToolStripMenuItem)sender).Tag as IList<SearchResult>) ?? this.listView.SelectedResults;
             if (searchResults.Count > 0)
             {
                 using (var editTagsForm = new EditTagsForm(this.index, searchResults))
@@ -257,8 +257,7 @@ namespace MediaLibrary
 
         private void EditToolStripMenuItem_DropDownOpened(object sender, EventArgs e)
         {
-            var searchResults = this.GetSelectedSearchResults();
-            this.favoriteMainMenuItem.CheckState = searchResults.All(r => r.Tags.Contains("favorite")) ? CheckState.Checked : CheckState.Unchecked;
+            this.favoriteMainMenuItem.CheckState = this.listView.SelectedResults.All(r => r.Tags.Contains("favorite")) ? CheckState.Checked : CheckState.Unchecked;
         }
 
         private async void FavoriteToolStripMenuItem_Click(object sender, EventArgs e)
@@ -268,7 +267,7 @@ namespace MediaLibrary
             bool @checked;
             if (!(senderMenu.Tag is IList<SearchResult> searchResults))
             {
-                searchResults = this.GetSelectedSearchResults();
+                searchResults = this.listView.SelectedResults;
                 @checked = searchResults.All(r => r.Tags.Contains("favorite"));
             }
             else
@@ -305,10 +304,9 @@ namespace MediaLibrary
 
         private IEnumerable<string> GetSelectedPaths()
         {
-            var items = this.listView.SelectedItems.Cast<ListViewItem>().ToList();
-            foreach (var item in items)
+            foreach (var item in this.listView.SelectedResults)
             {
-                foreach (var path in ((SearchResult)item.Tag).Paths)
+                foreach (var path in item.Paths)
                 {
                     if (File.Exists(PathEncoder.ExtendPath(path)))
                     {
@@ -318,8 +316,6 @@ namespace MediaLibrary
                 }
             }
         }
-
-        private List<SearchResult> GetSelectedSearchResults() => this.listView.SelectedItems.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
 
         private List<SearchResult> GetVisibleSearchResults() => this.listView.Items.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
 
@@ -338,7 +334,7 @@ namespace MediaLibrary
                 var item = this.listView.FocusedItem;
                 if (item.Bounds.Contains(e.Location))
                 {
-                    var searchResults = this.GetSelectedSearchResults();
+                    var searchResults = this.listView.SelectedResults;
                     this.favoriteContextMenuItem.CheckState = searchResults.All(r => r.Tags.Contains("favorite")) ? CheckState.Checked : CheckState.Unchecked;
                     this.favoriteContextMenuItem.Tag = searchResults;
                     this.editTagsContextMenuItem.Tag = searchResults;
@@ -428,9 +424,12 @@ namespace MediaLibrary
 
         private void OpenSlideshow(bool shuffle = false, bool autoPlay = false)
         {
-            var searchResults = this.listView.SelectedItems.Count > 1
-                ? this.GetSelectedSearchResults()
-                : this.GetVisibleSearchResults();
+            var searchResults = this.listView.SelectedResults;
+            if (searchResults.Count <= 1)
+            {
+                searchResults = this.GetVisibleSearchResults();
+            }
+
             new SlideShowForm(this.index, searchResults, shuffle, autoPlay).Show(this);
         }
 
@@ -448,9 +447,12 @@ namespace MediaLibrary
         {
             var category = (sender as ToolStripItem)?.Tag as string ?? string.Empty;
 
-            var searchResults = this.listView.SelectedItems.Count > 1
-                ? this.GetSelectedSearchResults()
-                : this.GetVisibleSearchResults();
+            var searchResults = this.listView.SelectedResults;
+            if (searchResults.Count <= 1)
+            {
+                searchResults = this.GetVisibleSearchResults();
+            }
+
             if (searchResults.Count > 2)
             {
                 new CompareForm(this.index, category, searchResults).Show(this);
@@ -567,7 +569,7 @@ namespace MediaLibrary
 
         private void UpdatePreview()
         {
-            this.preview.PreviewItems = this.listView.SelectedItems.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
+            this.preview.PreviewItems = this.listView.SelectedResults;
         }
 
         private void UpdateProgress()

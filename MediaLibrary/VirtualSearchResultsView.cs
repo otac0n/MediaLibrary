@@ -135,6 +135,14 @@ namespace MediaLibrary
             }
         }
 
+        public new IList<SearchResult> SelectedResults
+        {
+            get
+            {
+                return base.SelectedItems.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
+            }
+        }
+
         public string SortColumn
         {
             get => this.sorter.SortColumn.ToString();
