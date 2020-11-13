@@ -5,53 +5,26 @@ namespace MediaLibrary.Storage.Search
     using System;
     using System.Collections.Immutable;
     using System.Linq;
-    using System.Text;
     using MediaLibrary.Search;
-    using MediaLibrary.Search.Sql;
     using MediaLibrary.Tagging;
     using static MediaLibrary.Search.Sql.QueryBuilder;
 
-    public class SearchDialect : AnsiSqlCompiler
+    public abstract class SearchDialect<T>
     {
-        private readonly TagRuleEngine tagEngine;
-        private int depth = 0;
-        private bool excludeHidden;
-        private bool joinCopies = false;
-        private bool joinStars = false;
-        private bool joinTagCount = false;
-
-        public SearchDialect(TagRuleEngine tagEngine, bool excludeHidden = true)
+        public SearchDialect(TagRuleEngine tagEngine, bool excludeHidden, QueryCompiler<T> parentCompiler)
         {
-            this.tagEngine = tagEngine;
-            this.excludeHidden = excludeHidden;
+            this.TagEngine = tagEngine;
+            this.ExcludeHidden = excludeHidden;
+            this.ParentCompiler = parentCompiler;
         }
 
-        /// <inheritdoc/>
-        public override string Compile(Term term)
-        {
-            var originalDepth = this.depth;
-            this.depth++;
-            try
-            {
-                if (originalDepth == 0)
-                {
-                    this.joinCopies = false;
-                    this.joinTagCount = false;
-                    return this.FinalizeQuery(base.Compile(term));
-                }
-                else
-                {
-                    return base.Compile(term);
-                }
-            }
-            finally
-            {
-                this.depth = originalDepth;
-            }
-        }
+        public bool ExcludeHidden { get; private set; }
 
-        /// <inheritdoc/>
-        public override string CompileField(FieldTerm field)
+        public QueryCompiler<T> ParentCompiler { get; }
+
+        private TagRuleEngine TagEngine { get; }
+
+        public T CompileField(FieldTerm field)
         {
             if (field == null)
             {
@@ -61,7 +34,7 @@ namespace MediaLibrary.Storage.Search
             switch (field.Field)
             {
                 case null:
-                    return $"EXISTS (SELECT 1 FROM Paths WHERE LastHash = h.Hash AND MissingSince IS NULL AND {Contains("Path", field.Value)})";
+                    return this.TextSearch(field.Value);
 
                 case "@":
                     if (field.Operator != FieldTerm.EqualsOperator)
@@ -73,16 +46,16 @@ namespace MediaLibrary.Storage.Search
                     {
                         if (personId == 0)
                         {
-                            return $"NOT EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash)";
+                            return this.NoPerson();
                         }
                         else
                         {
-                            return $"EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash AND p.PersonId = {personId})";
+                            return this.PersonId(personId);
                         }
                     }
                     else
                     {
-                        return $"EXISTS (SELECT 1 FROM HashPerson hp INNER JOIN Names p ON hp.PersonId = p.PersonId WHERE h.Hash = hp.Hash AND {Contains("p.Name", field.Value)})";
+                        return this.PersonName(field.Value);
                     }
 
                 case "type":
@@ -92,16 +65,28 @@ namespace MediaLibrary.Storage.Search
                     }
 
                     var ix = field.Value.IndexOf('/');
-                    return
-                        ix < 0 ? $"FileType = {Literal(field.Value)} OR {StartsWith("FileType", field.Value + "/")}" :
-                        ix == field.Value.Length - 1 ? StartsWith("FileType", field.Value) :
-                        $"FileType = {Literal(field.Value)}";
+                    if (ix < 0)
+                    {
+                        return this.ParentCompiler.CompileDisjunction(new[]
+                        {
+                            this.TypeEquals(field.Value),
+                            this.TypePrefixed(field.Value + "/"),
+                        });
+                    }
+                    else if (ix == field.Value.Length - 1)
+                    {
+                        return this.TypePrefixed(field.Value);
+                    }
+                    else
+                    {
+                        return this.TypeEquals(field.Value);
+                    }
 
                 case "tag":
-                    var tagInfo = this.tagEngine[field.Value];
-                    if (this.excludeHidden && (tagInfo.Tag == "hidden" || tagInfo.Ancestors.Contains("hidden")))
+                    var tagInfo = this.TagEngine[field.Value];
+                    if (this.ExcludeHidden && (tagInfo.Tag == "hidden" || tagInfo.Ancestors.Contains("hidden")))
                     {
-                        this.excludeHidden = false;
+                        this.ExcludeHidden = false;
                     }
 
                     var tags = ImmutableHashSet<string>.Empty;
@@ -136,38 +121,34 @@ namespace MediaLibrary.Storage.Search
                             break;
                     }
 
-                    tags = tags.Union(tags.SelectMany(this.tagEngine.GetTagAliases));
-                    return $"EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", tags.Select(Literal))}))";
+                    tags = tags.Union(tags.SelectMany(this.TagEngine.GetTagAliases));
+                    return this.Tag(tags);
 
                 case "copies":
-                    this.joinCopies = true;
                     if (!int.TryParse(field.Value, out var copies))
                     {
                         throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
                     }
 
-                    return $"COALESCE(c.Copies, 0) {ConvertOperator(field.Operator)} {copies}";
+                    return this.Copies(field.Operator, copies);
 
                 case "tags":
-                    this.joinTagCount = true;
-                    if (!double.TryParse(field.Value, out var tagCount))
+                    if (!int.TryParse(field.Value, out var tagCount))
                     {
                         throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
                     }
 
-                    return $"COALESCE(tc.TagCount, 0) {ConvertOperator(field.Operator)} {tagCount}";
+                    return this.TagCount(field.Operator, tagCount);
 
                 case "rating":
-                    this.joinStars = true;
                     if (!double.TryParse(field.Value, out var rating))
                     {
                         throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
                     }
 
-                    return $"COALESCE(s.Rating, {Rating.DefaultRating}) {ConvertOperator(field.Operator)} {rating}";
+                    return this.Rating(field.Operator, rating);
 
                 case "stars":
-                    this.joinStars = true;
                     if (!int.TryParse(field.Value, out var stars))
                     {
                         throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
@@ -177,207 +158,38 @@ namespace MediaLibrary.Storage.Search
                         throw new NotSupportedException($"Field '{field.Field}' expects a value between 1 and 5.");
                     }
 
-                    return $"COALESCE(s.Stars, 3) {ConvertOperator(field.Operator)} {stars}";
+                    return this.Stars(field.Operator, stars);
 
                 case "hash":
-                    return $"Hash {ConvertOperator(field.Operator)} {Literal(field.Value)}";
+                    return this.Hash(field.Operator, field.Value);
 
                 default:
                     throw new NotSupportedException();
             }
         }
 
-        private static string Contains(string expr, string patternValue)
-        {
-            string literal;
-            char? escape;
-            if (patternValue.IndexOfAny(new[] { '%', '_' }) > -1)
-            {
-                literal = Literal('%' + EscapeLike(patternValue) + '%');
-                escape = '\\';
-            }
-            else
-            {
-                literal = Literal('%' + patternValue + '%');
-                escape = null;
-            }
+        public abstract T Copies(string @operator, int value);
 
-            return Like(expr, literal, escape);
-        }
+        public abstract T Hash(string @operator, string value);
 
-        private static string ConvertOperator(string fieldOperator)
-        {
-            switch (fieldOperator)
-            {
-                case FieldTerm.EqualsOperator:
-                    return "=";
+        public abstract T NoPerson();
 
-                case FieldTerm.GreaterThanOperator:
-                case FieldTerm.GreaterThanOrEqualOperator:
-                case FieldTerm.LessThanOperator:
-                case FieldTerm.LessThanOrEqualOperator:
-                    return fieldOperator;
+        public abstract T PersonId(int value);
 
-                default:
-                    throw new NotSupportedException($"Unrecognized operator '{fieldOperator}'.");
-            }
-        }
+        public abstract T PersonName(string value);
 
-        private static string Like(string expr, string patternExpr, char? escape)
-        {
-            var sb = new StringBuilder()
-                .Append(expr)
-                .Append(" LIKE ")
-                .Append(patternExpr);
+        public abstract T Rating(string @operator, double value);
 
-            if (escape != null)
-            {
-                sb
-                    .Append(" ESCAPE ")
-                    .Append(Literal(escape.Value));
-            }
+        public abstract T Stars(string @operator, int value);
 
-            return sb.ToString();
-        }
+        public abstract T Tag(ImmutableHashSet<string> value);
 
-        private static string StartsWith(string expr, string patternExpr, char? escape) => Like(expr, patternExpr, escape);
+        public abstract T TagCount(string @operator, int value);
 
-        private static string StartsWith(string expr, string patternValue)
-        {
-            string literal;
-            char? escape;
-            if (patternValue.IndexOfAny(new[] { '%', '_' }) > -1)
-            {
-                literal = Literal(EscapeLike(patternValue) + '%');
-                escape = '\\';
-            }
-            else
-            {
-                literal = Literal(patternValue + '%');
-                escape = null;
-            }
+        public abstract T TextSearch(string value);
 
-            return Like(expr, literal, escape);
-        }
+        public abstract T TypeEquals(string value);
 
-        private string FinalizeQuery(string filter)
-        {
-            var fetchTags = true;
-            var fetchPaths = true;
-            var fetchPeople = true;
-            var fetchAliases = true && fetchPeople;
-            var fetchRatings = true;
-            var fetchAny = fetchTags || fetchPaths || fetchPeople || fetchRatings;
-
-            var sb = new StringBuilder();
-
-            if (fetchAny)
-            {
-                sb
-                    .AppendLine("DROP TABLE IF EXISTS temp.SearchHashInfo;")
-                    .AppendLine("CREATE TEMP TABLE temp.SearchHashInfo (Hash text, FileSize integer, FileType text, PRIMARY KEY (Hash));")
-                    .AppendLine("INSERT INTO temp.SearchHashInfo (Hash, FileSize, FileType)");
-            }
-
-            sb
-                .AppendLine("SELECT h.Hash, h.FileSize, h.FileType")
-                .AppendLine("FROM HashInfo h");
-
-            if (this.joinCopies)
-            {
-                sb
-                    .AppendLine("LEFT JOIN (")
-                    .AppendLine("    SELECT LastHash Hash, COUNT(*) Copies")
-                    .AppendLine("    FROM Paths")
-                    .AppendLine("    WHERE MissingSince IS NULL")
-                    .AppendLine("    GROUP BY Hash")
-                    .AppendLine(") c ON h.Hash = c.Hash");
-            }
-
-            if (this.joinTagCount)
-            {
-                sb
-                    .AppendLine("LEFT JOIN (")
-                    .AppendLine("    SELECT Hash, COUNT(*) TagCount")
-                    .AppendLine("    FROM HashTag")
-                    .AppendLine("    GROUP BY Hash")
-                    .AppendLine(") tc ON h.Hash = tc.Hash");
-            }
-
-            if (this.joinStars)
-            {
-                sb
-                    .AppendLine("LEFT JOIN (")
-                    .AppendLine("    SELECT Hash, CASE WHEN NTile < 2 THEN 1 WHEN NTile < 4 THEN 2 WHEN NTile < 8 THEN 3 WHEN NTile < 10 THEN 4 ELSE 5 END AS Stars FROM (")
-                    .AppendLine("        SELECT Hash, NTILE(10) OVER (PARTITION BY Category ORDER BY Value) NTile")
-                    .AppendLine("        FROM Rating")
-                    .AppendLine("        WHERE Category = ''")
-                    .AppendLine("    ) z")
-                    .AppendLine(") s ON h.Hash = s.Hash");
-            }
-
-            sb
-                .AppendLine("WHERE (")
-                .AppendLine(filter);
-            if (this.excludeHidden)
-            {
-                var tags = this.tagEngine.GetTagDescendants("hidden").Add("hidden");
-                sb
-                    .AppendLine(")")
-                    .Append("AND NOT EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN (")
-                    .Append(string.Join(", ", tags.Select(Literal)))
-                    .Append(")");
-            }
-
-            sb.AppendLine(");");
-
-            if (fetchTags)
-            {
-                sb.AppendLine("SELECT t.* FROM temp.SearchHashInfo h INNER JOIN HashTag t ON h.Hash = t.Hash;");
-            }
-
-            if (fetchPaths)
-            {
-                sb.AppendLine("SELECT p.* FROM temp.SearchHashInfo h INNER JOIN Paths p ON h.Hash = p.LastHash WHERE p.MissingSince IS NULL;");
-            }
-
-            if (fetchPeople)
-            {
-                sb
-                    .AppendLine("DROP TABLE IF EXISTS temp.SearchHashPerson;")
-                    .AppendLine("CREATE TEMP TABLE temp.SearchHashPerson (Hash text, PersonId int, PRIMARY KEY (Hash, PersonId));")
-                    .AppendLine("INSERT INTO temp.SearchHashPerson (Hash, PersonId)")
-                    .AppendLine("SELECT hp.* FROM temp.SearchHashInfo h INNER JOIN HashPerson hp ON h.Hash = hp.Hash;");
-
-                if (fetchAliases)
-                {
-                    sb.AppendLine("SELECT PersonId, Site, Name FROM Alias WHERE PersonId IN (SELECT PersonId FROM temp.SearchHashPerson);");
-                }
-
-                sb
-                    .AppendLine("SELECT PersonId, Name FROM Person WHERE PersonId IN (SELECT PersonId FROM temp.SearchHashPerson);")
-                    .AppendLine("SELECT * FROM temp.SearchHashPerson;")
-                    .AppendLine("DROP TABLE temp.SearchHashPerson;");
-            }
-
-            if (fetchRatings)
-            {
-                sb
-                    .AppendLine("SELECT r.Hash, r.Category, r.Value, r.Count")
-                    .AppendLine("FROM temp.SearchHashInfo h")
-                    .AppendLine("INNER JOIN Rating r")
-                    .AppendLine("ON h.Hash = r.Hash")
-                    .AppendLine("WHERE Category = '';");
-            }
-
-            if (fetchAny)
-            {
-                sb
-                    .AppendLine("SELECT * FROM temp.SearchHashInfo;")
-                    .AppendLine("DROP TABLE temp.SearchHashInfo;");
-            }
-
-            return sb.ToString();
-        }
+        public abstract T TypePrefixed(string value);
     }
 }

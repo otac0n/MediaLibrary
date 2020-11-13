@@ -403,7 +403,7 @@ namespace MediaLibrary.Storage
         public async Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
         {
             var term = new SearchGrammar().Parse(query ?? string.Empty);
-            var dialect = new SearchDialect(this.TagEngine, excludeHidden);
+            var dialect = new SqlSearchCompiler(this.TagEngine, excludeHidden);
             var sqlQuery = dialect.Compile(term);
 
             using (var conn = await this.GetConnection().ConfigureAwait(false))
