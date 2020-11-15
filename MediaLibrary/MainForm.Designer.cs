@@ -109,7 +109,6 @@ namespace MediaLibrary
             this.toolStrip.SuspendLayout();
             this.itemContextMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
-            this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -840,7 +839,6 @@ namespace MediaLibrary
             this.toolStrip.ResumeLayout(false);
             this.toolStrip.PerformLayout();
             this.itemContextMenu.ResumeLayout(false);
-            this.splitContainer.Panel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
             this.splitContainer.ResumeLayout(false);
             this.ResumeLayout(false);

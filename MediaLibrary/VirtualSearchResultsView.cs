@@ -17,14 +17,71 @@ namespace MediaLibrary
 
     public class VirtualSearchResultsView : ListView
     {
-        private readonly Dictionary<string, ColumnHeader> columns;
+        private static readonly ImmutableDictionary<Column, ColumnDefinition> ColumnDefinitions = new ColumnDefinitionList
+        {
+            {
+                Column.Path,
+                r =>
+                {
+                    var path = GetBestPath(r);
+                    return path == null ? string.Empty : Path.GetDirectoryName(path);
+                },
+                (a, b) => PathComparer.Instance.Compare(GetBestPath(a), GetBestPath(b))
+            },
+            {
+                Column.Name,
+                r =>
+                {
+                    var path = GetBestPath(r);
+                    return path == null ? string.Empty : Path.GetFileNameWithoutExtension(path);
+                },
+                (a, b) =>
+                {
+                    var aPath = GetBestPath(a);
+                    var bPath = GetBestPath(b);
+                    return StringComparer.CurrentCultureIgnoreCase.Compare(
+                        aPath == null ? null : Path.GetFileNameWithoutExtension(aPath),
+                        bPath == null ? null : Path.GetFileNameWithoutExtension(bPath));
+                }
+            },
+            { Column.People, r => string.Join("; ", r.People.Select(p => p.Name)), (a, b) => a.People.Count.CompareTo(b.People.Count) },
+            { Column.Tags, r => string.Join("; ", r.Tags), (a, b) => a.Tags.Count.CompareTo(b.Tags.Count) },
+            {
+                Column.FileSize,
+                r => ByteSize.FromBytes(r.FileSize).ToString(),
+                (a, b) => a.FileSize.CompareTo(b.FileSize),
+                HorizontalAlignment.Right
+            },
+            {
+                Column.Rating,
+                r => r.Rating != null ? $"{Math.Round(r.Rating.Value)}{(r.Rating.Count < 15 ? "?" : string.Empty)}" : string.Empty,
+                (a, b) =>
+                {
+                    var aRating = a.Rating;
+                    var bRating = b.Rating;
+                    var value = (bRating?.Value ?? Rating.DefaultRating).CompareTo(aRating?.Value ?? Rating.DefaultRating);
+                    if (value == 0)
+                    {
+                        value = (bRating?.Count ?? 0).CompareTo(aRating?.Count ?? 0);
+                    }
+
+                    return value;
+                },
+                HorizontalAlignment.Right
+            },
+        }.ToImmutableDictionary(c => c.Column);
+
+        private readonly Dictionary<Column, ColumnHeader> columns = new Dictionary<Column, ColumnHeader>();
         private readonly MediaIndex index;
         private readonly Dictionary<string, ListViewItem> items = new Dictionary<string, ListViewItem>();
+        private readonly List<SearchResult> orderdResults = new List<SearchResult>();
         private readonly VirtualListSorter sorter;
-        private bool columnsAutoSized = false;
+        private bool columnsSized = false;
+
         public VirtualSearchResultsView(MediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
+            base.VirtualMode = true;
             this.AllowColumnReorder = true;
             this.FullRowSelect = true;
             this.HideSelection = false;
@@ -38,20 +95,20 @@ namespace MediaLibrary
             this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
             this.index.RatingUpdated += this.Index_RatingUpdated;
 
-            this.columns = new Dictionary<string, ColumnHeader>();
-            foreach (var column in Enum.GetValues(typeof(Column)).Cast<Column>())
+            foreach (var column in ColumnDefinitions.Values.OrderBy(c => c.Index))
             {
-                var columnName = column.ToString();
-                var columnHeader = this.columns[columnName] = new ColumnHeader();
-                columnHeader.Name = columnName;
-                columnHeader.Text = Resources.ResourceManager.GetString($"{columnName}Column", CultureInfo.CurrentCulture);
+                var columnHeader = this.columns[column.Column] = new ColumnHeader();
+                columnHeader.Name = column.Column.ToString();
+                columnHeader.Text = column.Name;
+                columnHeader.TextAlign = column.HorizontalAlignment;
                 this.Columns.Add(columnHeader);
-
-                // TODO: this.fileSizeColumn.TextAlign = HorizontalAlignment.Right;
-                // TODO: this.ratingColumn.TextAlign = HorizontalAlignment.Right;
             }
 
+            this.ColumnWidthChanged += this.Internal_ColumnWidthChanged;
             this.ColumnClick += this.Internal_ColumnClick;
+            this.CacheVirtualItems += this.Internal_CacheVirtualItems;
+            this.RetrieveVirtualItem += this.Internal_RetrieveVirtualItem;
+            this.SearchForVirtualItem += this.Internal_SearchForVirtualItem;
         }
 
         private enum Column
@@ -66,7 +123,7 @@ namespace MediaLibrary
 
         public string ColumnsSettings
         {
-            get => string.Join(",", this.Columns.Cast<ColumnHeader>().OrderBy(c => c.DisplayIndex).Select(h => this.columnsAutoSized ? $"{h.Name}:{h.Width}" : h.Name));
+            get => string.Join(",", this.Columns.Cast<ColumnHeader>().OrderBy(c => c.DisplayIndex).Select(h => this.columnsSized ? $"{h.Name}:{h.Width}" : h.Name));
 
             set
             {
@@ -78,7 +135,7 @@ namespace MediaLibrary
                 foreach (var desc in columnsDesc)
                 {
                     var parts = desc.Split(new[] { ':' }, 2);
-                    if (this.columns.TryGetValue(parts[0], out var columnHeader))
+                    if (Enum.TryParse<Column>(parts[0], out var column) && this.columns.TryGetValue(column, out var columnHeader))
                     {
                         var width = parts.Length > 1 && int.TryParse(parts[1], out var widthVal) && widthVal > 0
                             ? widthVal
@@ -88,7 +145,6 @@ namespace MediaLibrary
                         if (width != null)
                         {
                             columnHeader.Width = width.Value;
-                            this.columnsAutoSized = true;
                         }
                     }
                 }
@@ -99,49 +155,32 @@ namespace MediaLibrary
 
         public IList<SearchResult> SearchResults
         {
-            set
-            {
-                var newHashes = new HashSet<string>(value.Select(i => i.Hash));
-
-                this.ListViewItemSorter = null;
-
-                for (var i = this.Items.Count - 1; i >= 0; i--)
-                {
-                    var item = this.Items[i];
-                    var hash = ((SearchResult)item.Tag).Hash;
-                    if (!newHashes.Contains(hash))
-                    {
-                        this.items.Remove(hash);
-                        this.Items.RemoveAt(i);
-                    }
-                }
-
-                foreach (var item in value)
-                {
-                    if (!this.items.TryGetValue(item.Hash, out var _))
-                    {
-                        this.Items.Add(this.CreateListItem(item));
-                    }
-                }
-
-                if (!this.columnsAutoSized && value.Count > 0)
-                {
-                    this.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
-                    this.columnsAutoSized = true;
-                }
-
-                this.ListViewItemSorter = this.sorter;
-                this.Sort();
-            }
-        }
-
-        public new IList<SearchResult> SelectedResults
-        {
             get
             {
-                return base.SelectedItems.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
+                return this.orderdResults.AsReadOnly();
+            }
+
+            set
+            {
+                var keepHashes = new HashSet<string>(value.Select(v => v.Hash));
+                foreach (var key in this.items.Keys.ToList())
+                {
+                    if (!keepHashes.Contains(key))
+                    {
+                        this.items.Remove(key);
+                    }
+                }
+
+                this.orderdResults.Clear();
+                this.orderdResults.AddRange(value);
+                this.Resort();
+                this.VirtualListSize = this.orderdResults.Count;
+                this.Invalidate();
             }
         }
+
+        public IList<SearchResult> SelectedResults =>
+            this.SelectedIndices.Cast<int>().Select(i => this.orderdResults[i]).ToList();
 
         public string SortColumn
         {
@@ -154,6 +193,10 @@ namespace MediaLibrary
             get => this.sorter.Descending;
             set => this.sorter.Descending = value;
         }
+
+        public new bool VirtualMode => base.VirtualMode;
+
+        private static string GetBestPath(SearchResult searchResult) => searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
 
         private static string GetImageKey(string fileType)
         {
@@ -191,32 +234,17 @@ namespace MediaLibrary
             }
         }
 
-        private static void UpdateListItemPath(ListViewItem item, SearchResult searchResult)
+        private static void UpdateListViewItem(ListViewItem item, SearchResult searchResult)
         {
-            var firstPath = searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
-            item.SubItems[(int)Column.Path].Text = firstPath != null ? Path.GetDirectoryName(firstPath) : string.Empty;
-            item.SubItems[(int)Column.Path].Tag = firstPath;
-            item.SubItems[(int)Column.Name].Text = firstPath != null ? Path.GetFileNameWithoutExtension(firstPath) : searchResult.Hash;
-            item.SubItems[(int)Column.Name].Tag = firstPath;
+            foreach (var column in ColumnDefinitions.Values)
+            {
+                UpdateListViewItemColumn(item, searchResult, column);
+            }
         }
 
-        private static void UpdateListItemPeople(ListViewItem item, SearchResult searchResult)
+        private static void UpdateListViewItemColumn(ListViewItem item, SearchResult searchResult, ColumnDefinition column)
         {
-            item.SubItems[(int)Column.People].Text = string.Join("; ", searchResult.People.Select(p => p.Name));
-            item.SubItems[(int)Column.People].Tag = searchResult.People;
-        }
-
-        private static void UpdateListItemRating(ListViewItem item, SearchResult searchResult)
-        {
-            var rating = searchResult.Rating;
-            item.SubItems[(int)Column.Rating].Text = rating != null ? $"{Math.Round(rating.Value)}{(rating.Count < 15 ? "?" : string.Empty)}" : string.Empty;
-            item.SubItems[(int)Column.Rating].Tag = rating;
-        }
-
-        private static void UpdateListItemTags(ListViewItem item, SearchResult searchResult)
-        {
-            item.SubItems[(int)Column.Tags].Text = string.Join("; ", searchResult.Tags);
-            item.SubItems[(int)Column.Tags].Tag = searchResult.Tags;
+            item.SubItems[column.Index].Text = column.GetValue(searchResult);
         }
 
         private ListViewItem CreateListItem(SearchResult searchResult)
@@ -229,45 +257,63 @@ namespace MediaLibrary
                 columns[i] = new ListViewItem.ListViewSubItem();
             }
 
-            var item = new ListViewItem(columns, GetImageKey(searchResult.FileType))
+            var item = new ListViewItem(columns, this.GetImageIndex(GetImageKey(searchResult.FileType)))
             {
                 Tag = searchResult,
             };
 
-            UpdateListItemPath(item, searchResult);
-            UpdateListItemPeople(item, searchResult);
-            UpdateListItemTags(item, searchResult);
-            UpdateListItemRating(item, searchResult);
-
-            columns[(int)Column.FileSize].Text = ByteSize.FromBytes(searchResult.FileSize).ToString();
-            columns[(int)Column.FileSize].Tag = searchResult.FileSize;
+            UpdateListViewItem(item, searchResult);
 
             return this.items[searchResult.Hash] = item;
         }
 
+        private int GetImageIndex(string key) =>
+            (this.View == View.LargeIcon ? this.LargeImageList : this.SmallImageList)?.Images?.IndexOfKey(key) ?? -1;
+
+        private ListViewItem GetOrCreateListItem(int index) => this.GetOrCreateListItem(this.orderdResults[index]);
+
+        private ListViewItem GetOrCreateListItem(SearchResult searchResult)
+        {
+            var hash = searchResult.Hash;
+            if (!this.items.TryGetValue(hash, out var listItem))
+            {
+                this.items[hash] = listItem = this.CreateListItem(searchResult);
+            }
+
+            return listItem;
+        }
+
         private void Index_HashPersonAdded(object sender, ItemAddedEventArgs<(HashPerson hash, Person person)> e)
         {
-            this.UpdateSearchResult(e.Item.hash.Hash, UpdateListItemPeople);
+            this.UpdateSearchResult(e.Item.hash.Hash, Column.People);
         }
 
         private void Index_HashPersonRemoved(object sender, ItemRemovedEventArgs<HashPerson> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, UpdateListItemPeople);
+            this.UpdateSearchResult(e.Item.Hash, Column.People);
         }
 
         private void Index_HashTagAdded(object sender, ItemAddedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, UpdateListItemTags);
+            this.UpdateSearchResult(e.Item.Hash, Column.Tags);
         }
 
         private void Index_HashTagRemoved(object sender, ItemRemovedEventArgs<HashTag> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, UpdateListItemTags);
+            this.UpdateSearchResult(e.Item.Hash, Column.Tags);
         }
 
         private void Index_RatingUpdated(object sender, ItemUpdatedEventArgs<Rating> e)
         {
-            this.UpdateSearchResult(e.Item.Hash, UpdateListItemRating);
+            this.UpdateSearchResult(e.Item.Hash, Column.Rating);
+        }
+
+        private void Internal_CacheVirtualItems(object sender, CacheVirtualItemsEventArgs e)
+        {
+            for (var i = e.StartIndex; i <= e.EndIndex; i++)
+            {
+                this.GetOrCreateListItem(i);
+            }
         }
 
         private void Internal_ColumnClick(object sender, ColumnClickEventArgs e)
@@ -276,7 +322,7 @@ namespace MediaLibrary
             if ((int)this.sorter.SortColumn != column.Index)
             {
                 this.sorter.SortColumn = (Column)column.Index;
-                this.sorter.Descending = false;
+                this.sorter.Descending = false; // TODO: Default sort
             }
             else
             {
@@ -284,53 +330,143 @@ namespace MediaLibrary
             }
 
             // TODO: Raise sort changed event to notify settings to update.
-            this.Sort();
+            this.ResortMaintainingSelection();
+            this.Invalidate();
         }
 
-        private void UpdateSearchResult(string hash, Action<ListViewItem, SearchResult> updateListViewItem)
+        private void Internal_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
+        {
+            this.columnsSized = true;
+        }
+
+        private void Internal_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
+        {
+            e.Item = this.GetOrCreateListItem(e.ItemIndex);
+        }
+
+        private void Internal_SearchForVirtualItem(object sender, SearchForVirtualItemEventArgs e)
+        {
+            var indices = e.Direction == SearchDirectionHint.Down || e.Direction == SearchDirectionHint.Right
+                ? Enumerable.Range(e.StartIndex, this.orderdResults.Count - e.StartIndex)
+                : Enumerable.Range(0, e.StartIndex + 1).Reverse();
+
+            var test = new Func<string, bool>(subject => subject.StartsWith(e.Text, StringComparison.CurrentCultureIgnoreCase));
+
+            var found = false;
+            var nameColumn = ColumnDefinitions[Column.Name];
+            foreach (var ix in indices)
+            {
+                var result = this.orderdResults[ix];
+                if (this.TryGetListItem(ix, out var listItem))
+                {
+                    found = test(listItem.SubItems[nameColumn.Index].Text);
+                }
+                else
+                {
+                    found = test(nameColumn.GetValue(result));
+                }
+
+                if (found)
+                {
+                    e.Index = ix;
+                    break;
+                }
+            }
+        }
+
+        private void Resort()
+        {
+            this.orderdResults.Sort(this.sorter.Sorter.Compare);
+        }
+
+        private void ResortMaintainingSelection()
+        {
+            var selected = this.SelectedResults;
+            this.Resort();
+            this.SelectedIndices.Clear();
+            foreach (var item in selected)
+            {
+                this.SelectedIndices.Add(this.orderdResults.IndexOf(item));
+            }
+
+            // TODO: Fix focus.
+        }
+
+        private bool TryGetListItem(int index, out ListViewItem listItem) => this.TryGetListItem(this.orderdResults[index], out listItem);
+
+        private bool TryGetListItem(SearchResult searchResult, out ListViewItem listItem)
+        {
+            var hash = searchResult.Hash;
+            return this.items.TryGetValue(hash, out listItem);
+        }
+
+        private void UpdateSearchResult(string hash, Column column)
         {
             if (this.items.TryGetValue(hash, out var item))
             {
                 var searchResult = (SearchResult)item.Tag;
-                this.InvokeIfRequired(() => updateListViewItem(item, searchResult));
+                var columnDefinition = ColumnDefinitions[column];
+                this.InvokeIfRequired(() => UpdateListViewItemColumn(item, searchResult, columnDefinition));
             }
         }
 
-        private class VirtualListSorter : IComparer<ListViewItem>, IComparer
+        private class ColumnDefinition
+        {
+            public ColumnDefinition(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, string> getValue, Comparison<SearchResult> comparison = null)
+                : this(column, horizontalAlignment, Resources.ResourceManager.GetString($"{column}Column", CultureInfo.CurrentCulture), (int)column, getValue, comparison)
+            {
+            }
+
+            private ColumnDefinition(Column column, HorizontalAlignment horizontalAlignment, string name, int index, Func<SearchResult, string> getValue, Comparison<SearchResult> comparison = null)
+            {
+                this.Column = column;
+                this.HorizontalAlignment = horizontalAlignment;
+                this.Name = name ?? throw new ArgumentNullException(nameof(name));
+                this.Index = index;
+                this.GetValue = getValue ?? throw new ArgumentNullException(nameof(getValue));
+                this.Comparison = comparison ?? ((a, b) => StringComparer.CurrentCultureIgnoreCase.Compare(this.GetValue(a), this.GetValue(b)));
+            }
+
+            public Column Column { get; }
+
+            public Comparison<SearchResult> Comparison { get; }
+
+            public Func<SearchResult, string> GetValue { get; }
+
+            public HorizontalAlignment HorizontalAlignment { get; }
+
+            public int Index { get; }
+
+            public string Name { get; }
+        }
+
+        private class ColumnDefinitionList : List<ColumnDefinition>
+        {
+            public void Add(Column column, Func<SearchResult, string> getValue, Comparison<SearchResult> comparison = null, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left) =>
+                this.Add(new ColumnDefinition(column, horizontalAlignment, getValue, comparison));
+        }
+
+        private class SearchResultsSorter : IComparer<SearchResult>
         {
             public bool Descending { get; set; }
 
             public Column SortColumn { get; set; }
 
-            public int Compare(ListViewItem a, ListViewItem b)
+            public int Compare(SearchResult a, SearchResult b)
             {
-                int value;
+                var column = ColumnDefinitions[this.SortColumn];
+                var value = column.Comparison(a, b);
+
+                return
+                    !this.Descending || value == 0 ? value :
+                    value > 0 ? -1 : 1;
+
                 switch (this.SortColumn)
                 {
-                    case Column.Name:
-                        value = StringComparer.CurrentCultureIgnoreCase.Compare(a.SubItems[(int)Column.Name].Text, b.SubItems[(int)Column.Name].Text);
-                        break;
-
-                    case Column.Path:
-                        value = PathComparer.Instance.Compare((string)a.SubItems[(int)Column.Name].Tag, (string)b.SubItems[(int)Column.Name].Tag);
-                        break;
-
-                    case Column.Tags:
-                        value = ((ImmutableHashSet<string>)a.SubItems[(int)Column.Tags].Tag).Count.CompareTo(((ImmutableHashSet<string>)b.SubItems[(int)Column.Tags].Tag).Count);
-                        break;
-
-                    case Column.FileSize:
-                        value = ((long)a.SubItems[(int)Column.FileSize].Tag).CompareTo((long)b.SubItems[(int)Column.FileSize].Tag);
-                        break;
-
-                    case Column.People:
-                        value = ((ImmutableHashSet<Person>)a.SubItems[(int)Column.People].Tag).Count.CompareTo(((ImmutableHashSet<Person>)b.SubItems[(int)Column.People].Tag).Count);
-                        break;
-
                     case Column.Rating:
                         {
-                            var aRating = (Rating)a.SubItems[(int)Column.Rating].Tag;
-                            var bRating = (Rating)b.SubItems[(int)Column.Rating].Tag;
+                            var aRating = a.Rating;
+                            var bRating = b.Rating;
                             value = (bRating?.Value ?? Rating.DefaultRating).CompareTo(aRating?.Value ?? Rating.DefaultRating);
                             if (value == 0)
                             {
@@ -339,16 +475,32 @@ namespace MediaLibrary
                         }
 
                         break;
-
-                    default:
-                        value = 0;
-                        break;
                 }
-
-                return
-                    !this.Descending || value == 0 ? value :
-                    value > 0 ? -1 : 1;
             }
+        }
+
+        private class VirtualListSorter : IComparer<ListViewItem>, IComparer
+        {
+            public VirtualListSorter()
+            {
+                this.Sorter = new SearchResultsSorter();
+            }
+
+            public bool Descending
+            {
+                get => this.Sorter.Descending;
+                set => this.Sorter.Descending = value;
+            }
+
+            public Column SortColumn
+            {
+                get => this.Sorter.SortColumn;
+                set => this.Sorter.SortColumn = value;
+            }
+
+            public SearchResultsSorter Sorter { get; }
+
+            public int Compare(ListViewItem a, ListViewItem b) => this.Sorter.Compare((SearchResult)a.Tag, (SearchResult)b.Tag);
 
             public int Compare(object a, object b) => this.Compare(a as ListViewItem, b as ListViewItem);
         }

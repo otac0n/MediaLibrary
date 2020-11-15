@@ -317,8 +317,6 @@ namespace MediaLibrary
             }
         }
 
-        private List<SearchResult> GetVisibleSearchResults() => this.listView.Items.Cast<ListViewItem>().Select(i => (SearchResult)i.Tag).ToList();
-
         private async void ListView_DoubleClick(object sender, MouseEventArgs e)
         {
             if (this.listView.HitTest(e.X, e.Y).Item != null)
@@ -427,7 +425,7 @@ namespace MediaLibrary
             var searchResults = this.listView.SelectedResults;
             if (searchResults.Count <= 1)
             {
-                searchResults = this.GetVisibleSearchResults();
+                searchResults = this.listView.SearchResults;
             }
 
             new SlideShowForm(this.index, searchResults, shuffle, autoPlay).Show(this);
@@ -450,7 +448,7 @@ namespace MediaLibrary
             var searchResults = this.listView.SelectedResults;
             if (searchResults.Count <= 1)
             {
-                searchResults = this.GetVisibleSearchResults();
+                searchResults = this.listView.SearchResults;
             }
 
             if (searchResults.Count > 2)
