@@ -113,8 +113,8 @@ namespace MediaLibrary
 
         private enum Column
         {
-            Name,
             Path,
+            Name,
             People,
             Tags,
             FileSize,
@@ -202,33 +202,20 @@ namespace MediaLibrary
         {
             switch (fileType)
             {
-                case "audio/aac": return "audio-file-aac";
-                case "audio/midi": return "audio-file-midi";
-                case "audio/mpeg": return "audio-file-mp3";
-                case "audio/wav": return "audio-file-wav";
-                case "audio/x-aiff": return "audio-file-aif";
                 case "audio":
                 case string type when type.StartsWith("audio/", StringComparison.InvariantCulture):
                     return "audio-file";
 
-                case "image/bmp": return "image-file-bmp";
-                case "image/gif": return "image-file-gif";
-                case "image/jpeg": return "image-file-jpg";
-                case "image/png": return "image-file-png";
-                case "image/tiff": return "image-file-tiff";
+                case "image/gif":
+                    return "video-file";
+
                 case "image":
                 case string type when type.StartsWith("image/", StringComparison.InvariantCulture):
                     return "image-file";
 
-                case "video/mp4": return "video-file-mp4";
-                case "video/mpeg": return "video-file-mpg";
-                case "video/quicktime": return "video-file-qt";
-                case "video/webm": return "video-file-m4v";
-                case "video/x-flv": return "video-file-flv";
-                case "video/x-msvideo": return "video-file-avi";
                 case "video":
                 case string type when type.StartsWith("video/", StringComparison.InvariantCulture):
-                    return "video-file";
+                    return "modern-tv-flat";
 
                 default: return "common-file";
             }

@@ -750,6 +750,12 @@ namespace MediaLibrary
             this.fileTypeImages.Images.SetKeyName(20, "video-file-mp4");
             this.fileTypeImages.Images.SetKeyName(21, "video-file-mpg");
             this.fileTypeImages.Images.SetKeyName(22, "video-file-qt");
+            this.fileTypeImages.Images.SetKeyName(23, "modern-tv-3d-glasses");
+            this.fileTypeImages.Images.SetKeyName(24, "modern-tv-4k");
+            this.fileTypeImages.Images.SetKeyName(25, "modern-tv-8k");
+            this.fileTypeImages.Images.SetKeyName(26, "modern-tv-flat");
+            this.fileTypeImages.Images.SetKeyName(27, "modern-tv-hd");
+            this.fileTypeImages.Images.SetKeyName(28, "modern-tv-uhd");
             // 
             // itemContextMenu
             // 
