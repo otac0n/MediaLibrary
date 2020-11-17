@@ -30,6 +30,7 @@ export class AppComponent implements OnInit {
 
     public ngOnInit() {
         this.savedSearchService.list().then(data => {
+            data.sort((a, b) => (a?.name || '').localeCompare(b?.name || ''));
             this.savedSearches = data;
         });
     }
