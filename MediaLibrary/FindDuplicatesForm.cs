@@ -4,6 +4,7 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
@@ -12,21 +13,28 @@ namespace MediaLibrary
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using ByteSizeLib;
+    using MediaLibrary.Search;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
 
     public partial class FindDuplicatesForm : Form
     {
         private readonly MediaIndex index;
+        private readonly Dictionary<string, PathModel> pathModels = new Dictionary<string, PathModel>();
+        private readonly Dictionary<string, ResultModel> resultModels = new Dictionary<string, ResultModel>();
+        private readonly PredicateSearchCompiler searchCompiler;
         private CancellationTokenSource cancel = new CancellationTokenSource();
         private bool initialized;
-        private Dictionary<string, (TreeNode node, ListViewItem item)> nodes = new Dictionary<string, (TreeNode, ListViewItem)>();
         private bool running;
+        private int searchVersion;
         private bool synchronizeTreeView;
+        private Predicate<SearchResult> visiblePredicate;
 
         public FindDuplicatesForm(MediaIndex index)
         {
-            this.index = index;
+            this.index = index ?? throw new ArgumentNullException(nameof(index));
+            this.searchCompiler = new PredicateSearchCompiler(index.TagEngine, excludeHidden: false);
+            this.visiblePredicate = x => true;
             this.InitializeComponent();
         }
 
@@ -141,11 +149,54 @@ namespace MediaLibrary
             this.Hide();
         }
 
+        private void CreateViewNodes(List<SearchResult> results)
+        {
+            foreach (var result in results)
+            {
+                var group = new ListViewGroup($"{result.Hash} ({ByteSize.FromBytes(result.FileSize)} × {result.Paths.Count})")
+                {
+                    Tag = result,
+                };
+
+                this.resultModels.Add(result.Hash, new ResultModel(result)
+                {
+                    ListViewGroup = group,
+                });
+
+                foreach (var path in result.Paths)
+                {
+                    var filteredResult = result.With(
+                        paths: ImmutableHashSet.Create<string>(path));
+
+                    var treeNode = new TreeNode(Path.GetFileName(path))
+                    {
+                        Tag = path,
+                        ImageKey = "none",
+                        SelectedImageKey = "none",
+                    };
+
+                    var listViewItem = new ListViewItem(path, group)
+                    {
+                        Checked = false,
+                        Tag = path,
+                    };
+
+                    this.pathModels.Add(path, new PathModel(path, filteredResult)
+                    {
+                        TreeNode = treeNode,
+                        ListViewItem = listViewItem,
+                    });
+                }
+            }
+        }
+
         private void DuplicatesList_ItemChecked(object sender, ItemCheckedEventArgs e)
         {
-            this.nodes[(string)e.Item.Tag].node.Checked = e.Item.Checked;
-            this.UpdateGroup(e.Item.Group);
-            this.UpdateChart();
+            var node = this.pathModels[(string)e.Item.Tag].TreeNode;
+            if (node.Checked != e.Item.Checked)
+            {
+                node.Checked = e.Item.Checked;
+            }
         }
 
         private void FindDuplicatesForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -156,108 +207,14 @@ namespace MediaLibrary
         private async void FindDuplicatesForm_Load(object sender, System.EventArgs e)
         {
             var results = await this.index.SearchIndex("copies>1", excludeHidden: false).ConfigureAwait(true);
-
-            this.duplicatesList.ItemChecked -= this.DuplicatesList_ItemChecked;
-            this.duplicatesList.BeginUpdate();
-
-            var nodes = results.SelectMany(r => r.Paths).ToDictionary(p => p, p => new TreeNode(Path.GetFileName(p)) { Tag = p, ImageKey = "none", SelectedImageKey = "none" });
-            var queue = nodes.Select(n => new { Key = Path.GetDirectoryName(n.Key), Node = n.Value }).ToList();
-            var roots = new List<TreeNode>();
-            while (queue.Count > 1)
-            {
-                var group = (from n in queue
-                             group n by n.Key into g
-                             group g by g.Key.Length into g2
-                             orderby g2.Key descending
-                             select g2)
-                            .First()
-                            .OrderBy(g => g.Key, PathComparer.Instance)
-                            .First();
-                var items = group.ToList();
-
-                string key;
-                TreeNode node;
-                if (items.Count == 1 && items[0].Node.Nodes.Count > 0)
-                {
-                    var item = items[0];
-                    queue.Remove(item);
-                    node = item.Node;
-                    key = item.Key;
-                    node.Text = Path.GetFileName(key) + Path.DirectorySeparatorChar + node.Text;
-                }
-                else
-                {
-                    node = new TreeNode(Path.GetFileName(key = group.Key)) { ImageKey = "folder-none", SelectedImageKey = "folder-none" };
-                    foreach (var item in items.OrderBy(i => i.Node.Nodes.Count == 0).ThenBy(i => i.Node.Text))
-                    {
-                        queue.Remove(item);
-                        node.Nodes.Add(item.Node);
-                    }
-                }
-
-                var ix = key.LastIndexOfAny(MediaIndex.PathSeparators);
-                if (ix == -1)
-                {
-                    roots.Add(node);
-                }
-                else
-                {
-                    queue.Add(new { Key = key.Substring(0, ix), Node = node });
-                }
-            }
-
-            roots.AddRange(queue.Select(n => n.Node));
-            roots.ForEach(r => this.treeView.Nodes.Add(r));
-
-            foreach (var result in results.OrderByDescending(r => r.FileSize * (r.Paths.Count - 1)))
-            {
-                var group = new ListViewGroup($"{result.Hash} ({ByteSize.FromBytes(result.FileSize)} × {result.Paths.Count})")
-                {
-                    Tag = result,
-                };
-                this.duplicatesList.Groups.Add(group);
-
-                foreach (var path in result.Paths.OrderBy(r => r, PathComparer.Instance))
-                {
-                    var node = nodes[path];
-                    var item = new ListViewItem(path, group)
-                    {
-                        Checked = false,
-                        Tag = path,
-                    };
-
-                    this.nodes[path] = (node, item);
-                    this.duplicatesList.Items.Add(item);
-                }
-            }
-
-            if (results.Count > 0)
-            {
-                this.duplicatesList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
-            }
-
-            this.treeView.Enabled = this.duplicatesList.Enabled = this.okButton.Enabled = true;
-            this.duplicatesList.EndUpdate();
-            this.duplicatesList.ItemChecked += this.DuplicatesList_ItemChecked;
-
-            foreach (var result in results)
-            {
-                var bestPath = FindBestPath(result.Paths);
-                if (bestPath != null)
-                {
-                    this.nodes[bestPath].item.Checked = true;
-                }
-            }
-
-            this.initialized = true;
-            this.UpdateChart();
+            this.UpdateSearchResults(results);
         }
 
         private async void OKButton_Click(object sender, System.EventArgs e)
         {
-            var totalBytes = (from g in this.duplicatesList.Groups.Cast<ListViewGroup>()
-                              let result = (SearchResult)g.Tag
-                              let toKeep = g.Items.Cast<ListViewItem>().ToLookup(i => i.Checked)
+            var totalBytes = (from rm in this.resultModels.Values
+                              let result = rm.SearchResult
+                              let toKeep = rm.RemainingPaths.Select(p => this.pathModels[p]).ToLookup(i => i.ListViewItem.Checked)
                               where toKeep[true].Any()
                               from i in toKeep[false]
                               select result.FileSize).Sum();
@@ -266,8 +223,8 @@ namespace MediaLibrary
 
             this.SetRunning(true);
 
-            var allGroups = this.duplicatesList.Groups.Cast<ListViewGroup>().ToList();
             var anyRemoved = false;
+            var allGroups = this.resultModels.Values.ToList();
             for (var g = 0; g < allGroups.Count; g++)
             {
                 if (this.cancel.IsCancellationRequested)
@@ -275,11 +232,11 @@ namespace MediaLibrary
                     break;
                 }
 
-                var group = allGroups[g];
-                var result = (SearchResult)group.Tag;
-                var items = group.Items.Cast<ListViewItem>().ToLookup(i => i.Checked);
-                var toKeep = items[true].Select(i => (string)i.Tag).ToList();
-                var toRemove = items[false].Select(i => (string)i.Tag).ToList();
+                var rm = allGroups[g];
+                var result = rm.SearchResult;
+                var models = rm.RemainingPaths.Select(p => this.pathModels[p]).ToLookup(i => i.ListViewItem.Checked);
+                var toKeep = models[true].Select(i => i.Path).ToList();
+                var toRemove = models[false].Select(i => i.Path).ToList();
 
                 if (toRemove.Count == 0)
                 {
@@ -307,11 +264,27 @@ namespace MediaLibrary
 
                 if (success)
                 {
-                    void RemoveTreeNode(ListViewItem removed)
+                    void RemovePathModel(PathModel removed)
                     {
-                        var path = (string)removed.Tag;
-                        var node = this.nodes[path].node;
-                        this.nodes.Remove(path);
+                        var path = removed.Path;
+                        var node = removed.TreeNode;
+                        var item = removed.ListViewItem;
+                        var hash = removed.FilteredResult.Hash;
+
+                        this.pathModels.Remove(path);
+                        var resultModel = this.resultModels[hash];
+                        resultModel.RemainingPaths.Remove(path);
+                        if (resultModel.RemainingPaths.Count == 0)
+                        {
+                            this.resultModels.Remove(hash);
+                        }
+
+                        var group = resultModel.ListViewGroup;
+                        this.duplicatesList.Items.Remove(item);
+                        if (group.Items.Count == 0)
+                        {
+                            this.duplicatesList.Groups.Remove(group);
+                        }
 
                         while (node != null && node.Nodes.Count == 0)
                         {
@@ -326,21 +299,17 @@ namespace MediaLibrary
                         }
                     }
 
-                    foreach (var removed in items[false])
+                    foreach (var removed in models[false])
                     {
-                        RemoveTreeNode(removed);
-                        this.duplicatesList.Items.Remove(removed);
+                        RemovePathModel(removed);
                     }
 
                     if (toKeep.Count == 1)
                     {
-                        foreach (var removed in items[true])
+                        foreach (var removed in models[true])
                         {
-                            RemoveTreeNode(removed);
-                            this.duplicatesList.Items.Remove(removed);
+                            RemovePathModel(removed);
                         }
-
-                        this.duplicatesList.Groups.Remove(group);
                     }
                 }
             }
@@ -413,6 +382,34 @@ namespace MediaLibrary
             return true;
         }
 
+        private async void SearchBox_TextChangedAsync(object sender, EventArgs e)
+        {
+            var query = this.searchBox.Text;
+            var searchVersion = Interlocked.Increment(ref this.searchVersion);
+            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(true);
+            if (this.searchVersion != searchVersion)
+            {
+                return;
+            }
+
+            Predicate<SearchResult> predicate;
+            try
+            {
+                var term = new SearchGrammar().Parse(query ?? string.Empty);
+                predicate = this.searchCompiler.Compile(term);
+            }
+            catch
+            {
+                predicate = r => false;
+            }
+
+            if (this.searchVersion == searchVersion)
+            {
+                this.visiblePredicate = predicate;
+                this.UpdateListView();
+            }
+        }
+
         private void SetRunning(bool running) => this.treeView.Enabled = this.duplicatesList.Enabled = this.okButton.Enabled = !(this.progressBar.Visible = this.running = running);
 
         private void TreeView_AfterCheck(object sender, TreeViewEventArgs e)
@@ -440,9 +437,12 @@ namespace MediaLibrary
             }
 
             var node = e.Node;
-            if (node.Tag is string path)
+            var path = (string)node.Tag;
+            if (path != null)
             {
-                this.nodes[path].item.Checked = node.Checked;
+                var pathModel = this.pathModels[path];
+                pathModel.ListViewItem.Checked = node.Checked;
+                this.UpdateGroup(pathModel.FilteredResult.Hash);
             }
 
             if (!this.synchronizeTreeView)
@@ -462,30 +462,39 @@ namespace MediaLibrary
                 return;
             }
 
-            if (this.duplicatesList.Groups.Count == 0)
+            if (this.resultModels.Count == 0)
             {
                 this.sizeChart.Series[0].Points.Clear();
                 return;
             }
 
+            var countNecessary = 0;
             var sizeNecessary = 0L;
+            var countKeepRedundant = 0;
             var sizeKeepRedundant = 0L;
+            var countRedundantUnclassified = 0L;
             var sizeRedundantUnclassified = 0L;
+            var countToDelete = 0L;
             var sizeToDelete = 0L;
 
-            foreach (ListViewGroup group in this.duplicatesList.Groups)
+            foreach (var pair in this.resultModels.Values)
             {
-                var result = (SearchResult)group.Tag;
-                var @checked = group.Items.Cast<ListViewItem>().Count(i => i.Checked);
+                var result = pair.SearchResult;
+                var @checked = pair.RemainingPaths.Select(p => this.pathModels[p].ListViewItem).Count(i => i.Checked);
 
+                countNecessary += 1;
                 sizeNecessary += result.FileSize;
+
                 if (@checked == 0)
                 {
+                    countRedundantUnclassified += result.Paths.Count - 1;
                     sizeRedundantUnclassified += (result.Paths.Count - 1) * result.FileSize;
                 }
                 else
                 {
+                    countKeepRedundant += @checked - 1;
                     sizeKeepRedundant += (@checked - 1) * result.FileSize;
+                    countToDelete += result.Paths.Count - @checked;
                     sizeToDelete += (result.Paths.Count - @checked) * result.FileSize;
                 }
             }
@@ -493,13 +502,13 @@ namespace MediaLibrary
             var labels = new List<string>();
             var values = new List<long>();
 
-            labels.Add($"Necessary ({ByteSize.FromBytes(sizeNecessary)})");
+            labels.Add($"Necessary ({countNecessary} files, {ByteSize.FromBytes(sizeNecessary)})");
             values.Add(sizeNecessary);
-            labels.Add($"Extra Copies Kept ({ByteSize.FromBytes(sizeKeepRedundant)})");
+            labels.Add($"Extra Copies Kept ({countKeepRedundant} files, {ByteSize.FromBytes(sizeKeepRedundant)})");
             values.Add(sizeKeepRedundant);
-            labels.Add($"To Delete ({ByteSize.FromBytes(sizeToDelete)})");
+            labels.Add($"To Delete ({countToDelete} files, {ByteSize.FromBytes(sizeToDelete)})");
             values.Add(sizeToDelete);
-            labels.Add($"Redundant Copies ({ByteSize.FromBytes(sizeRedundantUnclassified)})");
+            labels.Add($"Redundant Copies ({countRedundantUnclassified} files, {ByteSize.FromBytes(sizeRedundantUnclassified)})");
             values.Add(sizeRedundantUnclassified);
 
             this.sizeChart.Series[0].Points.DataBindXY(labels, values);
@@ -529,18 +538,156 @@ namespace MediaLibrary
             }
         }
 
-        private void UpdateGroup(ListViewGroup group)
+        private void UpdateGroup(string hash)
         {
-            var noneChecked = !group.Items.Cast<ListViewItem>().Any(i => i.Checked);
-            foreach (ListViewItem item in group.Items)
+            var group = this.resultModels[hash];
+            var items = group.RemainingPaths.Select(p => this.pathModels[p]).ToList();
+            var noneChecked = !items.Any(i => i.ListViewItem.Checked);
+            foreach (var pathModel in items)
             {
-                var treeNode = this.nodes[(string)item.Tag].node;
+                var item = pathModel.ListViewItem;
+                var treeNode = pathModel.TreeNode;
                 treeNode.ImageKey = treeNode.SelectedImageKey = item.ImageKey =
                     noneChecked ? "none" :
                     item.Checked ? "save" :
                     "delete";
                 this.UpdateFolderImage(treeNode.Parent);
             }
+        }
+
+        private void UpdateListView()
+        {
+            this.duplicatesList.ItemChecked -= this.DuplicatesList_ItemChecked;
+            this.duplicatesList.BeginUpdate();
+            this.duplicatesList.Items.Clear();
+            this.duplicatesList.Groups.Clear();
+
+            var predicate = this.visiblePredicate;
+            var added = new HashSet<string>();
+            foreach (var pathModel in this.pathModels.Values.OrderByDescending(m => m.FilteredResult.FileSize))
+            {
+                var item = pathModel.ListViewItem;
+                var filteredResult = pathModel.FilteredResult;
+                if (predicate(filteredResult))
+                {
+                    var hash = filteredResult.Hash;
+                    var group = this.resultModels[hash].ListViewGroup;
+                    if (added.Add(hash))
+                    {
+                        this.duplicatesList.Groups.Add(group);
+                    }
+
+                    item.Group = group;
+                    this.duplicatesList.Items.Add(item);
+                }
+            }
+
+            this.duplicatesList.EndUpdate();
+            this.duplicatesList.ItemChecked += this.DuplicatesList_ItemChecked;
+        }
+
+        private void UpdateSearchResults(List<SearchResult> results)
+        {
+            this.CreateViewNodes(results);
+            this.UpdateTreeView();
+            this.UpdateListView();
+            this.treeView.Enabled = this.duplicatesList.Enabled = this.okButton.Enabled = true;
+
+            foreach (var result in results)
+            {
+                var bestPath = FindBestPath(result.Paths);
+                if (bestPath != null)
+                {
+                    this.pathModels[bestPath].ListViewItem.Checked = true;
+                }
+            }
+
+            this.duplicatesList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+            this.initialized = true;
+            this.UpdateChart();
+        }
+
+        private void UpdateTreeView()
+        {
+            var queue = this.pathModels.Values.Select(p => new { Key = Path.GetDirectoryName(p.Path), Node = p.TreeNode }).ToList();
+            var roots = new List<TreeNode>();
+            while (queue.Count > 1)
+            {
+                var group = (from n in queue
+                             group n by n.Key into g
+                             group g by g.Key.Length into g2
+                             orderby g2.Key descending
+                             select g2)
+                            .First()
+                            .OrderBy(g => g.Key, PathComparer.Instance)
+                            .First();
+                var items = group.ToList();
+
+                string key;
+                TreeNode node;
+                if (items.Count == 1 && items[0].Node.Nodes.Count > 0)
+                {
+                    var item = items[0];
+                    queue.Remove(item);
+                    node = item.Node;
+                    key = item.Key;
+                    node.Text = Path.GetFileName(key) + Path.DirectorySeparatorChar + node.Text;
+                }
+                else
+                {
+                    node = new TreeNode(Path.GetFileName(key = group.Key)) { ImageKey = "folder-none", SelectedImageKey = "folder-none" };
+                    foreach (var item in items.OrderBy(i => i.Node.Nodes.Count == 0).ThenBy(i => i.Node.Text))
+                    {
+                        queue.Remove(item);
+                        node.Nodes.Add(item.Node);
+                    }
+                }
+
+                var ix = key.LastIndexOfAny(MediaIndex.PathSeparators);
+                if (ix == -1)
+                {
+                    roots.Add(node);
+                }
+                else
+                {
+                    queue.Add(new { Key = key.Substring(0, ix), Node = node });
+                }
+            }
+
+            roots.AddRange(queue.Select(n => n.Node));
+            roots.ForEach(r => this.treeView.Nodes.Add(r));
+        }
+
+        private class PathModel
+        {
+            public PathModel(string path, SearchResult filteredResult)
+            {
+                this.Path = path;
+                this.FilteredResult = filteredResult;
+            }
+
+            public SearchResult FilteredResult { get; }
+
+            public ListViewItem ListViewItem { get; set; }
+
+            public string Path { get; }
+
+            public TreeNode TreeNode { get; set; }
+        }
+
+        private class ResultModel
+        {
+            public ResultModel(SearchResult searchResult)
+            {
+                this.SearchResult = searchResult;
+                this.RemainingPaths = new HashSet<string>(searchResult.Paths);
+            }
+
+            public ListViewGroup ListViewGroup { get; set; }
+
+            public HashSet<string> RemainingPaths { get; }
+
+            public SearchResult SearchResult { get; }
         }
     }
 }

@@ -41,14 +41,17 @@ namespace MediaLibrary
             this.titleLabel = new System.Windows.Forms.Label();
             this.sizeChart = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
+            this.panel1 = new System.Windows.Forms.Panel();
             this.duplicatesList = new System.Windows.Forms.ListView();
             this.pathHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.searchBox = new System.Windows.Forms.TextBox();
             this.treeView = new System.Windows.Forms.TreeView();
             ((System.ComponentModel.ISupportInitialize)(this.sizeChart)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
             this.splitContainer.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // imageList
@@ -128,8 +131,10 @@ namespace MediaLibrary
             legend1.BackColor = System.Drawing.Color.Transparent;
             legend1.MaximumAutoSize = 75F;
             legend1.Name = "pieLegend";
+            legend1.TableStyle = System.Windows.Forms.DataVisualization.Charting.LegendTableStyle.Tall;
+            legend1.TextWrapThreshold = 0;
             this.sizeChart.Legends.Add(legend1);
-            this.sizeChart.Location = new System.Drawing.Point(433, 9);
+            this.sizeChart.Location = new System.Drawing.Point(398, 9);
             this.sizeChart.Name = "sizeChart";
             series1.ChartArea = "pieArea";
             series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Doughnut;
@@ -137,7 +142,7 @@ namespace MediaLibrary
             series1.Legend = "pieLegend";
             series1.Name = "pieSeries";
             this.sizeChart.Series.Add(series1);
-            this.sizeChart.Size = new System.Drawing.Size(354, 90);
+            this.sizeChart.Size = new System.Drawing.Size(389, 117);
             this.sizeChart.TabIndex = 6;
             this.sizeChart.Text = "Size";
             // 
@@ -146,19 +151,29 @@ namespace MediaLibrary
             this.splitContainer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.splitContainer.Location = new System.Drawing.Point(12, 106);
+            this.splitContainer.Location = new System.Drawing.Point(12, 132);
             this.splitContainer.Name = "splitContainer";
             // 
             // splitContainer.Panel1
             // 
-            this.splitContainer.Panel1.Controls.Add(this.duplicatesList);
+            this.splitContainer.Panel1.Controls.Add(this.panel1);
             // 
             // splitContainer.Panel2
             // 
             this.splitContainer.Panel2.Controls.Add(this.treeView);
-            this.splitContainer.Size = new System.Drawing.Size(775, 303);
+            this.splitContainer.Size = new System.Drawing.Size(775, 277);
             this.splitContainer.SplitterDistance = 468;
             this.splitContainer.TabIndex = 8;
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.duplicatesList);
+            this.panel1.Controls.Add(this.searchBox);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(468, 277);
+            this.panel1.TabIndex = 2;
             // 
             // duplicatesList
             // 
@@ -167,19 +182,27 @@ namespace MediaLibrary
             this.pathHeader});
             this.duplicatesList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.duplicatesList.HideSelection = false;
-            this.duplicatesList.Location = new System.Drawing.Point(0, 0);
+            this.duplicatesList.Location = new System.Drawing.Point(0, 20);
             this.duplicatesList.Name = "duplicatesList";
-            this.duplicatesList.Size = new System.Drawing.Size(468, 303);
+            this.duplicatesList.Size = new System.Drawing.Size(468, 257);
             this.duplicatesList.SmallImageList = this.imageList;
-            this.duplicatesList.TabIndex = 1;
+            this.duplicatesList.TabIndex = 3;
             this.duplicatesList.UseCompatibleStateImageBehavior = false;
             this.duplicatesList.View = System.Windows.Forms.View.Details;
-            this.duplicatesList.ItemChecked += new System.Windows.Forms.ItemCheckedEventHandler(this.DuplicatesList_ItemChecked);
             // 
             // pathHeader
             // 
             this.pathHeader.Text = "Path";
             this.pathHeader.Width = 200;
+            // 
+            // searchBox
+            // 
+            this.searchBox.Dock = System.Windows.Forms.DockStyle.Top;
+            this.searchBox.Location = new System.Drawing.Point(0, 0);
+            this.searchBox.Name = "searchBox";
+            this.searchBox.Size = new System.Drawing.Size(468, 20);
+            this.searchBox.TabIndex = 2;
+            this.searchBox.TextChanged += new System.EventHandler(this.SearchBox_TextChangedAsync);
             // 
             // treeView
             // 
@@ -190,7 +213,7 @@ namespace MediaLibrary
             this.treeView.Location = new System.Drawing.Point(0, 0);
             this.treeView.Name = "treeView";
             this.treeView.SelectedImageIndex = 0;
-            this.treeView.Size = new System.Drawing.Size(303, 303);
+            this.treeView.Size = new System.Drawing.Size(303, 277);
             this.treeView.TabIndex = 8;
             this.treeView.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.TreeView_AfterCheck);
             // 
@@ -221,6 +244,8 @@ namespace MediaLibrary
             this.splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
             this.splitContainer.ResumeLayout(false);
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -235,8 +260,10 @@ namespace MediaLibrary
         private System.Windows.Forms.DataVisualization.Charting.Chart sizeChart;
         private System.Windows.Forms.ImageList imageList;
         private System.Windows.Forms.SplitContainer splitContainer;
+        private System.Windows.Forms.TreeView treeView;
+        private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.ListView duplicatesList;
         private System.Windows.Forms.ColumnHeader pathHeader;
-        private System.Windows.Forms.TreeView treeView;
+        private System.Windows.Forms.TextBox searchBox;
     }
 }
