@@ -1,6 +1,8 @@
 namespace MediaLibrary.Storage
 {
-    public class Rating
+    using System;
+
+    public class Rating : IComparable<Rating>
     {
         public static readonly double DefaultRating = 1500;
 
@@ -19,6 +21,19 @@ namespace MediaLibrary.Storage
         public string Hash { get; }
 
         public double Value { get; }
+
+        public static int Compare(Rating a, Rating b)
+        {
+            var value = (b?.Value ?? Rating.DefaultRating).CompareTo(a?.Value ?? Rating.DefaultRating);
+            if (value == 0)
+            {
+                value = (b?.Count ?? 0).CompareTo(a?.Count ?? 0);
+            }
+
+            return value;
+        }
+
+        public int CompareTo(Rating other) => Rating.Compare(this, other);
 
         internal static class Queries
         {
