@@ -393,7 +393,11 @@ namespace MediaLibrary
             {
                 var searchResult = (SearchResult)item.Tag;
                 var columnDefinition = ColumnDefinitions[column];
-                this.InvokeIfRequired(() => UpdateListViewItemColumn(item, searchResult, columnDefinition));
+                this.InvokeIfRequired(() =>
+                {
+                    UpdateListViewItemColumn(item, searchResult, columnDefinition);
+                    this.Invalidate(item.Bounds);
+                });
             }
         }
 
