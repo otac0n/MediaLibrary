@@ -334,8 +334,8 @@ namespace MediaLibrary
         private void Internal_SearchForVirtualItem(object sender, SearchForVirtualItemEventArgs e)
         {
             var indices = e.Direction == SearchDirectionHint.Down || e.Direction == SearchDirectionHint.Right
-                ? Enumerable.Range(e.StartIndex, this.orderdResults.Count - e.StartIndex)
-                : Enumerable.Range(0, e.StartIndex + 1).Reverse();
+                ? Enumerable.Range(e.StartIndex, this.orderdResults.Count - e.StartIndex).Concat(Enumerable.Range(0, e.StartIndex))
+                : Enumerable.Range(e.StartIndex + 1, this.orderdResults.Count - (e.StartIndex + 1)).Concat(Enumerable.Range(0, e.StartIndex + 1)).Reverse();
 
             var test = new Func<string, bool>(subject => subject.StartsWith(e.Text, StringComparison.CurrentCultureIgnoreCase));
 
@@ -447,22 +447,6 @@ namespace MediaLibrary
                 return
                     !this.Descending || value == 0 ? value :
                     value > 0 ? -1 : 1;
-
-                switch (this.SortColumn)
-                {
-                    case Column.Rating:
-                        {
-                            var aRating = a.Rating;
-                            var bRating = b.Rating;
-                            value = (bRating?.Value ?? Rating.DefaultRating).CompareTo(aRating?.Value ?? Rating.DefaultRating);
-                            if (value == 0)
-                            {
-                                value = (bRating?.Count ?? 0).CompareTo(aRating?.Count ?? 0);
-                            }
-                        }
-
-                        break;
-                }
             }
         }
 
