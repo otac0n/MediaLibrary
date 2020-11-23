@@ -139,7 +139,7 @@ namespace MediaLibrary
 
                 if (column.GetImage != null)
                 {
-                    columnHeader.ImageGetter = row => column.GetImage((SearchResult)row);
+                    columnHeader.ImageGetter = row => row == null ? null : column.GetImage((SearchResult)row);
                 }
 
                 this.Columns.Add(columnHeader);
