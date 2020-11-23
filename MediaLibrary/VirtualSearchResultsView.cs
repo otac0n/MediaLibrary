@@ -6,6 +6,7 @@ namespace MediaLibrary
     using System.Collections;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Drawing;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -66,16 +67,31 @@ namespace MediaLibrary
                 {
                     Column.Tags,
                     r => r.Tags,
-                    value =>
-                    {
-                        var comparison = this.index.TagEngine.GetTagComparison();
-                        return string.Join("; ", value.OrderBy(t => t, Comparer<string>.Create(comparison)));
-                    },
+                    value => string.Join("; ", value),
                     (a, b) => a.Tags.Count.CompareTo(b.Tags.Count),
-                    e =>
+                    (g, bounds, r) =>
                     {
-                        e.DrawBackground();
-                        e.DrawText();
+                        var engine = this.index.TagEngine;
+                        var comparison = engine.GetTagComparison();
+                        var baseSize = g.MeasureString("#", this.Font);
+                        var padding = (int)Math.Floor((bounds.Height - baseSize.Height) / 2);
+
+                        var xOffset = 0f;
+                        foreach (var tag in r.Tags.OrderBy(t => t, Comparer<string>.Create(comparison)))
+                        {
+                            var backgroundColor = engine.GetTagColor(tag) ?? SystemColors.Info;
+                            var textColor = ColorService.ContrastColor(backgroundColor);
+                            var size = g.MeasureString(tag, this.Font);
+                            using (var backgroundBrush = new SolidBrush(backgroundColor))
+                            using (var textBrush = new SolidBrush(textColor))
+                            {
+                                var topLeft = new PointF(bounds.Left + xOffset, bounds.Top + padding);
+                                g.FillRectangle(backgroundBrush, new RectangleF(topLeft, size));
+                                g.DrawString(tag, this.Font, textBrush, topLeft);
+                            }
+
+                            xOffset += size.Width + padding;
+                        }
                     }
                 },
                 {
@@ -110,6 +126,15 @@ namespace MediaLibrary
                 columnHeader.TextAlign = column.HorizontalAlignment;
                 columnHeader.AspectGetter = row => column.GetValue((SearchResult)row);
                 columnHeader.AspectToStringConverter = value => column.FormatValue(value);
+
+                if (column.DrawSubItem != null)
+                {
+                    columnHeader.Renderer = new ColumnRenderer(column.DrawSubItem)
+                    {
+                        ListView = this,
+                    };
+                }
+
                 if (column.GetImage != null)
                 {
                     columnHeader.ImageGetter = row => column.GetImage((SearchResult)row);
@@ -193,7 +218,7 @@ namespace MediaLibrary
             set => this.PrimarySortOrder = value ? SortOrder.Descending : SortOrder.Ascending;
         }
 
-        private static string GetBestPath(SearchResult searchResult) => searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
+        private static string GetBestPath(SearchResult searchResult) => searchResult == null ? null : searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
 
         private static string GetImageKey(string fileType)
         {
@@ -272,7 +297,7 @@ namespace MediaLibrary
                 Func<T, string> formatValue,
                 Comparison<SearchResult> comparison = null,
                 Func<SearchResult, object> getImage = null,
-                Action<DrawListViewSubItemEventArgs> drawSubItem = null)
+                Action<Graphics, Rectangle, SearchResult> drawSubItem = null)
                 : base(column, horizontalAlignment, r => getValue(r), value => formatValue((T)value), comparison, getImage, drawSubItem)
             {
                 this.GetValue = getValue;
@@ -293,7 +318,7 @@ namespace MediaLibrary
                 Func<object, string> formatValue,
                 Comparison<SearchResult> comparison = null,
                 Func<SearchResult, object> getImage = null,
-                Action<DrawListViewSubItemEventArgs> drawSubItem = null)
+                Action<Graphics, Rectangle, SearchResult> drawSubItem = null)
             {
                 this.Column = column;
                 this.HorizontalAlignment = horizontalAlignment;
@@ -310,7 +335,7 @@ namespace MediaLibrary
 
             public Comparison<SearchResult> Comparison { get; }
 
-            public Action<DrawListViewSubItemEventArgs> DrawSubItem { get; }
+            public Action<Graphics, Rectangle, SearchResult> DrawSubItem { get; }
 
             public Func<object, string> FormatValue { get; }
 
@@ -333,10 +358,10 @@ namespace MediaLibrary
             public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison) =>
                 this.Add(column, HorizontalAlignment.Left, getValue, formatValue, comparison);
 
-            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Action<DrawListViewSubItemEventArgs> drawSubItem) =>
+            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Action<Graphics, Rectangle, SearchResult> drawSubItem) =>
                 this.Add(column, HorizontalAlignment.Left, getValue, formatValue, drawSubItem);
 
-            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Action<DrawListViewSubItemEventArgs> drawSubItem) =>
+            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Action<Graphics, Rectangle, SearchResult> drawSubItem) =>
                 this.Add(column, HorizontalAlignment.Left, getValue, formatValue, comparison, drawSubItem);
 
             public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Func<SearchResult, object> getImage) =>
@@ -351,10 +376,10 @@ namespace MediaLibrary
             public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison) =>
                 this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison));
 
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Action<DrawListViewSubItemEventArgs> drawSubItem) =>
+            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Action<Graphics, Rectangle, SearchResult> drawSubItem) =>
                 this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, drawSubItem: drawSubItem));
 
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Action<DrawListViewSubItemEventArgs> drawSubItem) =>
+            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Action<Graphics, Rectangle, SearchResult> drawSubItem) =>
                 this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, drawSubItem: drawSubItem));
 
             public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Func<SearchResult, object> getImage) =>
@@ -362,6 +387,23 @@ namespace MediaLibrary
 
             public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Func<SearchResult, object> getImage) =>
                 this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, getImage));
+        }
+
+        private class ColumnRenderer : BaseRenderer
+        {
+            private Action<Graphics, Rectangle, SearchResult> drawSubItem;
+
+            public ColumnRenderer(Action<Graphics, Rectangle, SearchResult> drawSubItem)
+            {
+                this.drawSubItem = drawSubItem;
+            }
+
+            public override void Render(Graphics g, Rectangle r)
+            {
+                this.DrawBackground(g, r);
+                var searchResult = this.RowObject as SearchResult;
+                this.drawSubItem(g, r, searchResult);
+            }
         }
 
         private class DataSource : FastObjectListDataSource
