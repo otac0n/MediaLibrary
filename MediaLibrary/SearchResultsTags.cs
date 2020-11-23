@@ -75,7 +75,7 @@ namespace MediaLibrary
         private void UpdateTags()
         {
             var searchResults = this.searchResults;
-            var tagComparer = Comparer<string>.Create(this.index.TagEngine.GetTagComparison());
+            var tagComparer = this.index.TagEngine.GetTagComparer();
 
             var tagCounts = new Dictionary<string, int>();
             foreach (var tag in searchResults.SelectMany(r => r.Tags))

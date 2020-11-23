@@ -54,6 +54,8 @@ namespace MediaLibrary.Storage
 
         public event EventHandler<ItemUpdatedEventArgs<Rating>> RatingUpdated;
 
+        public event EventHandler<ItemUpdatedEventArgs<TagRuleEngine>> TagRulesUpdated;
+
         public TagRuleEngine TagEngine { get; private set; }
 
         public static async Task<HashInfo> HashFileAsync(string path)
@@ -504,6 +506,7 @@ namespace MediaLibrary.Storage
             var updatedEngine = new TagRuleEngine(this.tagRuleGrammar.Parse(rules));
             await this.IndexWrite(conn => conn.Execute(Queries.UdateTagRules, new { Rules = rules })).ConfigureAwait(false);
             this.TagEngine = updatedEngine;
+            this.TagRulesUpdated?.Invoke(this, new ItemUpdatedEventArgs<TagRuleEngine>(updatedEngine));
         }
 
         private async Task AddFilePath(FilePath filePath) =>

@@ -16,6 +16,7 @@ namespace MediaLibrary
     using MediaLibrary.Properties;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
+    using MediaLibrary.Tagging;
 
     public class VirtualSearchResultsView : FastObjectListView
     {
@@ -24,6 +25,7 @@ namespace MediaLibrary
         private readonly MediaIndex index;
         private readonly List<SearchResult> orderdResults = new List<SearchResult>();
         private bool columnsSized = false;
+        private TagComparer tagComparer;
 
         public VirtualSearchResultsView(MediaIndex index)
         {
@@ -71,15 +73,14 @@ namespace MediaLibrary
                     (a, b) => a.Tags.Count.CompareTo(b.Tags.Count),
                     (g, bounds, r) =>
                     {
-                        var engine = this.index.TagEngine;
-                        var comparison = engine.GetTagComparison();
+                        var tagComparer = this.TagComparer;
                         var baseSize = g.MeasureString("#", this.Font);
                         var padding = (int)Math.Floor((bounds.Height - baseSize.Height) / 2);
 
                         var xOffset = 0f;
-                        foreach (var tag in r.Tags.OrderBy(t => t, Comparer<string>.Create(comparison)))
+                        foreach (var tag in r.Tags.OrderBy(t => t, tagComparer))
                         {
-                            var backgroundColor = engine.GetTagColor(tag) ?? SystemColors.Info;
+                            var backgroundColor = tagComparer.GetTagColor(tag) ?? SystemColors.Info;
                             var textColor = ColorService.ContrastColor(backgroundColor);
                             var size = g.MeasureString(tag, this.Font);
                             using (var backgroundBrush = new SolidBrush(backgroundColor))
@@ -117,6 +118,7 @@ namespace MediaLibrary
             this.index.HashPersonAdded += this.Index_HashPersonAdded;
             this.index.HashPersonRemoved += this.Index_HashPersonRemoved;
             this.index.RatingUpdated += this.Index_RatingUpdated;
+            this.index.TagRulesUpdated += this.Index_TagRulesUpdated;
 
             foreach (var column in this.columnDefinitions.Values.OrderBy(c => c.Index))
             {
@@ -218,6 +220,8 @@ namespace MediaLibrary
             set => this.PrimarySortOrder = value ? SortOrder.Descending : SortOrder.Ascending;
         }
 
+        private TagComparer TagComparer => this.tagComparer ?? (this.tagComparer = this.index.TagEngine.GetTagComparer());
+
         private static string GetBestPath(SearchResult searchResult) => searchResult == null ? null : searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
 
         private static string GetImageKey(string fileType)
@@ -269,6 +273,11 @@ namespace MediaLibrary
         private void Index_RatingUpdated(object sender, ItemUpdatedEventArgs<Rating> e)
         {
             this.UpdateSearchResult(e.Item.Hash);
+        }
+
+        private void Index_TagRulesUpdated(object sender, ItemUpdatedEventArgs<TagRuleEngine> e)
+        {
+            this.tagComparer = null;
         }
 
         private void Internal_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
