@@ -367,6 +367,8 @@ namespace MediaLibrary.Storage
             await this.IndexWrite(conn => conn.Execute(Queries.RemoveIndexedPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) })).ConfigureAwait(false);
         }
 
+        public Task RemovePerson(Person person) => this.IndexWrite(conn => conn.Execute(Person.Queries.RemovePerson, new { person.PersonId }));
+
         public Task RemoveSavedSearch(SavedSearch savedSearch) =>
             this.IndexWrite(conn =>
                 conn.Execute(SavedSearch.Queries.RemoveSavedSearch, new { savedSearch.SearchId }));

@@ -29,7 +29,7 @@ namespace MediaLibrary
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.personSearchBox = new MediaLibrary.PersonSearchBox();
+            this.addNewPersonMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editorTablePanel = new System.Windows.Forms.TableLayoutPanel();
             this.nameLabel = new System.Windows.Forms.Label();
             this.nameTextBox = new System.Windows.Forms.TextBox();
@@ -42,21 +42,25 @@ namespace MediaLibrary
             this.usernameTextBox = new System.Windows.Forms.TextBox();
             this.siteTextBox = new System.Windows.Forms.TextBox();
             this.errorProvider = new System.Windows.Forms.ErrorProvider(this.components);
+            this.advancedButton = new System.Windows.Forms.Button();
+            this.advancedMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.deletePersonMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.personSearchBox = new MediaLibrary.PersonSearchBox();
             this.editorTablePanel.SuspendLayout();
             this.addUsernameFlowPanel.SuspendLayout();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).BeginInit();
+            this.advancedMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
-            // personSearchBox
+            // addNewPersonMenuItem
             // 
-            this.personSearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.personSearchBox.Location = new System.Drawing.Point(105, 13);
-            this.personSearchBox.Name = "personSearchBox";
-            this.personSearchBox.SelectedPerson = null;
-            this.personSearchBox.Size = new System.Drawing.Size(450, 21);
-            this.personSearchBox.TabIndex = 0;
-            this.personSearchBox.SelectedPersonChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
+            this.addNewPersonMenuItem.Enabled = false;
+            this.addNewPersonMenuItem.Image = global::MediaLibrary.Properties.Resources.add_circle;
+            this.addNewPersonMenuItem.Name = "addNewPersonMenuItem";
+            this.addNewPersonMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.addNewPersonMenuItem.Text = "Add new person...";
+            this.addNewPersonMenuItem.Click += new System.EventHandler(this.AddNewPersonMenuItem_Click);
             // 
             // editorTablePanel
             // 
@@ -190,11 +194,51 @@ namespace MediaLibrary
             // 
             this.errorProvider.ContainerControl = this;
             // 
+            // advancedButton
+            // 
+            this.advancedButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.advancedButton.Location = new System.Drawing.Point(529, 13);
+            this.advancedButton.Name = "advancedButton";
+            this.advancedButton.Size = new System.Drawing.Size(29, 21);
+            this.advancedButton.TabIndex = 2;
+            this.advancedButton.Text = "...";
+            this.advancedButton.UseVisualStyleBackColor = true;
+            this.advancedButton.Click += new System.EventHandler(this.AdvancedButton_Click);
+            // 
+            // advancedMenuStrip
+            // 
+            this.advancedMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addNewPersonMenuItem,
+            this.deletePersonMenuItem});
+            this.advancedMenuStrip.Name = "advancedMenuStrip";
+            this.advancedMenuStrip.Size = new System.Drawing.Size(170, 48);
+            // 
+            // deletePersonMenuItem
+            // 
+            this.deletePersonMenuItem.Enabled = false;
+            this.deletePersonMenuItem.Image = global::MediaLibrary.Properties.Resources.remove_circle_red;
+            this.deletePersonMenuItem.Name = "deletePersonMenuItem";
+            this.deletePersonMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.deletePersonMenuItem.Text = "Delete person...";
+            this.deletePersonMenuItem.Click += new System.EventHandler(this.DeletePersonMenuItem_Click);
+            // 
+            // personSearchBox
+            // 
+            this.personSearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.personSearchBox.Location = new System.Drawing.Point(105, 13);
+            this.personSearchBox.Name = "personSearchBox";
+            this.personSearchBox.SelectedPerson = null;
+            this.personSearchBox.Size = new System.Drawing.Size(418, 21);
+            this.personSearchBox.TabIndex = 0;
+            this.personSearchBox.SelectedPersonChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
+            this.personSearchBox.TextUpdate += new System.EventHandler(this.PersonSearchBox_TextUpdate);
+            // 
             // EditPeopleForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(570, 349);
+            this.Controls.Add(this.advancedButton);
             this.Controls.Add(this.editorTablePanel);
             this.Controls.Add(this.personSearchBox);
             this.KeyPreview = true;
@@ -211,6 +255,7 @@ namespace MediaLibrary
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).EndInit();
+            this.advancedMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -230,5 +275,9 @@ namespace MediaLibrary
         private System.Windows.Forms.TextBox usernameTextBox;
         private System.Windows.Forms.TextBox siteTextBox;
         private System.Windows.Forms.ErrorProvider errorProvider;
+        private System.Windows.Forms.Button advancedButton;
+        private System.Windows.Forms.ContextMenuStrip advancedMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem deletePersonMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addNewPersonMenuItem;
     }
 }

@@ -4,6 +4,7 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
+    using System.Drawing;
     using System.Linq;
     using System.Threading;
     using System.Windows.Forms;
@@ -27,6 +28,18 @@ namespace MediaLibrary
         public List<Alias> SelectedPersonAliases { get; private set; }
 
         private static bool IsGeneric(Alias a) => a.Site == null;
+
+        private async void AddNewPersonMenuItem_Click(object sender, EventArgs e)
+        {
+            var name = this.personSearchBox.Text.Trim();
+            var result = MessageBox.Show($"This will add a new person, {name}, distinct from any people in the index. Are you sure you want to create this person?", "Are you sure?", MessageBoxButtons.YesNo);
+            if (result == DialogResult.Yes)
+            {
+                this.editorTablePanel.Enabled = false;
+                this.SelectedPerson = await this.index.AddPerson(name).ConfigureAwait(true);
+                this.RefreshView();
+            }
+        }
 
         private async void AddUsernameButton_Click(object sender, EventArgs e)
         {
@@ -62,6 +75,13 @@ namespace MediaLibrary
                     this.ExitUpdate();
                 }
             }
+        }
+
+        private void AdvancedButton_Click(object sender, EventArgs e)
+        {
+            var control = (Control)sender;
+            var offset = new Point(0, control.Height);
+            this.advancedMenuStrip.Show(control, offset);
         }
 
         private async void AliasControl_DeleteClick(object sender, EventArgs e)
@@ -152,6 +172,20 @@ namespace MediaLibrary
             }
         }
 
+        private async void DeletePersonMenuItem_Click(object sender, EventArgs e)
+        {
+            var person = this.SelectedPerson;
+            if (person != null)
+            {
+                var result = MessageBox.Show($"This will delete {person.Name} (ID: {person.PersonId}). This is a destructive operation and cannot be undone. Are you sure you want to delete this person?", "Are you sure?", MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    await this.index.RemovePerson(person).ConfigureAwait(true);
+                    this.editorTablePanel.Enabled = false;
+                }
+            }
+        }
+
         private void EditPersonForm_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Escape)
@@ -224,8 +258,18 @@ namespace MediaLibrary
                 this.SelectedPersonAliases = await this.index.GetAliases(person.PersonId).ConfigureAwait(true);
                 this.siteTextBox.Text = string.Empty;
                 this.usernameTextBox.Text = string.Empty;
+                this.deletePersonMenuItem.Enabled = true;
                 this.RefreshView();
             }
+            else
+            {
+                this.deletePersonMenuItem.Enabled = false;
+            }
+        }
+
+        private void PersonSearchBox_TextUpdate(object sender, EventArgs e)
+        {
+            this.addNewPersonMenuItem.Enabled = !string.IsNullOrEmpty(this.personSearchBox.Text);
         }
 
         private async void PopulatePeopleSearchBox()
