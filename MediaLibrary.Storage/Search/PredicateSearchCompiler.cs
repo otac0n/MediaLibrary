@@ -5,11 +5,9 @@ namespace MediaLibrary.Storage.Search
     using System;
     using System.Collections.Immutable;
     using System.Linq;
-    using System.Text;
     using MediaLibrary.Search;
     using MediaLibrary.Search.Sql;
     using MediaLibrary.Tagging;
-    using static MediaLibrary.Search.Sql.QueryBuilder;
 
     public class PredicateSearchCompiler : PredicateCompiler<SearchResult>
     {
@@ -84,7 +82,11 @@ namespace MediaLibrary.Storage.Search
                 return x => op(StringComparer.InvariantCultureIgnoreCase.Compare(x.Hash, value));
             }
 
-            public override Predicate<SearchResult> NoPerson() => x => x.People.Count == 0;
+            public override Predicate<SearchResult> PersonCount(string @operator, int value)
+            {
+                var op = ConvertOperator(@operator);
+                return x => op(x.People.Count.CompareTo(value));
+            }
 
             public override Predicate<SearchResult> PersonId(int value) => x => x.People.Any(p => p.PersonId == value);
 

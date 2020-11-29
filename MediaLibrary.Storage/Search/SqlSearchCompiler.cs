@@ -97,6 +97,16 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine(") tc ON h.Hash = tc.Hash");
             }
 
+            if (this.dialect.JoinPersonCount)
+            {
+                sb
+                    .AppendLine("LEFT JOIN (")
+                    .AppendLine("    SELECT Hash, COUNT(*) PersonCount")
+                    .AppendLine("    FROM HashPerson")
+                    .AppendLine("    GROUP BY Hash")
+                    .AppendLine(") pc ON h.Hash = pc.Hash");
+            }
+
             if (this.dialect.JoinStars)
             {
                 sb
@@ -182,6 +192,8 @@ namespace MediaLibrary.Storage.Search
 
             public bool JoinCopies { get; private set; }
 
+            public bool JoinPersonCount { get; private set; }
+
             public bool JoinStars { get; private set; }
 
             public bool JoinTagCount { get; private set; }
@@ -194,7 +206,11 @@ namespace MediaLibrary.Storage.Search
 
             public override string Hash(string @operator, string value) => $"Hash {ConvertOperator(@operator)} {Literal(value)}";
 
-            public override string NoPerson() => $"NOT EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash)";
+            public override string PersonCount(string @operator, int value)
+            {
+                this.JoinPersonCount = true;
+                return $"COALESCE(pc.PersonCount, 0) {ConvertOperator(@operator)} {value}";
+            }
 
             public override string PersonId(int value) => $"EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash AND p.PersonId = {value})";
 

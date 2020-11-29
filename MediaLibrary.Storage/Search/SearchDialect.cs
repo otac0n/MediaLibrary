@@ -7,7 +7,6 @@ namespace MediaLibrary.Storage.Search
     using System.Linq;
     using MediaLibrary.Search;
     using MediaLibrary.Tagging;
-    using static MediaLibrary.Search.Sql.QueryBuilder;
 
     public abstract class SearchDialect<T>
     {
@@ -140,6 +139,14 @@ namespace MediaLibrary.Storage.Search
 
                     return this.TagCount(field.Operator, tagCount);
 
+                case "people":
+                    if (!int.TryParse(field.Value, out var peopleCount))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return this.PersonCount(field.Operator, peopleCount);
+
                 case "rating":
                     if (!double.TryParse(field.Value, out var rating))
                     {
@@ -172,7 +179,9 @@ namespace MediaLibrary.Storage.Search
 
         public abstract T Hash(string @operator, string value);
 
-        public abstract T NoPerson();
+        public virtual T NoPerson() => this.PersonCount(FieldTerm.EqualsOperator, 0);
+
+        public abstract T PersonCount(string @operator, int value);
 
         public abstract T PersonId(int value);
 
