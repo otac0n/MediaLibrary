@@ -138,8 +138,8 @@ namespace MediaLibrary
                 columnHeader.Name = column.Column.ToString();
                 columnHeader.Text = column.Name;
                 columnHeader.TextAlign = column.HorizontalAlignment;
-                columnHeader.AspectGetter = row => column.GetValue((SearchResult)row);
-                columnHeader.AspectToStringConverter = value => column.FormatValue(value);
+                columnHeader.AspectGetter = row => row == null ? null : column.GetValue((SearchResult)row);
+                columnHeader.AspectToStringConverter = value => value == null ? null : column.FormatValue(value);
 
                 if (column.DrawSubItem != null)
                 {
