@@ -432,6 +432,26 @@ namespace MediaLibrary.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap love_it_break {
+            get {
+                object obj = ResourceManager.GetObject("love_it_break", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap love_it_filled {
+            get {
+                object obj = ResourceManager.GetObject("love_it_filled", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap modern_tv_3d_glasses {
             get {
                 object obj = ResourceManager.GetObject("modern_tv_3d_glasses", resourceCulture);

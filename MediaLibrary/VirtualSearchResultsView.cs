@@ -78,8 +78,20 @@ namespace MediaLibrary
                         var padding = (int)Math.Floor((bounds.Height - baseSize.Height) / 2);
 
                         var xOffset = 0f;
+                        if (r.Tags.Contains("favorite"))
+                        {
+                            var size = bounds.Height - padding * 2;
+                            g.DrawImage(Resources.love_it_filled, new RectangleF(bounds.Left + xOffset, bounds.Top + padding, size, size));
+                            xOffset += size + padding;
+                        }
+
                         foreach (var tag in r.Tags.OrderBy(t => t, tagComparer))
                         {
+                            if (tag == "favorite")
+                            {
+                                continue;
+                            }
+
                             var backgroundColor = tagComparer.GetTagColor(tag) ?? SystemColors.Info;
                             var textColor = ColorService.ContrastColor(backgroundColor);
                             var size = g.MeasureString(tag, this.Font);
