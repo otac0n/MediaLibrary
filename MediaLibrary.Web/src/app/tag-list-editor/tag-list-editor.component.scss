@@ -1,0 +1,10 @@
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+
+    input {
+        flex-grow: 1;
+        width: 75px;
+        max-width: min(50%, 500px);
+    }
+}

@@ -9,8 +9,6 @@ export type TagSet = { [tag: string]: TagInfo };
     providedIn: 'root'
 })
 export class TagsService {
-    private allTagsPromise: Promise<TagSet>;
-
     constructor(
         private http: HttpClient) {
     }

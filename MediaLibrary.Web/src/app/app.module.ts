@@ -12,6 +12,7 @@ import { PersonListComponent } from './person-list/person-list.component';
 import { PersonComponent } from './person/person.component';
 import { PreviewComponent } from './preview/preview.component';
 import { staticDataInit } from './static-data';
+import { TagListEditorComponent } from './tag-list-editor/tag-list-editor.component';
 import { TagListComponent } from './tag-list/tag-list.component';
 import { TagComponent } from './tag/tag.component';
 import { TagsService } from './tags.service';
@@ -27,6 +28,7 @@ import { UrlEncodePipe } from './url-encode.pipe';
         PreviewComponent,
         TagComponent,
         TagListComponent,
+        TagListEditorComponent,
         UrlEncodePipe,
     ],
     imports: [

@@ -32,7 +32,7 @@ export class TagComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        const tag = StaticData.alltags[this.tag];
+        const tag = StaticData.allTags[this.tag];
         if (tag) {
             const color = TagsService.getColor(tag);
             if (color) {

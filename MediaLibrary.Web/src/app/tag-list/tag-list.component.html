@@ -1,6 +1,3 @@
-<div [ngClass]="{ 'tag-list': true, 'editable': editable }">
-  <ng-container *ngFor="let tag of tags">
-    <app-tag *ngIf="!excludeFavorite || tag != 'favorite'" [tag]="tag" [allowDelete]="editable" (edit)="editTag(tag)" (remove)="removeTag.emit(tag)" (reject)="rejectTag.emit(tag)"></app-tag>
-  </ng-container>
-  <input #tagInput *ngIf="editable" (keydown)="keydown($event)" (keypress)="keypress($event)" (click)="click($event)" [(ngModel)]="inputValue" />
-</div>
+<ng-container *ngFor="let tag of tags">
+  <app-tag *ngIf="!excludeFavorite || tag != 'favorite'" [tag]="tag" [allowDelete]="editable" (edit)="editTag.emit(tag)" (remove)="removeTag.emit(tag)" (reject)="rejectTag.emit(tag)"></app-tag>
+</ng-container>

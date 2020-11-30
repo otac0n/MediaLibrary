@@ -88,27 +88,11 @@ export class PreviewComponent implements OnInit {
     }
 
     public favorite() {
-        this.addTag('favorite');
+        this.taggingService.addTag(this.searchResult, 'favorite');
     }
 
     public unfavorite() {
-        this.removeTag('favorite');
-    }
-
-    public addTag(tag: string) {
-        this.taggingService.addTag({ hash: this.searchResult.hash, tag });
-        if (this.searchResult.tags.indexOf(tag) === -1) {
-            if (tag === 'favorite') {
-                this.searchResult.tags.unshift(tag);
-            } else {
-                this.searchResult.tags.push(tag);
-            }
-        }
-    }
-
-    public removeTag(tag: string) {
-        this.taggingService.removeTag({ hash: this.searchResult.hash, tag });
-        this.searchResult.tags.splice(this.searchResult.tags.indexOf(tag), 1);
+        this.taggingService.removeTag(this.searchResult, 'favorite');
     }
 
     @HostListener('touchstart', ['$event'])

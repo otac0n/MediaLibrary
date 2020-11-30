@@ -4,16 +4,14 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { SearchResult } from '../schema';
-import * as StaticData from './static-data';
-import { TagsService } from './tags.service';
+import { TaggingService } from './tagging.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class SearchService {
     constructor(
-        private http: HttpClient,
-        private tagsService: TagsService) {
+        private http: HttpClient) {
     }
 
     public static sortPaths(a: string, b: string): number {
@@ -49,11 +47,7 @@ export class SearchService {
     public search(q: string): Observable<SearchResult[]> {
         return this.http.get<SearchResult[]>(`files?q=${encodeURIComponent(q)}`).pipe(map(results => {
             results.forEach(r => {
-                r.tags.sort((a, b) => {
-                    const aTag = StaticData.alltags[a];
-                    const bTag = StaticData.alltags[b];
-                    return TagsService.sort(aTag, bTag);
-                });
+                r.tags.sort(TaggingService.sort);
                 r.paths.sort(SearchService.sortPaths);
             });
             return results;

@@ -5,6 +5,6 @@
   <div class="details">
     <app-heart [favorite]="searchResult?.tags?.indexOf('favorite') > -1" (favorited)="favorite()" (unfavorited)="unfavorite()"></app-heart>
     <app-person-list [people]="searchResult?.people"></app-person-list>
-    <app-tag-list [tags]="searchResult?.tags" [excludeFavorite]="true" [editable]="true" (addTag)="addTag($event)" (removeTag)="removeTag($event)"></app-tag-list>
+    <app-tag-list-editor *ngIf="searchResult" [searchResult]="searchResult" [excludeFavorite]="true"></app-tag-list-editor>
   </div>
 </div>
