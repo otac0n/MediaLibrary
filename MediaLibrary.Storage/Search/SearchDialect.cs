@@ -82,46 +82,17 @@ namespace MediaLibrary.Storage.Search
                     }
 
                 case "tag":
-                    var tagInfo = this.TagEngine[field.Value];
-                    if (this.ExcludeHidden && (tagInfo.Tag == "hidden" || tagInfo.Ancestors.Contains("hidden")))
                     {
-                        this.ExcludeHidden = false;
+                        var tagInfo = this.TagEngine[field.Value];
+                        if (this.ExcludeHidden && (tagInfo.Tag == "hidden" || tagInfo.Ancestors.Contains("hidden")))
+                        {
+                            this.ExcludeHidden = false;
+                        }
+
+                        var tags = tagInfo.RelatedTags(TagDialect.TagRelationships[field.Operator]);
+                        tags = tags.Union(tags.SelectMany(this.TagEngine.GetTagAliases));
+                        return this.Tag(tags);
                     }
-
-                    var tags = ImmutableHashSet<string>.Empty;
-                    switch (field.Operator)
-                    {
-                        case FieldTerm.GreaterThanOperator:
-                        case FieldTerm.GreaterThanOrEqualOperator:
-
-                            tags = tags.Union(tagInfo.Ancestors);
-
-                            if (field.Operator == FieldTerm.GreaterThanOrEqualOperator)
-                            {
-                                goto case FieldTerm.EqualsOperator;
-                            }
-
-                            break;
-
-                        case FieldTerm.LessThanOperator:
-                        case FieldTerm.LessThanOrEqualOperator:
-
-                            tags = tags.Union(tagInfo.Descendants);
-
-                            if (field.Operator == FieldTerm.LessThanOrEqualOperator)
-                            {
-                                goto case FieldTerm.EqualsOperator;
-                            }
-
-                            break;
-
-                        case FieldTerm.EqualsOperator:
-                            tags = tags.Add(tagInfo.Tag);
-                            break;
-                    }
-
-                    tags = tags.Union(tags.SelectMany(this.TagEngine.GetTagAliases));
-                    return this.Tag(tags);
 
                 case "copies":
                     if (!int.TryParse(field.Value, out var copies))
