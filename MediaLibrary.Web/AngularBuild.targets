@@ -6,7 +6,7 @@
   <Target Name="EnsureNpm" DependsOnTargets="EnsureNode">
     <Exec Command="$(NpmCommand) --version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
   </Target>
-  <Target Name="EnsureAngular" DependsOnTargets="EnsureNpm">
+  <Target Name="EnsureAngular" DependsOnTargets="NpmRestore">
     <Exec Command="$(AngularCommand) --version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
   </Target>
   <Target Name="NpmRestore" DependsOnTargets="EnsureNpm" Inputs="package.json;$(MSBuildThisFile)" Outputs="node_modules\.msbuild">
