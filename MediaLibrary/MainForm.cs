@@ -306,7 +306,7 @@ namespace MediaLibrary
         {
             foreach (var item in this.listView.SelectedResults)
             {
-                foreach (var path in item.Paths)
+                foreach (var path in item.Paths.OrderBy(p => p, PathComparer.Instance))
                 {
                     if (File.Exists(PathEncoder.ExtendPath(path)))
                     {
