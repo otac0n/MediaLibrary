@@ -102,6 +102,19 @@ namespace MediaLibrary
             this.mediaPlayer.stretchToFit = true;
         }
 
+        private void UpdateMediaPlayerUrl(string url)
+        {
+            this.mediaPlayer.URL = url;
+            var wasVisible = this.mediaPlayer.Visible;
+            this.mediaPlayer.Visible = url != null;
+            if (this.mediaPlayer.Visible && !wasVisible)
+            {
+                this.mediaPlayer.Dock = DockStyle.None;
+                this.mediaPlayer.Dock = DockStyle.Fill;
+                this.ResetMediaPlayer();
+            }
+        }
+
         private void UpdatePreview()
         {
             this.existingTags.SearchResults = this.previewItems;
@@ -118,26 +131,23 @@ namespace MediaLibrary
                        select path).FirstOrDefault();
                 if (url == null || IsImage(item))
                 {
-                    this.mediaPlayer.URL = null;
-                    this.mediaPlayer.Visible = false;
-                    this.thumbnail.Image = url == null ? null : Image.FromFile(url);
-                    this.thumbnail.Visible = url != null;
+                    this.UpdateMediaPlayerUrl(null);
+                    this.UpdateThumbnailUrl(url);
                 }
                 else
                 {
-                    this.thumbnail.Image = null;
-                    this.thumbnail.Visible = false;
-                    this.mediaPlayer.URL = url;
-                    var wasVisible = this.mediaPlayer.Visible;
-                    this.mediaPlayer.Visible = url != null;
-                    if (this.mediaPlayer.Visible && !wasVisible)
-                    {
-                        this.mediaPlayer.Dock = DockStyle.None;
-                        this.mediaPlayer.Dock = DockStyle.Fill;
-                        this.ResetMediaPlayer();
-                    }
+                    this.UpdateThumbnailUrl(null);
+                    this.UpdateMediaPlayerUrl(url);
                 }
             }
+        }
+
+        private void UpdateThumbnailUrl(string url)
+        {
+            var previous = this.thumbnail.Image;
+            this.thumbnail.Image = url == null ? null : Image.FromFile(url);
+            this.thumbnail.Visible = url != null;
+            previous?.Dispose();
         }
     }
 }
