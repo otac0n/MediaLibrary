@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
     selector: 'app-tag-list',
     templateUrl: './tag-list.component.html',
     styleUrls: ['./tag-list.component.scss']
 })
-export class TagListComponent implements OnInit {
+export class TagListComponent {
     @Input()
     public tags: string[];
 
@@ -23,10 +23,4 @@ export class TagListComponent implements OnInit {
 
     @Output()
     public rejectTag = new EventEmitter<string>();
-
-    constructor() {
-    }
-
-    ngOnInit(): void {
-    }
 }

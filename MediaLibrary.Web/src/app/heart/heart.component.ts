@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
     selector: 'app-heart',
     templateUrl: './heart.component.html',
     styleUrls: ['./heart.component.scss'],
 })
-export class HeartComponent implements OnInit {
+export class HeartComponent {
     @Input()
     public favorite = false;
 
@@ -17,13 +17,7 @@ export class HeartComponent implements OnInit {
     @Output()
     public unfavorited = new EventEmitter<void>();
 
-    constructor() {
-    }
-
-    ngOnInit(): void {
-    }
-
-    onClick(event: MouseEvent): void {
+    public onClick(event: MouseEvent): void {
         this.favorite = !this.favorite;
         this.stillHover = true;
         event.stopPropagation();
@@ -31,7 +25,7 @@ export class HeartComponent implements OnInit {
         this.favorite ? this.favorited.emit() : this.unfavorited.emit();
     }
 
-    onLeave(): void {
+    public onLeave(): void {
         this.stillHover = false;
     }
 }

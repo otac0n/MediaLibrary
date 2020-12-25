@@ -1,12 +1,10 @@
-import { Component, HostListener, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Component, OnInit } from '@angular/core';
 import { filter } from 'rxjs/operators';
 
 import { SavedSearch, SearchResult } from '../schema';
 import { SavedSearchService } from './saved-search.service';
 import { SearchService } from './search.service';
 import { TaggingService } from './tagging.service';
-import { TagsService } from './tags.service';
 
 @Component({
     selector: 'app-root',

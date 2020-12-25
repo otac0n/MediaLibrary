@@ -8,7 +8,6 @@ namespace MediaLibrary.Web.Hosting
     using System.Threading;
     using System.Threading.Tasks;
     using System.Web.Http;
-    using MediaLibrary.Web;
 
     public class ViewResult : IHttpActionResult
     {

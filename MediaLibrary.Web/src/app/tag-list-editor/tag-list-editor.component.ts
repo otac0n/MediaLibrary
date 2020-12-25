@@ -1,14 +1,14 @@
-import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 
 import { SearchResult } from '../../schema';
 import { TaggingService } from '../tagging.service';
 
 @Component({
-  selector: 'app-tag-list-editor',
-  templateUrl: './tag-list-editor.component.html',
-  styleUrls: ['./tag-list-editor.component.scss']
+    selector: 'app-tag-list-editor',
+    templateUrl: './tag-list-editor.component.html',
+    styleUrls: ['./tag-list-editor.component.scss']
 })
-export class TagListEditorComponent implements OnChanges, OnInit {
+export class TagListEditorComponent implements OnChanges {
     @Input()
     public searchResult: SearchResult;
 
@@ -26,14 +26,11 @@ export class TagListEditorComponent implements OnChanges, OnInit {
         private taggingService: TaggingService) {
     }
 
-    ngOnChanges(changes: SimpleChanges) {
+    public ngOnChanges(changes: SimpleChanges) {
         if ('searchResult' in changes) {
             this.editStack = [];
             this.inputValue = '';
         }
-    }
-
-    ngOnInit(): void {
     }
 
     public addTag(tag: string) {
@@ -96,7 +93,7 @@ export class TagListEditorComponent implements OnChanges, OnInit {
         switch (event.which) {
             case 32:
                 // TODO: Handle different cursor positions.
-                const tags = this.inputValue.split(' ').filter(t => !!t).forEach(t => {
+                this.inputValue.split(' ').filter(t => !!t).forEach(t => {
                     this.addTag(t);
                 });
                 this.inputValue = '';

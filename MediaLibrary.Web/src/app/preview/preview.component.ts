@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 
 import { SearchResult } from '../../schema';
 import { TaggingService } from '../tagging.service';
@@ -61,7 +61,7 @@ class SwipeDetector {
     templateUrl: './preview.component.html',
     styleUrls: ['./preview.component.scss']
 })
-export class PreviewComponent implements OnInit {
+export class PreviewComponent {
     @Input()
     public searchResult: SearchResult;
 
@@ -80,10 +80,7 @@ export class PreviewComponent implements OnInit {
         private taggingService: TaggingService) {
     }
 
-    ngOnInit(): void {
-    }
-
-    onClick(): void {
+    public onClick(): void {
         this.requestClose.emit();
     }
 
@@ -96,12 +93,12 @@ export class PreviewComponent implements OnInit {
     }
 
     @HostListener('touchstart', ['$event'])
-    handleTouchStart(event: TouchEvent) {
+    public handleTouchStart(event: TouchEvent) {
         this.swipeDetector.handleTouchStart(event);
     }
 
     @HostListener('touchend', ['$event'])
-    handleTouchEnd(event: TouchEvent) {
+    public handleTouchEnd(event: TouchEvent) {
         this.swipeDetector.handleTouchEnd(event, {
             left: () => this.requestNext.emit(),
             right: () => this.requestPrevious.emit(),
@@ -109,7 +106,7 @@ export class PreviewComponent implements OnInit {
     }
 
     @HostListener('document:keydown', ['$event'])
-    private keyDown(event: KeyboardEvent) {
+    public keyDown(event: KeyboardEvent) {
         if (this.searchResult) {
             switch (event.which) {
                 case 27:

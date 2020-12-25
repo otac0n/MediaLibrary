@@ -4,7 +4,7 @@ import { Pipe, PipeTransform } from '@angular/core';
     name: 'urlEncode'
 })
 export class UrlEncodePipe implements PipeTransform {
-    transform(value: unknown): string {
+    public transform(value: unknown): string {
         return encodeURIComponent('' + value);
     }
 }

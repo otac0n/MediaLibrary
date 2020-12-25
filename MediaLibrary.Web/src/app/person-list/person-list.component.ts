@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 import { Person } from '../../schema';
 
@@ -7,13 +7,7 @@ import { Person } from '../../schema';
     templateUrl: './person-list.component.html',
     styleUrls: ['./person-list.component.scss']
 })
-export class PersonListComponent implements OnInit {
+export class PersonListComponent {
     @Input()
     public people: Person[];
-
-    constructor() {
-    }
-
-    ngOnInit(): void {
-    }
 }
