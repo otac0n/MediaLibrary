@@ -222,6 +222,8 @@ namespace MediaLibrary.Storage.Search
                 return $"COALESCE(s.Rating, {Storage.Rating.DefaultRating}) {ConvertOperator(@operator)} {value}";
             }
 
+            public override string RejectedTag(ImmutableHashSet<string> value) => $"EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", value.Select(Literal))}))";
+
             public override string Stars(string @operator, int value)
             {
                 this.JoinStars = true;

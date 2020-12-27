@@ -315,6 +315,8 @@ namespace MediaLibrary.Tagging
         public string Rename(string tag) =>
             this.renameMap.TryGetValue(tag, out var renamed) ? renamed : tag;
 
+        public IEnumerable<ImmutableHashSet<string>> TagSetsThatSuggest(string target) => this.tagRules[TagOperator.Suggestion].Where(r => r.Right.Contains(target)).Select(r => r.Left);
+
         private static void AddParentToChild(string fromTag, string toTag, TagRule rule, Dictionary<string, ImmutableDictionary<string, TagRule>> map)
         {
             if (!map.TryGetValue(fromTag, out var parents))

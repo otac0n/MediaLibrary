@@ -98,10 +98,15 @@ namespace MediaLibrary.Storage.Search
                 return x => op((x.Rating?.Value ?? Storage.Rating.DefaultRating).CompareTo(value));
             }
 
+            public override Predicate<SearchResult> RejectedTag(ImmutableHashSet<string> value)
+            {
+                throw new NotImplementedException("Query rejection table and compare to the hash of this result.");
+            }
+
             public override Predicate<SearchResult> Stars(string @operator, int value)
             {
                 var op = ConvertOperator(@operator);
-                throw new NotImplementedException("Get stars statistics from the database, and compare to the percentiles.");
+                throw new NotImplementedException("Get stars statistics from the database and compare to the percentiles.");
             }
 
             public override Predicate<SearchResult> Tag(ImmutableHashSet<string> value) => x => x.Tags.Any(value.Contains);

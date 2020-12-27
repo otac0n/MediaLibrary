@@ -2,8 +2,6 @@
 
 namespace MediaLibrary.Search
 {
-    using System;
-
     public class FieldTerm : Term
     {
         public const string EqualsOperator = ":";

@@ -94,6 +94,25 @@ namespace MediaLibrary.Storage.Search
                         return this.Tag(tags);
                     }
 
+                case "rejected":
+                    {
+                        var tagInfo = this.TagEngine[field.Value];
+                        var tags = tagInfo.RelatedTags(TagDialect.TagRelationships[field.Operator]);
+                        tags = tags.Union(tags.SelectMany(this.TagEngine.GetTagAliases));
+                        return this.RejectedTag(tags);
+                    }
+
+                case "suggested":
+                    return this.ParentCompiler.CompileConjunction(new[]
+                    {
+                        this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value))),
+                        this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("rejected", FieldTerm.GreaterThanOrEqualOperator, field.Value))),
+                        this.ParentCompiler.CompileDisjunction(
+                            this.TagEngine.TagSetsThatSuggest(field.Value).Select(set =>
+                                this.ParentCompiler.CompileConjunction(
+                                    set.Select(reqired => this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, reqired)))))),
+                    });
+
                 case "copies":
                     if (!int.TryParse(field.Value, out var copies))
                     {
@@ -159,6 +178,8 @@ namespace MediaLibrary.Storage.Search
         public abstract T PersonName(string value);
 
         public abstract T Rating(string @operator, double value);
+
+        public abstract T RejectedTag(ImmutableHashSet<string> value);
 
         public abstract T Stars(string @operator, int value);
 
