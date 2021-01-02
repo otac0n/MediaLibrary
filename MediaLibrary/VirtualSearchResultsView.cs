@@ -70,7 +70,20 @@ namespace MediaLibrary
                     Column.Tags,
                     r => r.Tags,
                     value => string.Join("; ", value),
-                    (a, b) => a.Tags.Count.CompareTo(b.Tags.Count),
+                    (a, b) =>
+                    {
+                        var comp = a.Tags.Count.CompareTo(b.Tags.Count);
+                        if (comp != 0 || a.Tags.Count == 0)
+                        {
+                            return comp;
+                        }
+
+                        var tagComparer = this.TagComparer;
+                        var aSorted = a.Tags.OrderBy(t => t, tagComparer);
+                        var bSorted = b.Tags.OrderBy(t => t, tagComparer);
+
+                        return aSorted.Zip(bSorted, tagComparer.Compare).Select(c => -Math.Sign(c)).Where(c => c != 0).FirstOrDefault();
+                    },
                     (g, bounds, r) =>
                     {
                         var tagComparer = this.TagComparer;
