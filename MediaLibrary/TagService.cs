@@ -5,7 +5,7 @@ namespace MediaLibrary
     using System;
     using System.Drawing;
     using System.Linq;
-    using MediaLibrary.Tagging;
+    using TaggingLibrary;
 
     public static class TagService
     {

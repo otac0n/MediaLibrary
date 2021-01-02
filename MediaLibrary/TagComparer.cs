@@ -5,7 +5,7 @@ namespace MediaLibrary
     using System;
     using System.Collections.Generic;
     using System.Drawing;
-    using MediaLibrary.Tagging;
+    using TaggingLibrary;
 
     public class TagComparer : IComparer<string>
     {

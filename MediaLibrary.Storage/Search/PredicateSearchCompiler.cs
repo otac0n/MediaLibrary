@@ -7,7 +7,7 @@ namespace MediaLibrary.Storage.Search
     using System.Linq;
     using MediaLibrary.Search;
     using MediaLibrary.Search.Sql;
-    using MediaLibrary.Tagging;
+    using TaggingLibrary;
 
     public class PredicateSearchCompiler : PredicateCompiler<SearchResult>
     {

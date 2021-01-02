@@ -8,7 +8,7 @@ namespace MediaLibrary.Storage.Search
     using System.Text;
     using MediaLibrary.Search;
     using MediaLibrary.Search.Sql;
-    using MediaLibrary.Tagging;
+    using TaggingLibrary;
     using static MediaLibrary.Search.Sql.QueryBuilder;
 
     public class SqlSearchCompiler : AnsiSqlCompiler

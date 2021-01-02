@@ -16,7 +16,7 @@ namespace MediaLibrary
     using MediaLibrary.Properties;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
-    using MediaLibrary.Tagging;
+    using TaggingLibrary;
 
     public class VirtualSearchResultsView : FastObjectListView
     {

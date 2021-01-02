@@ -11,7 +11,7 @@ namespace MediaLibrary
     using System.Windows.Forms;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
-    using MediaLibrary.Tagging;
+    using TaggingLibrary;
 
     public partial class EditTagsForm : Form
     {

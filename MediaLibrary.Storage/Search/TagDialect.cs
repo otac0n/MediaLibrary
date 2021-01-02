@@ -5,7 +5,7 @@ namespace MediaLibrary.Storage.Search
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using MediaLibrary.Search;
-    using MediaLibrary.Tagging;
+    using TaggingLibrary;
 
     public static class TagDialect
     {

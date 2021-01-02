@@ -19,7 +19,6 @@
   <ItemGroup>
     <ProjectReference Include="..\MediaLibrary\MediaLibrary.csproj" />
     <ProjectReference Include="..\MediaLibrary.Storage\MediaLibrary.Storage.csproj" />
-    <ProjectReference Include="..\MediaLibrary.Tagging\MediaLibrary.Tagging.csproj" />
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />

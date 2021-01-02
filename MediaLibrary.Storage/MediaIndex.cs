@@ -21,7 +21,7 @@ namespace MediaLibrary.Storage
     using MediaLibrary.Search.Sql;
     using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;
-    using MediaLibrary.Tagging;
+    using TaggingLibrary;
 
     public class MediaIndex : IDisposable
     {
@@ -34,12 +34,12 @@ namespace MediaLibrary.Storage
         private readonly string indexPath;
         private readonly WeakReferenceCache<long, Person> personCache = new WeakReferenceCache<long, Person>();
         private readonly WeakReferenceCache<string, SearchResult> searchResultsCache = new WeakReferenceCache<string, SearchResult>();
-        private readonly TagRulesGrammar tagRuleGrammar;
+        private readonly TagRulesParser tagRuleParser;
 
         public MediaIndex(string indexPath)
         {
             this.indexPath = indexPath;
-            this.tagRuleGrammar = new TagRulesGrammar();
+            this.tagRuleParser = new TagRulesParser();
         }
 
         public event EventHandler<HashInvalidatedEventArgs> HashInvalidated;
@@ -296,7 +296,7 @@ namespace MediaLibrary.Storage
         public async Task Initialize()
         {
             await this.IndexWrite(conn => conn.Execute(Queries.CreateSchema)).ConfigureAwait(false);
-            this.TagEngine = new TagRuleEngine(this.tagRuleGrammar.Parse(await this.GetAllTagRules().ConfigureAwait(false)));
+            this.TagEngine = new TagRuleEngine(this.tagRuleParser.Parse(await this.GetAllTagRules().ConfigureAwait(false)));
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
             lock (this.fileSystemWatchers)
             {
@@ -505,7 +505,7 @@ namespace MediaLibrary.Storage
 
         public async Task UpdateTagRules(string rules)
         {
-            var updatedEngine = new TagRuleEngine(this.tagRuleGrammar.Parse(rules));
+            var updatedEngine = new TagRuleEngine(this.tagRuleParser.Parse(rules));
             await this.IndexWrite(conn => conn.Execute(Queries.UdateTagRules, new { Rules = rules })).ConfigureAwait(false);
             this.TagEngine = updatedEngine;
             this.TagRulesUpdated?.Invoke(this, new ItemUpdatedEventArgs<TagRuleEngine>(updatedEngine));

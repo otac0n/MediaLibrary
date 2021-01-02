@@ -6,7 +6,7 @@ namespace MediaLibrary.Storage.Search
     using System.Collections.Immutable;
     using System.Linq;
     using MediaLibrary.Search;
-    using MediaLibrary.Tagging;
+    using TaggingLibrary;
 
     public abstract class SearchDialect<T>
     {

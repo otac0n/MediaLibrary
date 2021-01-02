@@ -17,12 +17,13 @@
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8" PrivateAssets="All" />
     <PackageReference Include="Pegasus" Version="4.1.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All" />
-    <PackageReference Include="System.Collections.Immutable" Version="1.7.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.7.1" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="TaggingLibrary" Version="0.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MediaLibrary.Search\MediaLibrary.Search.csproj" />
-    <ProjectReference Include="..\MediaLibrary.Tagging\MediaLibrary.Tagging.csproj" />
   </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include="MediaLibrary.Storage.ruleset" />
