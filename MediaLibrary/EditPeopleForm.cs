@@ -36,7 +36,12 @@ namespace MediaLibrary
             if (result == DialogResult.Yes)
             {
                 this.editorTablePanel.Enabled = false;
-                this.SelectedPerson = await this.index.AddPerson(name).ConfigureAwait(true);
+                var person = await this.index.AddPerson(name).ConfigureAwait(true);
+                this.people.Add(person);
+                this.personSearchBox.People = this.people;
+                this.personSearchBox.Text = name;
+                this.personSearchBox.SelectedPerson = person;
+                this.SelectedPerson = person;
                 this.RefreshView();
             }
         }
