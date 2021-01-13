@@ -102,9 +102,9 @@ namespace MediaLibrary
             this.Enabled = true;
         }
 
-        private TagControl GetOrUpdateSuggestionControl(string tag, bool isMissing, bool isInMissingGroups, IEnumerable<TagRule> rules)
+        private TagControl GetOrUpdateSuggestionControl(string tag, bool isMissing, bool isInMissingGroups, IEnumerable<IList<TagRule>> rules)
         {
-            var toolTip = string.Join(Environment.NewLine, rules.OrderBy(r => r.Operator).ThenBy(r => r.Right.Count));
+            var toolTip = string.Join(Environment.NewLine, rules.Select(r => string.Join(Environment.NewLine, r)));
             if (!this.suggestionControls.TryGetValue(tag, out var suggestionControl))
             {
                 suggestionControl = new TagControl
@@ -150,9 +150,10 @@ namespace MediaLibrary
 
         private async void PopulateTagsCombo()
         {
-            var tags = await this.index.GetAllTags().ConfigureAwait(true);
+            var tagSet = new HashSet<string>(this.index.TagEngine.GetKnownTags());
+            tagSet.UnionWith(await this.index.GetAllTags().ConfigureAwait(true));
             var text = this.tagCombo.Text;
-            this.tagCombo.DataSource = tags;
+            this.tagCombo.DataSource = tagSet.ToList();
             this.tagCombo.Text = text;
         }
 
@@ -160,11 +161,11 @@ namespace MediaLibrary
         {
             this.suggestedTags.SuspendLayout();
             var threshold = this.searchResults.Count / 2 + 1;
-            var result = this.index.TagEngine.Analyze(this.tagCounts.Where(t => t.Value >= threshold).Select(t => t.Key));
+            var result = this.index.TagEngine.Analyze(this.tagCounts.Where(t => t.Value >= threshold).Select(t => t.Key), this.rejectedTags);
             var allMissingTags = new HashSet<string>(result.MissingTagSets.SelectMany(t => t.Result));
             var missingTags = new HashSet<string>(result.MissingTagSets.Where(t => t.Result.Count == 1).SelectMany(t => t.Result));
 
-            var rulesLookup = result.SuggestedTags.ToLookup(r => r.Result, r => r.Rule);
+            var rulesLookup = result.SuggestedTags.ToLookup(r => r.Result, r => r.Rules);
             var existing = new HashSet<Control>(this.suggestedTags.Controls.Cast<Control>());
             foreach (var c in existing)
             {

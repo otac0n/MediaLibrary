@@ -42,7 +42,7 @@ namespace MediaLibrary.Web.Controllers
         {
             var engine = this.index.TagEngine;
             var rawTags = await this.index.GetAllTags().ConfigureAwait(true);
-            var tags = new HashSet<string>(rawTags.Select(engine.Rename).Concat(engine.GetKnownTags()));
+            var tags = new HashSet<string>(engine.GetKnownTags().Concat(rawTags).Select(engine.Rename));
 
             return this.Content(HttpStatusCode.OK, tags.OrderBy(t => t).Select(t => engine[t]));
         }
