@@ -97,6 +97,8 @@ namespace MediaLibrary.Storage
             ";
 
             public static readonly string RemovePerson = @"
+                DELETE FROM Alias WHERE PersonId = @PersonId
+                DELETE FROM HashPerson WHERE PersonId = @PersonId
                 DELETE FROM Person WHERE PersonId = @PersonId
             ";
 
