@@ -3,6 +3,7 @@
 namespace MediaLibrary
 {
     using System;
+    using System.Collections.Generic;
     using System.ComponentModel;
     using System.Windows.Forms;
 
@@ -28,6 +29,56 @@ namespace MediaLibrary
             else
             {
                 action();
+            }
+        }
+
+        public static void UpdateControlsCollection<TItem, TControl>(this Control control, IList<TItem> items, Func<TControl> create, Action<TControl> destroy, Action<TControl, TItem> update)
+            where TControl : Control
+        {
+            control.SuspendLayout();
+            try
+            {
+                if (items.Count == 0)
+                {
+                    foreach (var child in control.Controls)
+                    {
+                        (child as IDisposable)?.Dispose();
+                    }
+
+                    control.Controls.Clear();
+                }
+                else
+                {
+                    var write = 0;
+                    foreach (var tag in items)
+                    {
+                        if (write < control.Controls.Count)
+                        {
+                            var child = (TControl)control.Controls[write];
+                            update(child, tag);
+                        }
+                        else
+                        {
+                            var child = create();
+                            update(child, tag);
+                            control.Controls.Add(child);
+                        }
+
+                        write++;
+                    }
+
+                    while (write < control.Controls.Count)
+                    {
+                        var child = (TControl)control.Controls[write];
+                        control.Controls.RemoveAt(write);
+                        (child as IDisposable)?.Dispose();
+                        destroy(child);
+                    }
+                }
+            }
+            finally
+            {
+                control.ResumeLayout();
             }
         }
     }

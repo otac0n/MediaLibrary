@@ -18,7 +18,6 @@ namespace MediaLibrary
         private readonly MediaIndex index;
         private readonly HashSet<string> rejectedTags = new HashSet<string>();
         private readonly IList<SearchResult> searchResults;
-        private readonly Dictionary<string, TagControl> suggestionControls = new Dictionary<string, TagControl>();
         private readonly Dictionary<string, TagControl> tagControls = new Dictionary<string, TagControl>();
         private Dictionary<string, int> tagCounts;
 
@@ -102,35 +101,6 @@ namespace MediaLibrary
             this.Enabled = true;
         }
 
-        private TagControl GetOrUpdateSuggestionControl(string tag, bool isMissing, bool isInMissingGroups, IEnumerable<IList<TagRule>> rules)
-        {
-            var toolTip = string.Join(Environment.NewLine, rules.Select(r => string.Join(Environment.NewLine, r)));
-            if (!this.suggestionControls.TryGetValue(tag, out var suggestionControl))
-            {
-                suggestionControl = new TagControl
-                {
-                    Text = tag,
-                    Tag = toolTip,
-                    Indeterminate = !isMissing, // TODO: Third state for !isInMissingGroups,
-                    AllowDelete = true,
-                    ContextMenuStrip = this.suggestionContextMenu,
-                };
-                suggestionControl.MouseClick += this.SuggestionControl_MouseClick;
-                suggestionControl.DeleteClick += this.SuggestionControl_DeleteClick;
-                suggestionControl.MouseEnter += this.SuggestionControl_MouseEnter;
-                suggestionControl.MouseLeave += this.SuggestionControl_MouseLeave;
-                suggestionControl.Cursor = Cursors.Hand;
-                this.suggestionControls[tag] = suggestionControl;
-            }
-            else
-            {
-                suggestionControl.Indeterminate = !isMissing; // TODO: Third state for !isInMissingGroups,
-                suggestionControl.Tag = toolTip;
-            }
-
-            return suggestionControl;
-        }
-
         private async Task PopulateExistingTags()
         {
             this.tagCounts = this.CountTags();
@@ -160,36 +130,56 @@ namespace MediaLibrary
 
         private void RefreshSuggestions()
         {
-            this.suggestedTags.SuspendLayout();
             var threshold = this.searchResults.Count / 2 + 1;
-            var result = this.index.TagEngine.Analyze(this.tagCounts.Where(t => t.Value >= threshold).Select(t => t.Key), this.rejectedTags);
-            var allMissingTags = new HashSet<string>(result.MissingTagSets.SelectMany(t => t.Result));
-            var missingTags = new HashSet<string>(result.MissingTagSets.Where(t => t.Result.Count == 1).SelectMany(t => t.Result));
+            var analysisResult = this.index.TagEngine.Analyze(this.tagCounts.Where(t => t.Value >= threshold).Select(t => t.Key), this.rejectedTags);
+            var allMissingTags = new HashSet<string>(analysisResult.MissingTagSets.SelectMany(t => t.Result));
+            var missingTags = new HashSet<string>(analysisResult.MissingTagSets.Where(t => t.Result.Count == 1).SelectMany(t => t.Result));
 
-            var rulesLookup = result.SuggestedTags.ToLookup(r => r.Result, r => r.Rules);
-            var existing = new HashSet<Control>(this.suggestedTags.Controls.Cast<Control>());
-            foreach (var c in existing)
-            {
-                if (!rulesLookup[c.Text].Any())
+            var tagComparer = this.index.TagEngine.GetTagComparer();
+            var rulesLookup = analysisResult.SuggestedTags.ToLookup(r => r.Result, r => r.Rules);
+            this.suggestedTags.UpdateControlsCollection(
+                rulesLookup.ToList(),
+                () =>
                 {
-                    this.suggestedTags.Controls.Remove(c);
-                }
-            }
-
-            foreach (var g in rulesLookup)
-            {
-                var suggestion = g.Key;
-                if (!this.rejectedTags.Contains(suggestion))
-                {
-                    var suggestionControl = this.GetOrUpdateSuggestionControl(suggestion, missingTags.Contains(suggestion), allMissingTags.Contains(suggestion), g);
-                    if (!existing.Contains(suggestionControl))
+                    TagControl tagControl = null;
+                    try
                     {
-                        this.suggestedTags.Controls.Add(suggestionControl);
+                        tagControl = new TagControl
+                        {
+                            AllowDelete = true,
+                            ContextMenuStrip = this.suggestionContextMenu,
+                            Cursor = Cursors.Hand,
+                        };
+                        tagControl.MouseClick += this.SuggestionControl_MouseClick;
+                        tagControl.DeleteClick += this.SuggestionControl_DeleteClick;
+                        tagControl.MouseEnter += this.SuggestionControl_MouseEnter;
+                        tagControl.MouseLeave += this.SuggestionControl_MouseLeave;
+                        var result = tagControl;
+                        tagControl = null;
+                        return result;
                     }
-                }
-            }
+                    finally
+                    {
+                        tagControl?.Dispose();
+                    }
+                },
+                tagControl =>
+                {
+                    tagControl.MouseClick -= this.SuggestionControl_MouseClick;
+                    tagControl.DeleteClick -= this.SuggestionControl_DeleteClick;
+                    tagControl.MouseEnter -= this.SuggestionControl_MouseEnter;
+                    tagControl.MouseLeave -= this.SuggestionControl_MouseLeave;
+                },
+                (tagControl, tag) =>
+                {
+                    var toolTip = string.Join(Environment.NewLine, tag.Select(r => string.Join(Environment.NewLine, r)));
+                    var isMissing = missingTags.Contains(tag.Key);
+                    var isInMissingGroups = allMissingTags.Contains(tag.Key);
 
-            this.suggestedTags.ResumeLayout();
+                    tagControl.Text = tag.Key;
+                    tagControl.Tag = toolTip;
+                    tagControl.Indeterminate = !isMissing; // TODO: Third state for !isInMissingGroups,
+                });
         }
 
         private void RejectSuggestionMenuItem_Click(object sender, EventArgs e)
@@ -205,9 +195,10 @@ namespace MediaLibrary
             var tag = tagControl.Text;
             this.RemoveTagControl(tagControl, destroy: true);
 
-            if (this.suggestionControls.TryGetValue(tag, out tagControl))
+            var suggestion = this.suggestedTags.Controls.Cast<TagControl>().Where(s => s.Text == tag).SingleOrDefault();
+            if (suggestion != null)
             {
-                this.RemoveSuggestionControl(tagControl, destroy: true);
+                this.RemoveSuggestionControl(suggestion, destroy: true);
             }
 
             foreach (var searchResult in this.searchResults)
@@ -231,7 +222,6 @@ namespace MediaLibrary
                 tagControl.MouseEnter -= this.SuggestionControl_MouseEnter;
                 tagControl.MouseLeave -= this.SuggestionControl_MouseLeave;
                 this.toolTip.Hide(this);
-                this.suggestionControls.Remove(tag);
                 this.toolTip.SetToolTip(tagControl, null);
                 tagControl.Dispose();
             }
