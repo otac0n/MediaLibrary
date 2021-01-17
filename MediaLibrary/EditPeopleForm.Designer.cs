@@ -227,10 +227,10 @@ namespace MediaLibrary
             this.personSearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.personSearchBox.Location = new System.Drawing.Point(105, 13);
             this.personSearchBox.Name = "personSearchBox";
-            this.personSearchBox.SelectedPerson = null;
+            this.personSearchBox.SelectedItem = null;
             this.personSearchBox.Size = new System.Drawing.Size(418, 21);
             this.personSearchBox.TabIndex = 0;
-            this.personSearchBox.SelectedPersonChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
+            this.personSearchBox.SelectedItemChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
             this.personSearchBox.TextUpdate += new System.EventHandler(this.PersonSearchBox_TextUpdate);
             // 
             // EditPeopleForm

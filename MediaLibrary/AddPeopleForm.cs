@@ -32,7 +32,7 @@ namespace MediaLibrary
                 return;
             }
 
-            if (!(this.personSearchBox.SelectedPerson is Person person))
+            if (!(this.personSearchBox.SelectedItem is Person person))
             {
                 this.personSearchBox.Text = string.Empty;
                 this.personSearchBox.Focus();
@@ -41,7 +41,7 @@ namespace MediaLibrary
             }
             else
             {
-                this.personSearchBox.SelectedPerson = null;
+                this.personSearchBox.SelectedItem = null;
                 this.personSearchBox.Focus();
             }
 
@@ -126,12 +126,12 @@ namespace MediaLibrary
         private async void PopulatePeopleCombo()
         {
             var people = await this.index.GetAllPeople().ConfigureAwait(true);
-            this.personSearchBox.People = people;
+            this.personSearchBox.Items = people;
         }
 
         private void UpdateTitle()
         {
-            var person = this.personSearchBox.SelectedPerson;
+            var person = this.personSearchBox.SelectedItem;
             var text = this.personSearchBox.Text;
             this.Text =
                 person != null ? $"Add Person: {person} (ID: {person.PersonId})" :

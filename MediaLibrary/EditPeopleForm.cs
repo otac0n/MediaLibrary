@@ -38,9 +38,9 @@ namespace MediaLibrary
                 this.editorTablePanel.Enabled = false;
                 var person = await this.index.AddPerson(name).ConfigureAwait(true);
                 this.people.Add(person);
-                this.personSearchBox.People = this.people;
+                this.personSearchBox.Items = this.people;
                 this.personSearchBox.Text = name;
-                this.personSearchBox.SelectedPerson = person;
+                this.personSearchBox.SelectedItem = person;
                 this.SelectedPerson = person;
                 this.RefreshView();
             }
@@ -257,7 +257,7 @@ namespace MediaLibrary
         private async void PersonSearchBox_SelectedPersonChanged(object sender, EventArgs e)
         {
             this.editorTablePanel.Enabled = false;
-            if (this.personSearchBox.SelectedPerson is Person person)
+            if (this.personSearchBox.SelectedItem is Person person)
             {
                 this.SelectedPerson = await this.index.GetPersonById(person.PersonId).ConfigureAwait(true);
                 this.SelectedPersonAliases = await this.index.GetAliases(person.PersonId).ConfigureAwait(true);
@@ -281,7 +281,7 @@ namespace MediaLibrary
         {
             this.people = await this.index.GetAllPeople().ConfigureAwait(true);
             var text = this.personSearchBox.Text;
-            this.personSearchBox.People = this.people;
+            this.personSearchBox.Items = this.people;
             this.personSearchBox.Text = text;
 
             this.siteTextBox.AutoCompleteCustomSource.AddRange(await this.index.GetAllAliasSites().ConfigureAwait(true));

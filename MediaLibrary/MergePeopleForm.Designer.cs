@@ -45,10 +45,10 @@ namespace MediaLibrary
             this.personASearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.personASearchBox.Location = new System.Drawing.Point(108, 83);
             this.personASearchBox.Name = "personASearchBox";
-            this.personASearchBox.SelectedPerson = null;
+            this.personASearchBox.SelectedItem = null;
             this.personASearchBox.Size = new System.Drawing.Size(382, 21);
             this.personASearchBox.TabIndex = 0;
-            this.personASearchBox.SelectedPersonChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
+            this.personASearchBox.SelectedItemChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
             // 
             // personALabel
             // 
@@ -75,10 +75,10 @@ namespace MediaLibrary
             this.personBSearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.personBSearchBox.Location = new System.Drawing.Point(108, 110);
             this.personBSearchBox.Name = "personBSearchBox";
-            this.personBSearchBox.SelectedPerson = null;
+            this.personBSearchBox.SelectedItem = null;
             this.personBSearchBox.Size = new System.Drawing.Size(382, 21);
             this.personBSearchBox.TabIndex = 2;
-            this.personBSearchBox.SelectedPersonChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
+            this.personBSearchBox.SelectedItemChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
             // 
             // titleLabel
             // 

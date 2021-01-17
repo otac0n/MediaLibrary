@@ -42,8 +42,8 @@ namespace MediaLibrary
 
         private void OkButton_Click(object sender, EventArgs e)
         {
-            var personA = this.personASearchBox.SelectedPerson;
-            var personB = this.personBSearchBox.SelectedPerson;
+            var personA = this.personASearchBox.SelectedItem;
+            var personB = this.personBSearchBox.SelectedItem;
 
             var result = MessageBox.Show($"This will merge {personA.Name} (ID: {personA.PersonId}) and {personB.Name} (ID: {personB.PersonId}). This is a destructive operation and cannot be undone. Are you sure you want to merge these people?", "Are you sure?", MessageBoxButtons.YesNo);
             if (result == DialogResult.Yes)
@@ -63,18 +63,18 @@ namespace MediaLibrary
             this.people = await this.index.GetAllPeople().ConfigureAwait(true);
 
             var text = this.personASearchBox.Text;
-            this.personASearchBox.People = this.people;
+            this.personASearchBox.Items = this.people;
             this.personASearchBox.Text = text;
 
             text = this.personBSearchBox.Text;
-            this.personBSearchBox.People = this.people;
+            this.personBSearchBox.Items = this.people;
             this.personBSearchBox.Text = text;
         }
 
         private void RefreshView()
         {
-            var personA = this.personASearchBox.SelectedPerson;
-            var personB = this.personBSearchBox.SelectedPerson;
+            var personA = this.personASearchBox.SelectedItem;
+            var personB = this.personBSearchBox.SelectedItem;
             this.okButton.Enabled = personA != null && personB != null && personA.PersonId != personB.PersonId;
         }
     }
