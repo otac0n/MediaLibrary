@@ -138,7 +138,7 @@ namespace MediaLibrary
             var tagComparer = this.index.TagEngine.GetTagComparer();
             var rulesLookup = analysisResult.SuggestedTags.ToLookup(r => r.Result, r => r.Rules);
             this.suggestedTags.UpdateControlsCollection(
-                rulesLookup.ToList(),
+                rulesLookup.OrderByDescending(g => g.Count()).ToList(),
                 () =>
                 {
                     TagControl tagControl = null;
