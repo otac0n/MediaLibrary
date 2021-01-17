@@ -30,8 +30,12 @@ namespace MediaLibrary
         {
             this.applyButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
-            this.rules = new System.Windows.Forms.TextBox();
             this.okButton = new System.Windows.Forms.Button();
+            this.rulePages = new System.Windows.Forms.TabControl();
+            this.defaultPage = new System.Windows.Forms.TabPage();
+            this.rules = new System.Windows.Forms.TextBox();
+            this.rulePages.SuspendLayout();
+            this.defaultPage.SuspendLayout();
             this.SuspendLayout();
             // 
             // applyButton
@@ -58,23 +62,6 @@ namespace MediaLibrary
             this.cancelButton.UseVisualStyleBackColor = true;
             this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
-            // rules
-            // 
-            this.rules.AcceptsReturn = true;
-            this.rules.AcceptsTab = true;
-            this.rules.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.rules.Enabled = false;
-            this.rules.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.rules.Location = new System.Drawing.Point(12, 12);
-            this.rules.Multiline = true;
-            this.rules.Name = "rules";
-            this.rules.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.rules.Size = new System.Drawing.Size(365, 470);
-            this.rules.TabIndex = 0;
-            this.rules.WordWrap = false;
-            // 
             // okButton
             // 
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -87,6 +74,46 @@ namespace MediaLibrary
             this.okButton.UseVisualStyleBackColor = true;
             this.okButton.Click += new System.EventHandler(this.OkButton_Click);
             // 
+            // rulePages
+            // 
+            this.rulePages.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.rulePages.Controls.Add(this.defaultPage);
+            this.rulePages.Location = new System.Drawing.Point(12, 12);
+            this.rulePages.Name = "rulePages";
+            this.rulePages.SelectedIndex = 0;
+            this.rulePages.Size = new System.Drawing.Size(365, 470);
+            this.rulePages.TabIndex = 4;
+            // 
+            // defaultPage
+            // 
+            this.defaultPage.Controls.Add(this.rules);
+            this.defaultPage.Location = new System.Drawing.Point(4, 22);
+            this.defaultPage.Name = "defaultPage";
+            this.defaultPage.Padding = new System.Windows.Forms.Padding(3);
+            this.defaultPage.Size = new System.Drawing.Size(357, 444);
+            this.defaultPage.TabIndex = 0;
+            this.defaultPage.Text = "(Default)";
+            this.defaultPage.UseVisualStyleBackColor = true;
+            // 
+            // rules
+            // 
+            this.rules.AcceptsReturn = true;
+            this.rules.AcceptsTab = true;
+            this.rules.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.rules.Enabled = false;
+            this.rules.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rules.Location = new System.Drawing.Point(0, 0);
+            this.rules.Multiline = true;
+            this.rules.Name = "rules";
+            this.rules.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.rules.Size = new System.Drawing.Size(357, 444);
+            this.rules.TabIndex = 1;
+            this.rules.WordWrap = false;
+            // 
             // EditTagRulesForm
             // 
             this.AcceptButton = this.okButton;
@@ -94,10 +121,10 @@ namespace MediaLibrary
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
             this.ClientSize = new System.Drawing.Size(389, 523);
+            this.Controls.Add(this.rulePages);
             this.Controls.Add(this.okButton);
             this.Controls.Add(this.applyButton);
             this.Controls.Add(this.cancelButton);
-            this.Controls.Add(this.rules);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.KeyPreview = true;
             this.MaximizeBox = false;
@@ -108,15 +135,19 @@ namespace MediaLibrary
             this.Text = "Edit Tag Rules";
             this.Load += new System.EventHandler(this.EditTagRulesForm_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.EditTagRulesForm_KeyDown);
+            this.rulePages.ResumeLayout(false);
+            this.defaultPage.ResumeLayout(false);
+            this.defaultPage.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
         private System.Windows.Forms.Button applyButton;
         private System.Windows.Forms.Button cancelButton;
-        private System.Windows.Forms.TextBox rules;
         private System.Windows.Forms.Button okButton;
+        private System.Windows.Forms.TabControl rulePages;
+        private System.Windows.Forms.TabPage defaultPage;
+        private System.Windows.Forms.TextBox rules;
     }
 }
