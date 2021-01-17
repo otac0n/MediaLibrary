@@ -31,9 +31,9 @@ namespace MediaLibrary
 
         private async void AddButton_Click(object sender, EventArgs e)
         {
-            var tag = this.tagCombo.Text.Trim();
-            this.tagCombo.Text = string.Empty;
-            this.tagCombo.Focus();
+            var tag = this.tagSearchBox.Text.Trim();
+            this.tagSearchBox.Text = string.Empty;
+            this.tagSearchBox.Focus();
 
             if (string.IsNullOrWhiteSpace(tag))
             {
@@ -150,11 +150,12 @@ namespace MediaLibrary
 
         private async void PopulateTagsCombo()
         {
-            var tagSet = new HashSet<string>(this.index.TagEngine.GetKnownTags());
-            tagSet.UnionWith(await this.index.GetAllTags().ConfigureAwait(true));
-            var text = this.tagCombo.Text;
-            this.tagCombo.DataSource = tagSet.ToList();
-            this.tagCombo.Text = text;
+            var engine = this.index.TagEngine;
+            var rawTags = await this.index.GetAllTags().ConfigureAwait(true);
+            var tags = engine.GetKnownTags().Concat(rawTags).Select(engine.Rename).Distinct().Select(t => engine[t]);
+            var text = this.tagSearchBox.Text;
+            this.tagSearchBox.Items = tags.ToList();
+            this.tagSearchBox.Text = text;
         }
 
         private void RefreshSuggestions()

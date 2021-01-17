@@ -29,7 +29,7 @@ namespace MediaLibrary
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.tagCombo = new System.Windows.Forms.ComboBox();
+            this.tagSearchBox = new MediaLibrary.TagSearchBox();
             this.addButton = new System.Windows.Forms.Button();
             this.tagLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.suggestedTags = new System.Windows.Forms.FlowLayoutPanel();
@@ -45,17 +45,17 @@ namespace MediaLibrary
             this.suggestionContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
-            // tagCombo
+            // tagSearchBox
             // 
-            this.tagCombo.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.tagSearchBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tagCombo.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.tagCombo.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.tagCombo.FormattingEnabled = true;
-            this.tagCombo.Location = new System.Drawing.Point(12, 14);
-            this.tagCombo.Name = "tagCombo";
-            this.tagCombo.Size = new System.Drawing.Size(279, 21);
-            this.tagCombo.TabIndex = 0;
+            this.tagSearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.tagSearchBox.FormattingEnabled = true;
+            this.tagSearchBox.Location = new System.Drawing.Point(12, 14);
+            this.tagSearchBox.Name = "tagSearchBox";
+            this.tagSearchBox.SelectedItem = null;
+            this.tagSearchBox.Size = new System.Drawing.Size(279, 21);
+            this.tagSearchBox.TabIndex = 0;
             // 
             // addButton
             // 
@@ -118,14 +118,14 @@ namespace MediaLibrary
             // removeTagMenuItem
             // 
             this.removeTagMenuItem.Name = "removeTagMenuItem";
-            this.removeTagMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.removeTagMenuItem.Size = new System.Drawing.Size(138, 22);
             this.removeTagMenuItem.Text = "Remove Tag";
             this.removeTagMenuItem.Click += new System.EventHandler(this.RemoveTagMenuItem_Click);
             // 
             // rejectTagMenuItem
             // 
             this.rejectTagMenuItem.Name = "rejectTagMenuItem";
-            this.rejectTagMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.rejectTagMenuItem.Size = new System.Drawing.Size(138, 22);
             this.rejectTagMenuItem.Text = "Reject Tag";
             this.rejectTagMenuItem.Click += new System.EventHandler(this.RejectTagMenuItem_Click);
             // 
@@ -139,7 +139,7 @@ namespace MediaLibrary
             // rejectSuggestionMenuItem
             // 
             this.rejectSuggestionMenuItem.Name = "rejectSuggestionMenuItem";
-            this.rejectSuggestionMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.rejectSuggestionMenuItem.Size = new System.Drawing.Size(168, 22);
             this.rejectSuggestionMenuItem.Text = "Reject Suggestion";
             this.rejectSuggestionMenuItem.Click += new System.EventHandler(this.RejectSuggestionMenuItem_Click);
             // 
@@ -151,7 +151,7 @@ namespace MediaLibrary
             this.ClientSize = new System.Drawing.Size(384, 261);
             this.Controls.Add(this.tagLayoutPanel);
             this.Controls.Add(this.addButton);
-            this.Controls.Add(this.tagCombo);
+            this.Controls.Add(this.tagSearchBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.KeyPreview = true;
             this.MaximizeBox = false;
@@ -172,7 +172,7 @@ namespace MediaLibrary
 
         #endregion
 
-        private System.Windows.Forms.ComboBox tagCombo;
+        private TagSearchBox tagSearchBox;
         private System.Windows.Forms.Button addButton;
         private System.Windows.Forms.FlowLayoutPanel tagLayoutPanel;
         private System.Windows.Forms.FlowLayoutPanel suggestedTags;
