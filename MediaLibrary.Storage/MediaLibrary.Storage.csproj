@@ -20,7 +20,7 @@
     <PackageReference Include="System.Collections.Immutable" Version="1.7.1" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    <PackageReference Include="TaggingLibrary" Version="0.4.0-alpha.7" />
+    <PackageReference Include="TaggingLibrary" Version="0.4.0-alpha.11" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MediaLibrary.Search\MediaLibrary.Search.csproj" />
