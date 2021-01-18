@@ -271,6 +271,7 @@ namespace MediaLibrary
             var tagControl = (TagControl)sender;
             var tag = tagControl.Text;
             this.RemoveSuggestionControl(tagControl);
+            this.toolTip.Hide(this);
 
             await this.AddTagAndUpdate(tag).ConfigureAwait(true);
         }
