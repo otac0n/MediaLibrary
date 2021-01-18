@@ -125,7 +125,6 @@ namespace MediaLibrary
             this.Controls.Add(this.okButton);
             this.Controls.Add(this.applyButton);
             this.Controls.Add(this.cancelButton);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.KeyPreview = true;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
