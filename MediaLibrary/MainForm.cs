@@ -5,6 +5,7 @@ namespace MediaLibrary
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Drawing;
     using System.IO;
     using System.Linq;
     using System.Threading;
@@ -22,6 +23,7 @@ namespace MediaLibrary
         private VirtualSearchResultsView listView;
         private PreviewControl preview;
         private int searchVersion;
+        private List<Form> selectionDialogs = new List<Form>();
         private int taskVersion;
 
         public MainForm(MediaIndex index)
@@ -89,10 +91,7 @@ namespace MediaLibrary
             var searchResults = (((ToolStripMenuItem)sender).Tag as IList<SearchResult>) ?? this.listView.SelectedResults;
             if (searchResults.Count > 0)
             {
-                using (var addPeopleForm = new AddPeopleForm(this.index, searchResults))
-                {
-                    addPeopleForm.ShowDialog(this);
-                }
+                this.OpenSelectionDialog(new AddPeopleForm(this.index, searchResults));
             }
         }
 
@@ -166,10 +165,7 @@ namespace MediaLibrary
             var searchResults = (((ToolStripMenuItem)sender).Tag as IList<SearchResult>) ?? this.listView.SelectedResults;
             if (searchResults.Count > 0)
             {
-                using (var editTagsForm = new EditTagsForm(this.index, searchResults))
-                {
-                    editTagsForm.ShowDialog(this);
-                }
+                this.OpenSelectionDialog(new EditTagsForm(this.index, searchResults));
             }
         }
 
@@ -209,6 +205,12 @@ namespace MediaLibrary
                 settings.Columns = this.listView.ColumnsSettings;
                 Save();
             };
+        }
+
+        private void CloseSelectionDialogs()
+        {
+            this.selectionDialogs.ForEach(d => d.Dispose());
+            this.selectionDialogs.Clear();
         }
 
         private void CopyMenuItem_Click(object sender, EventArgs e)
@@ -344,6 +346,7 @@ namespace MediaLibrary
 
         private void ListView_SelectedIndexChanged(object sender, EventArgs e)
         {
+            this.CloseSelectionDialogs();
             this.UpdatePreview();
         }
 
@@ -418,6 +421,24 @@ namespace MediaLibrary
             {
                 Process.Start(path);
             }
+        }
+
+        private void OpenSelectionDialog(Form form)
+        {
+            form.Owner = this;
+            form.ShowInTaskbar = false;
+            form.FormClosed += (s, a) => form.Dispose();
+            this.selectionDialogs.Add(form);
+
+            if (form.StartPosition == FormStartPosition.CenterParent)
+            {
+                form.StartPosition = FormStartPosition.Manual;
+                var x = this.Location.X + (this.Width - form.Width) / 2;
+                var y = this.Location.Y + (this.Height - form.Height) / 2;
+                form.Location = new Point(Math.Max(x, 0), Math.Max(y, 0));
+            }
+
+            form.Show();
         }
 
         private void OpenSlideshow(bool shuffle = false, bool autoPlay = false)
