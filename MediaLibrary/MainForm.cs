@@ -452,13 +452,17 @@ namespace MediaLibrary
             new SlideShowForm(this.index, searchResults, shuffle, autoPlay).Show(this);
         }
 
-        private async Task PerformSearch()
+        private async Task PerformSearch(bool throttle = false)
         {
+            var selectedHashes = new HashSet<string>(this.listView.SelectedResults.Select(r => r.Hash));
             var searchVersion = Interlocked.Increment(ref this.searchVersion);
-            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(true);
-            if (this.searchVersion != searchVersion)
+            if (throttle)
             {
-                return;
+                await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(true);
+                if (this.searchVersion != searchVersion)
+                {
+                    return;
+                }
             }
 
             IList<SearchResult> data;
@@ -474,6 +478,7 @@ namespace MediaLibrary
             if (this.searchVersion == searchVersion)
             {
                 this.listView.SearchResults = data;
+                this.listView.SelectObjects(data.Where(d => selectedHashes.Contains(d.Hash)).ToList());
             }
         }
 
@@ -505,7 +510,7 @@ namespace MediaLibrary
 
         private async void RefreshMenuItem_Click(object sender, EventArgs e)
         {
-            await this.PerformSearch();
+            await this.PerformSearch().ConfigureAwait(true);
         }
 
         private void SavedSearchMenuItem_Click(object sender, EventArgs e)
@@ -546,7 +551,7 @@ namespace MediaLibrary
 
         private async void SearchBox_TextChangedAsync(object sender, EventArgs e)
         {
-            await this.PerformSearch();
+            await this.PerformSearch(throttle: true).ConfigureAwait(true);
         }
 
         private void ShowPreviewMenuItem_CheckedChanged(object sender, EventArgs e)
