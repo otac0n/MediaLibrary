@@ -32,8 +32,8 @@ namespace MediaLibrary
             this.tagSearchBox = new MediaLibrary.TagSearchBox();
             this.addButton = new System.Windows.Forms.Button();
             this.tagLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
-            this.suggestedTags = new System.Windows.Forms.FlowLayoutPanel();
             this.existingTags = new System.Windows.Forms.FlowLayoutPanel();
+            this.suggestedTags = new System.Windows.Forms.FlowLayoutPanel();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.tagContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.removeTagMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -74,8 +74,8 @@ namespace MediaLibrary
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tagLayoutPanel.AutoScroll = true;
-            this.tagLayoutPanel.Controls.Add(this.suggestedTags);
             this.tagLayoutPanel.Controls.Add(this.existingTags);
+            this.tagLayoutPanel.Controls.Add(this.suggestedTags);
             this.tagLayoutPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.tagLayoutPanel.Location = new System.Drawing.Point(12, 45);
             this.tagLayoutPanel.Name = "tagLayoutPanel";
@@ -83,23 +83,23 @@ namespace MediaLibrary
             this.tagLayoutPanel.TabIndex = 4;
             this.tagLayoutPanel.WrapContents = false;
             // 
-            // suggestedTags
-            // 
-            this.suggestedTags.AutoSize = true;
-            this.suggestedTags.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.suggestedTags.Location = new System.Drawing.Point(3, 3);
-            this.suggestedTags.Name = "suggestedTags";
-            this.suggestedTags.Size = new System.Drawing.Size(0, 0);
-            this.suggestedTags.TabIndex = 4;
-            // 
             // existingTags
             // 
             this.existingTags.AutoSize = true;
             this.existingTags.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.existingTags.Location = new System.Drawing.Point(3, 9);
+            this.existingTags.Location = new System.Drawing.Point(3, 3);
             this.existingTags.Name = "existingTags";
             this.existingTags.Size = new System.Drawing.Size(0, 0);
-            this.existingTags.TabIndex = 5;
+            this.existingTags.TabIndex = 4;
+            // 
+            // suggestedTags
+            // 
+            this.suggestedTags.AutoSize = true;
+            this.suggestedTags.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.suggestedTags.Location = new System.Drawing.Point(3, 9);
+            this.suggestedTags.Name = "suggestedTags";
+            this.suggestedTags.Size = new System.Drawing.Size(0, 0);
+            this.suggestedTags.TabIndex = 5;
             // 
             // toolTip
             // 
@@ -175,8 +175,8 @@ namespace MediaLibrary
         private TagSearchBox tagSearchBox;
         private System.Windows.Forms.Button addButton;
         private System.Windows.Forms.FlowLayoutPanel tagLayoutPanel;
-        private System.Windows.Forms.FlowLayoutPanel suggestedTags;
         private System.Windows.Forms.FlowLayoutPanel existingTags;
+        private System.Windows.Forms.FlowLayoutPanel suggestedTags;
         private System.Windows.Forms.ToolTip toolTip;
         private System.Windows.Forms.ContextMenuStrip tagContextMenu;
         private System.Windows.Forms.ToolStripMenuItem removeTagMenuItem;
