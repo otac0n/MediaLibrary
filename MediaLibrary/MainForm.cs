@@ -452,6 +452,31 @@ namespace MediaLibrary
             new SlideShowForm(this.index, searchResults, shuffle, autoPlay).Show(this);
         }
 
+        private async Task PerformSearch()
+        {
+            var searchVersion = Interlocked.Increment(ref this.searchVersion);
+            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(true);
+            if (this.searchVersion != searchVersion)
+            {
+                return;
+            }
+
+            IList<SearchResult> data;
+            try
+            {
+                data = await this.index.SearchIndex(this.searchBox.Text).ConfigureAwait(true);
+            }
+            catch
+            {
+                data = Array.Empty<SearchResult>();
+            }
+
+            if (this.searchVersion == searchVersion)
+            {
+                this.listView.SearchResults = data;
+            }
+        }
+
         private void PlayAllButton_Click(object sender, EventArgs e)
         {
             this.OpenSlideshow(autoPlay: true);
@@ -476,6 +501,11 @@ namespace MediaLibrary
             {
                 new CompareForm(this.index, category, searchResults).Show(this);
             }
+        }
+
+        private async void RefreshMenuItem_Click(object sender, EventArgs e)
+        {
+            await this.PerformSearch();
         }
 
         private void SavedSearchMenuItem_Click(object sender, EventArgs e)
@@ -516,27 +546,7 @@ namespace MediaLibrary
 
         private async void SearchBox_TextChangedAsync(object sender, EventArgs e)
         {
-            var searchVersion = Interlocked.Increment(ref this.searchVersion);
-            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(true);
-            if (this.searchVersion != searchVersion)
-            {
-                return;
-            }
-
-            IList<SearchResult> data;
-            try
-            {
-                data = await this.index.SearchIndex(this.searchBox.Text).ConfigureAwait(true);
-            }
-            catch
-            {
-                data = Array.Empty<SearchResult>();
-            }
-
-            if (this.searchVersion == searchVersion)
-            {
-                this.listView.SearchResults = data;
-            }
+            await this.PerformSearch();
         }
 
         private void ShowPreviewMenuItem_CheckedChanged(object sender, EventArgs e)
