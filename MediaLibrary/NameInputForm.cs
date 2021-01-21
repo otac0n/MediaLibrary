@@ -11,7 +11,11 @@ namespace MediaLibrary
             this.InitializeComponent();
         }
 
-        public string SelectedName => this.name.Text;
+        public string SelectedName
+        {
+            get => this.name.Text;
+            set => this.name.Text = value;
+        }
 
         private void CancelButton_Click(object sender, System.EventArgs e)
         {

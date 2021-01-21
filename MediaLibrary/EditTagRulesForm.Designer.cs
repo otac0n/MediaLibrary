@@ -28,14 +28,20 @@ namespace MediaLibrary
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.applyButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
             this.okButton = new System.Windows.Forms.Button();
             this.rulePages = new System.Windows.Forms.TabControl();
             this.defaultPage = new System.Windows.Forms.TabPage();
             this.rules = new System.Windows.Forms.TextBox();
+            this.tabContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.renameMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.removeCategoryMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addCategoryMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rulePages.SuspendLayout();
             this.defaultPage.SuspendLayout();
+            this.tabContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // applyButton
@@ -80,11 +86,13 @@ namespace MediaLibrary
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.rulePages.Controls.Add(this.defaultPage);
+            this.rulePages.Enabled = false;
             this.rulePages.Location = new System.Drawing.Point(12, 12);
             this.rulePages.Name = "rulePages";
             this.rulePages.SelectedIndex = 0;
             this.rulePages.Size = new System.Drawing.Size(420, 497);
             this.rulePages.TabIndex = 4;
+            this.rulePages.MouseClick += new System.Windows.Forms.MouseEventHandler(this.RulePages_MouseClick);
             // 
             // defaultPage
             // 
@@ -104,7 +112,6 @@ namespace MediaLibrary
             this.rules.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.rules.Enabled = false;
             this.rules.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.rules.Location = new System.Drawing.Point(0, 0);
             this.rules.Multiline = true;
@@ -113,6 +120,39 @@ namespace MediaLibrary
             this.rules.Size = new System.Drawing.Size(412, 471);
             this.rules.TabIndex = 1;
             this.rules.WordWrap = false;
+            // 
+            // tabContextMenu
+            // 
+            this.tabContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.renameMenuItem,
+            this.removeCategoryMenuItem,
+            this.addCategoryMenuItem});
+            this.tabContextMenu.Name = "tabContextMenu";
+            this.tabContextMenu.Size = new System.Drawing.Size(181, 92);
+            // 
+            // renameMenuItem
+            // 
+            this.renameMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_edit;
+            this.renameMenuItem.Name = "renameMenuItem";
+            this.renameMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.renameMenuItem.Text = "Re&name...";
+            this.renameMenuItem.Click += new System.EventHandler(this.RenameMenuItem_Click);
+            // 
+            // removeCategoryMenuItem
+            // 
+            this.removeCategoryMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_remove;
+            this.removeCategoryMenuItem.Name = "removeCategoryMenuItem";
+            this.removeCategoryMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.removeCategoryMenuItem.Text = "&Remove Category";
+            this.removeCategoryMenuItem.Click += new System.EventHandler(this.RemoveCategoryMenuItem_Click);
+            // 
+            // addCategoryMenuItem
+            // 
+            this.addCategoryMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_add;
+            this.addCategoryMenuItem.Name = "addCategoryMenuItem";
+            this.addCategoryMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addCategoryMenuItem.Text = "&Add Category...";
+            this.addCategoryMenuItem.Click += new System.EventHandler(this.AddCategoryMenuItem_Click);
             // 
             // EditTagRulesForm
             // 
@@ -137,6 +177,7 @@ namespace MediaLibrary
             this.rulePages.ResumeLayout(false);
             this.defaultPage.ResumeLayout(false);
             this.defaultPage.PerformLayout();
+            this.tabContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -148,5 +189,9 @@ namespace MediaLibrary
         private System.Windows.Forms.TabControl rulePages;
         private System.Windows.Forms.TabPage defaultPage;
         private System.Windows.Forms.TextBox rules;
+        private System.Windows.Forms.ContextMenuStrip tabContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem removeCategoryMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addCategoryMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem renameMenuItem;
     }
 }

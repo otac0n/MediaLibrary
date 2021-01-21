@@ -5,10 +5,24 @@ namespace MediaLibrary
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using System.Drawing;
     using System.Windows.Forms;
 
     internal static class ControlHelpers
     {
+        public static int? FindTabIndex(this TabControl tabControl, Point location)
+        {
+            for (var i = 0; i < tabControl.TabCount; i++)
+            {
+                if (tabControl.GetTabRect(i).Contains(location))
+                {
+                    return i;
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Extension method allowing conditional invoke usage.
         /// </summary>

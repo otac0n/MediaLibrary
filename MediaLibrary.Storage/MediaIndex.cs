@@ -235,13 +235,13 @@ namespace MediaLibrary.Storage
             this.IndexRead(conn =>
                 conn.Query<string>(Rating.Queries.GetRatingCategories).ToList());
 
-        public Task<List<SavedSearch>> GetAllSavedSearches() =>
+        public Task<List<RuleCategory>> GetAllRuleCategories() =>
             this.IndexRead(conn =>
-                conn.Query<SavedSearch>(SavedSearch.Queries.GetSavedSearches).ToList());
+                conn.Query<RuleCategory>(RuleCategory.Queries.GetAllRuleCategories).ToList());
 
-        public Task<string> GetAllTagRules() =>
-            this.IndexRead(conn =>
-                string.Join(Environment.NewLine, conn.Query<string>(Queries.GetAllTagRules)));
+        public Task<List<SavedSearch>> GetAllSavedSearches() =>
+             this.IndexRead(conn =>
+                conn.Query<SavedSearch>(SavedSearch.Queries.GetSavedSearches).ToList());
 
         public Task<List<string>> GetAllTags() =>
             this.IndexRead(conn =>
@@ -295,8 +295,21 @@ namespace MediaLibrary.Storage
 
         public async Task Initialize()
         {
-            await this.IndexWrite(conn => conn.Execute(Queries.CreateSchema)).ConfigureAwait(false);
-            this.TagEngine = new TagRuleEngine(this.tagRuleParser.Parse(await this.GetAllTagRules().ConfigureAwait(false)));
+            await this.IndexWrite(conn =>
+            {
+                conn.Execute(Queries.CreateSchema);
+                if (!conn.Query<string>("SELECT name FROM pragma_table_info('TagRules') WHERE name = 'Category'").Any())
+                {
+                    using (var tran = conn.BeginTransaction())
+                    {
+                        conn.Execute(Queries.CreateSchema_01_AddTagRuleCategories, transaction: tran);
+                        tran.Commit();
+                    }
+                }
+            }).ConfigureAwait(false);
+
+            var ruleCategories = await this.GetAllRuleCategories().ConfigureAwait(false);
+            this.TagEngine = new TagRuleEngine(ruleCategories.SelectMany(c => this.tagRuleParser.Parse(c.Rules)));
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
             lock (this.fileSystemWatchers)
             {
@@ -503,10 +516,22 @@ namespace MediaLibrary.Storage
             this.IndexWrite(conn =>
                 conn.Execute(SavedSearch.Queries.UpdateSavedSearch, savedSearch));
 
-        public async Task UpdateTagRules(string rules)
+        public async Task UpdateTagRules(IList<RuleCategory> ruleCategories)
         {
-            var updatedEngine = new TagRuleEngine(this.tagRuleParser.Parse(rules));
-            await this.IndexWrite(conn => conn.Execute(Queries.UdateTagRules, new { Rules = rules })).ConfigureAwait(false);
+            var updatedEngine = new TagRuleEngine(ruleCategories.SelectMany(c => this.tagRuleParser.Parse(c.Rules)));
+            await this.IndexWrite(conn =>
+            {
+                using (var tran = conn.BeginTransaction())
+                {
+                    conn.Execute(RuleCategory.Queries.ClearRuleCategories, transaction: tran);
+                    foreach (var c in ruleCategories)
+                    {
+                        conn.Execute(RuleCategory.Queries.AddRuleCategory, c);
+                    }
+
+                    tran.Commit();
+                }
+            }).ConfigureAwait(false);
             this.TagEngine = updatedEngine;
             this.TagRulesUpdated?.Invoke(this, new ItemUpdatedEventArgs<TagRuleEngine>(updatedEngine));
         }
@@ -1029,7 +1054,10 @@ namespace MediaLibrary.Storage
 
                 CREATE TABLE IF NOT EXISTS TagRules
                 (
-                    Rules text NOT NULL
+                    Category text NOT NULL,
+                    [Order] integer NOT NULL,
+                    Rules text NOT NULL,
+                    PRIMARY KEY (Category)
                 );
 
                 CREATE TABLE IF NOT EXISTS Person
@@ -1083,10 +1111,10 @@ namespace MediaLibrary.Storage
                 );
             ";
 
-            public static readonly string GetAllTagRules = @"
-                SELECT
-                    Rules
-                FROM TagRules
+            public static readonly string CreateSchema_01_AddTagRuleCategories = @"
+                ALTER TABLE TagRules ADD COLUMN Category text NOT NULL DEFAULT '';
+                ALTER TABLE TagRules ADD COLUMN [Order] integer NOT NULL DEFAULT (0);
+                CREATE UNIQUE INDEX PK_Category ON TagRules(Category);
             ";
 
             public static readonly string GetIndexedPaths = @"
@@ -1100,11 +1128,6 @@ namespace MediaLibrary.Storage
                 DELETE FROM IndexedPaths
                 WHERE Path = @Path
                 AND ((@PathRaw IS NULL AND PathRaw IS NULL) OR (@PathRaw IS NOT NULL AND PathRaw = @PathRaw))
-            ";
-
-            public static readonly string UdateTagRules = @"
-                DELETE FROM TagRules;
-                INSERT INTO TagRules (Rules) VALUES (@Rules);
             ";
         }
     }
