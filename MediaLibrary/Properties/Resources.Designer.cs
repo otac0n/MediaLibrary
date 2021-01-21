@@ -123,6 +123,16 @@ namespace MediaLibrary.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap button_refresh_arrow {
+            get {
+                object obj = ResourceManager.GetObject("button_refresh_arrow", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap button_shuffle {
             get {
                 object obj = ResourceManager.GetObject("button_shuffle", resourceCulture);

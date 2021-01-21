@@ -665,6 +665,7 @@ namespace MediaLibrary
             // 
             // refreshMenuItem
             // 
+            this.refreshMenuItem.Image = global::MediaLibrary.Properties.Resources.button_refresh_arrow;
             this.refreshMenuItem.Name = "refreshMenuItem";
             this.refreshMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F5;
             this.refreshMenuItem.Size = new System.Drawing.Size(180, 22);
