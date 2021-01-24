@@ -102,7 +102,26 @@ namespace MediaLibrary.Storage.Search
                         return this.RejectedTag(tags);
                     }
 
+                case "~":
+                    {
+                        if (field.Operator != FieldTerm.EqualsOperator)
+                        {
+                            throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                        }
+
+                        return this.ParentCompiler.CompileConjunction(new[]
+                        {
+                            this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value))),
+                            this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("rejected", FieldTerm.GreaterThanOrEqualOperator, field.Value))),
+                        });
+                    }
+
                 case "suggested":
+                    if (field.Operator != FieldTerm.EqualsOperator)
+                    {
+                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                    }
+
                     return this.ParentCompiler.CompileConjunction(new[]
                     {
                         this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value))),
