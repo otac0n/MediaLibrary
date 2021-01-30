@@ -9,6 +9,11 @@ namespace MediaLibrary.Search.Sql
 
     public abstract class AnsiSqlCompiler : QueryCompiler<string>
     {
+        public AnsiSqlCompiler(Func<string, Term> getSavedSearch)
+            : base(getSavedSearch)
+        {
+        }
+
         public static string Contains(string expr, string patternValue)
         {
             string literal;

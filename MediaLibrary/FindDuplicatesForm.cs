@@ -33,7 +33,7 @@ namespace MediaLibrary
         public FindDuplicatesForm(MediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
-            this.searchCompiler = new PredicateSearchCompiler(index.TagEngine, excludeHidden: false);
+            this.searchCompiler = new PredicateSearchCompiler(index.TagEngine, excludeHidden: false, _ => null); // TODO: Support saved searches.
             this.visiblePredicate = x => true;
             this.InitializeComponent();
         }

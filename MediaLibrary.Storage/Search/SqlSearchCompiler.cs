@@ -18,7 +18,8 @@ namespace MediaLibrary.Storage.Search
         private int depth = 0;
         private SqlDialect dialect;
 
-        public SqlSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden)
+        public SqlSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden, Func<string, Term> getSavedSearch)
+            : base(getSavedSearch)
         {
             this.tagEngine = tagEngine;
             this.excludeHidden = excludeHidden;

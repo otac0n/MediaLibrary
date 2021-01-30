@@ -12,6 +12,7 @@ namespace MediaLibrary
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using MediaLibrary.Properties;
+    using MediaLibrary.Search;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
 
@@ -516,7 +517,7 @@ namespace MediaLibrary
         private void SavedSearchMenuItem_Click(object sender, EventArgs e)
         {
             var savedSearch = (SavedSearch)((ToolStripMenuItem)sender).Tag;
-            this.searchBox.Text = savedSearch.Query;
+            this.searchBox.Text = new SavedSearchTerm(savedSearch.Name).ToString();
             this.viewButton.HideDropDown();
         }
 

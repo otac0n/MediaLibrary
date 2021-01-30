@@ -8,6 +8,11 @@ namespace MediaLibrary.Search.Sql
 
     public abstract class PredicateCompiler<T> : QueryCompiler<Predicate<T>>
     {
+        public PredicateCompiler(Func<string, Term> getSavedSearch)
+            : base(getSavedSearch)
+        {
+        }
+
         public static Func<int, bool> ConvertOperator(string fieldOperator)
         {
             switch (fieldOperator)

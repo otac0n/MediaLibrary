@@ -8,6 +8,13 @@ namespace MediaLibrary.Search
 
     public abstract class QueryCompiler<TQuery>
     {
+        private Func<string, Term> getSavedSearch;
+
+        protected QueryCompiler(Func<string, Term> getSavedSearch)
+        {
+            this.getSavedSearch = getSavedSearch;
+        }
+
         public virtual TQuery Compile(Term term)
         {
             switch (term)
@@ -23,6 +30,9 @@ namespace MediaLibrary.Search
 
                 case FieldTerm field:
                     return this.CompileField(field);
+
+                case SavedSearchTerm savedSearch:
+                    return this.CompileSavedSearch(savedSearch);
 
                 default:
                     throw new NotSupportedException();
@@ -49,5 +59,14 @@ namespace MediaLibrary.Search
         public abstract TQuery CompileField(FieldTerm field);
 
         public abstract TQuery CompileNegation(TQuery query);
+
+        public virtual TQuery CompileSavedSearch(SavedSearchTerm savedSearch)
+        {
+            // TODO: Handle recursion, avoid stack overflow.
+            var term = this.getSavedSearch(savedSearch.SearchName);
+            return term == null
+                ? this.CompileDisjunction(Array.Empty<TQuery>())
+                : this.Compile(term);
+        }
     }
 }

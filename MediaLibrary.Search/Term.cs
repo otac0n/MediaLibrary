@@ -3,7 +3,9 @@
 namespace MediaLibrary.Search
 {
     using System;
+    using System.Diagnostics;
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public abstract class Term
     {
         public static int GetPrecedence(Term term)

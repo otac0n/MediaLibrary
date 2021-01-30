@@ -13,6 +13,7 @@ unary <Term>
 
 primary <Term>
     = "(" _ t:conjunction _ (")" / EOF) { t }
+    / "{" _ n:("" ([^}] / "}}" { "}" })+) _ "}" { new SavedSearchTerm(n) }
     / term;
 
 term <Term>
@@ -23,7 +24,7 @@ term <Term>
     / ":"? value:atom { new FieldTerm(null, value) };
 
 atom
-    = str:([^-" \t\r\n:()><][^" \t\r\n:()><]*)
+    = str:([^-" \t\r\n:(){}<>][^" \t\r\n:(){}<>]*)
     / '"' str:([^"] / '"' t:'"' { t })+ ('"' / EOF) { string.Concat(str) };
 
 _ = "" WS?;

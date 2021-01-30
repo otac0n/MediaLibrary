@@ -16,7 +16,8 @@ namespace MediaLibrary.Storage.Search
         private int depth = 0;
         private PredicateDialect dialect;
 
-        public PredicateSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden)
+        public PredicateSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden, Func<string, Term> getSavedSearch)
+            : base(getSavedSearch)
         {
             this.tagEngine = tagEngine;
             this.excludeHidden = excludeHidden;

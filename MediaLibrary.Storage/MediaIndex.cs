@@ -419,8 +419,13 @@ namespace MediaLibrary.Storage
 
         public async Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
         {
-            var term = new SearchGrammar().Parse(query ?? string.Empty);
-            var dialect = new SqlSearchCompiler(this.TagEngine, excludeHidden);
+            var grammar = new SearchGrammar();
+            var term = grammar.Parse(query ?? string.Empty);
+            var containsSavedSearches = new ContainsSavedSearchTermCompiler().Compile(term);
+            var savedSearches = containsSavedSearches
+                ? (await this.GetAllSavedSearches().ConfigureAwait(false)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
+                : null;
+            var dialect = new SqlSearchCompiler(this.TagEngine, excludeHidden, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
             var sqlQuery = dialect.Compile(term);
 
             using (var conn = await this.GetConnection().ConfigureAwait(false))
@@ -1129,6 +1134,24 @@ namespace MediaLibrary.Storage
                 WHERE Path = @Path
                 AND ((@PathRaw IS NULL AND PathRaw IS NULL) OR (@PathRaw IS NOT NULL AND PathRaw = @PathRaw))
             ";
+        }
+
+        private class ContainsSavedSearchTermCompiler : QueryCompiler<bool>
+        {
+            public ContainsSavedSearchTermCompiler()
+                : base(null)
+            {
+            }
+
+            public override bool CompileConjunction(IEnumerable<bool> query) => query.Any(x => x);
+
+            public override bool CompileDisjunction(IEnumerable<bool> query) => query.Any(x => x);
+
+            public override bool CompileField(FieldTerm field) => false;
+
+            public override bool CompileNegation(bool query) => query;
+
+            public override bool CompileSavedSearch(SavedSearchTerm savedSearch) => true;
         }
     }
 }
