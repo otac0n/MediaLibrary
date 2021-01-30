@@ -133,11 +133,11 @@ namespace MediaLibrary
 
             editItem.Click += async (sender, args) =>
             {
-                using (var editSavedSearchForm = new EditSavedSearchForm(savedSearch))
+                using (var editSavedSearchForm = new ObjectInitializerForm<SavedSearch>(startingState: savedSearch))
                 {
                     if (editSavedSearchForm.ShowDialog(this) == DialogResult.OK)
                     {
-                        savedSearch = editSavedSearchForm.SavedSearch;
+                        savedSearch = editSavedSearchForm.CurrentState;
                         await this.index.UpdateSavedSearch(savedSearch).ConfigureAwait(true);
                         searchItem.Text = savedSearch.Name;
                         searchItem.Tag = savedSearch;
@@ -405,12 +405,12 @@ namespace MediaLibrary
 
         private void NewCategoryMenuItem_Click(object sender, EventArgs e)
         {
-            using (var nameInputForm = new NameInputForm())
+            using (var nameInputForm = new ObjectInitializerForm<NameInput>())
             {
                 nameInputForm.Text = "New Category";
                 if (nameInputForm.ShowDialog(this) == DialogResult.OK)
                 {
-                    var menuItem = this.AddRatingCategoryMenuItem(nameInputForm.SelectedName);
+                    var menuItem = this.AddRatingCategoryMenuItem(nameInputForm.CurrentState.Name);
                     menuItem.PerformClick();
                 }
             }
@@ -524,12 +524,12 @@ namespace MediaLibrary
         private async void SaveThisSearchMenuItem_Click(object sender, EventArgs e)
         {
             var searchText = this.searchBox.Text;
-            using (var nameInputForm = new NameInputForm())
+            using (var nameInputForm = new ObjectInitializerForm<NameInput>())
             {
                 nameInputForm.Text = "Save Search";
                 if (nameInputForm.ShowDialog(this) == DialogResult.OK)
                 {
-                    var savedSearch = await this.index.AddSavedSearch(nameInputForm.SelectedName, searchText).ConfigureAwait(true);
+                    var savedSearch = await this.index.AddSavedSearch(nameInputForm.CurrentState.Name, searchText).ConfigureAwait(true);
                     this.AddSavedSearchMenuItem(savedSearch);
                 }
             }

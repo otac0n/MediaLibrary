@@ -27,13 +27,13 @@ namespace MediaLibrary
         private void AddCategoryMenuItem_Click(object sender, EventArgs e)
         {
             var tabIndex = this.tabContextMenu.Tag as int?;
-            using (var nameInputForm = new NameInputForm())
+            using (var nameInputForm = new ObjectInitializerForm<NameInput>())
             {
                 nameInputForm.Text = "New Category";
                 if (nameInputForm.ShowDialog(this) == DialogResult.OK)
                 {
                     // TODO: Append after the right-clicked tab.
-                    this.AppendNewTab(nameInputForm.SelectedName); // TODO: Enusure it is unique, etc.
+                    this.AppendNewTab(nameInputForm.CurrentState.Name); // TODO: Enusure it is unique, etc.
                 }
             }
         }
@@ -122,13 +122,12 @@ namespace MediaLibrary
         {
             var tabIndex = this.tabContextMenu.Tag as int?;
             var tabPage = this.rulePages.TabPages[tabIndex.Value];
-            using (var nameInputForm = new NameInputForm())
+            using (var nameInputForm = new ObjectInitializerForm<NameInput>(startingState: new NameInput(tabPage.Text)))
             {
                 nameInputForm.Text = "Rename Category";
-                nameInputForm.SelectedName = tabPage.Text;
                 if (nameInputForm.ShowDialog(this) == DialogResult.OK)
                 {
-                    tabPage.Text = nameInputForm.SelectedName; // TODO: Enusure it is unique, etc.
+                    tabPage.Text = nameInputForm.CurrentState.Name; // TODO: Enusure it is unique, etc.
                 }
             }
         }

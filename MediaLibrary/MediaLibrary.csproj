@@ -33,6 +33,7 @@
     <PackageReference Include="System.Runtime" Version="4.3.1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MediaLibrary.FormsClerk\MediaLibrary.FormsClerk.csproj" />
     <ProjectReference Include="..\MediaLibrary.Storage\MediaLibrary.Storage.csproj" />
     <ProjectReference Include="..\MediaLibrary.Web\MediaLibrary.Web.csproj" />
   </ItemGroup>
@@ -65,7 +66,6 @@
     </COMReference>
     <None Remove="ColorParser.peg" />
     <PegGrammar Include="ColorParser.peg" />
-    <Compile Update="EditSavedSearchForm.cs" />
     <AdditionalFiles Include="MediaLibrary.ruleset" />
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
     <COMReference Include="WMPLib.dll">

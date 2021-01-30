@@ -1,6 +1,6 @@
 namespace MediaLibrary
 {
-    partial class NameInputForm
+    partial class ObjectInitializerForm<T>
     {
         /// <summary>
         /// Required designer variable.
@@ -28,10 +28,11 @@ namespace MediaLibrary
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.finishButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
-            this.name = new System.Windows.Forms.TextBox();
-            this.folderLabel = new System.Windows.Forms.Label();
+            this.errorProvider = new System.Windows.Forms.ErrorProvider(this.components);
+            ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).BeginInit();
             this.SuspendLayout();
             // 
             // finishButton
@@ -57,53 +58,36 @@ namespace MediaLibrary
             this.cancelButton.UseVisualStyleBackColor = true;
             this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
-            // name
+            // errorProvider
             // 
-            this.name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.name.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.name.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystemDirectories;
-            this.name.Location = new System.Drawing.Point(54, 14);
-            this.name.Name = "name";
-            this.name.Size = new System.Drawing.Size(385, 20);
-            this.name.TabIndex = 1;
+            this.errorProvider.ContainerControl = this;
             // 
-            // folderLabel
-            // 
-            this.folderLabel.AutoSize = true;
-            this.folderLabel.Location = new System.Drawing.Point(12, 17);
-            this.folderLabel.Name = "folderLabel";
-            this.folderLabel.Size = new System.Drawing.Size(35, 13);
-            this.folderLabel.TabIndex = 0;
-            this.folderLabel.Text = "&Name";
-            // 
-            // NameInputForm
+            // ObjectInitializerForm
             // 
             this.AcceptButton = this.finishButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoSize = true;
+            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.CancelButton = this.cancelButton;
             this.ClientSize = new System.Drawing.Size(451, 92);
-            this.Controls.Add(this.name);
-            this.Controls.Add(this.folderLabel);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.finishButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "NameInputForm";
+            this.Name = "ObjectInitializerForm";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Name Input";
+            this.Text = "Edit";
+            ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).EndInit();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
         private System.Windows.Forms.Button finishButton;
         private System.Windows.Forms.Button cancelButton;
-        private System.Windows.Forms.TextBox name;
-        private System.Windows.Forms.Label folderLabel;
+        private System.Windows.Forms.ErrorProvider errorProvider;
     }
 }
