@@ -116,21 +116,23 @@ namespace MediaLibrary.Storage.Search
                         });
                     }
 
+                case "?":
                 case "suggested":
                     if (field.Operator != FieldTerm.EqualsOperator)
                     {
                         throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
                     }
 
-                    return this.ParentCompiler.CompileConjunction(new[]
+                    return this.CompileTagRelation(TagOperator.Suggestion, field.Value);
+
+                case "^":
+                case "missing":
+                    if (field.Operator != FieldTerm.EqualsOperator)
                     {
-                        this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value))),
-                        this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("rejected", FieldTerm.GreaterThanOrEqualOperator, field.Value))),
-                        this.ParentCompiler.CompileDisjunction(
-                            this.TagEngine.TagSetsThatSuggest(field.Value).Select(set =>
-                                this.ParentCompiler.CompileConjunction(
-                                    set.Select(reqired => this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, reqired)))))),
-                    });
+                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                    }
+
+                    return this.CompileTagRelation(TagOperator.Implication, field.Value);
 
                 case "copies":
                     if (!int.TryParse(field.Value, out var copies))
@@ -211,5 +213,34 @@ namespace MediaLibrary.Storage.Search
         public abstract T TypeEquals(string value);
 
         public abstract T TypePrefixed(string value);
+
+        private T CompileTagRelation(TagOperator @operator, string tag)
+        {
+            var tagEngine = this.TagEngine;
+            var tagInfo = tagEngine[tag];
+            var searchTags = tagInfo.RelatedTags(HierarchyRelation.SelfOrDescendant);
+            var exclusionTags = tagInfo.RelatedTags(HierarchyRelation.SelfOrAncestor);
+            var rules = tagEngine[@operator].Where(rule => rule.Right.Any(r => searchTags.Contains(r)));
+            var exclusions = tagEngine[TagOperator.Exclusion].Where(rule => rule.Right.Any(r => exclusionTags.Contains(r)));
+            return this.ParentCompiler.CompileConjunction(new[]
+            {
+                this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, tag))),
+                this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("rejected", FieldTerm.GreaterThanOrEqualOperator, tag))),
+                this.ParentCompiler.CompileDisjunction(rules.Select(rule =>
+                {
+                    var requirements = Enumerable.Concat(
+                        rule.Left.Select(required => this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, required))),
+                        rule.Right.Where(r => !searchTags.Contains(r)).Select(sufficient => this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, sufficient)))));
+                    return this.ParentCompiler.CompileConjunction(requirements);
+                })),
+                this.ParentCompiler.CompileConjunction(exclusions.Select(rule =>
+                {
+                    var requirements = Enumerable.Concat(
+                        rule.Left.Select(required => this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, required)))),
+                        rule.Right.Where(r => !exclusionTags.Contains(r)).Select(excluded => this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, excluded)))));
+                    return this.ParentCompiler.CompileDisjunction(requirements);
+                })),
+            });
+        }
     }
 }
