@@ -5,7 +5,7 @@
       <button class="btn btn-light dropdown-toggle-split" ngbDropdownToggle></button>
       <div class="dropdown-menu" ngbDropdownMenu>
         <div class="saved-searches">
-          <button *ngFor="let savedSearch of savedSearches" ngbDropdownItem (click)="query = savedSearch.query; search()">{{savedSearch.name}}</button>
+          <button *ngFor="let savedSearch of savedSearches" ngbDropdownItem (click)="query = '{' + savedSearch.name + '}'; search()">{{savedSearch.name}}</button>
         </div>
       </div>
     </div>
