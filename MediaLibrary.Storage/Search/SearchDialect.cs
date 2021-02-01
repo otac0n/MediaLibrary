@@ -6,6 +6,7 @@ namespace MediaLibrary.Storage.Search
     using System.Collections.Immutable;
     using System.Linq;
     using MediaLibrary.Search;
+    using MediaLibrary.Storage.FileTypes;
     using TaggingLibrary;
 
     public abstract class SearchDialect<T>
@@ -134,6 +135,18 @@ namespace MediaLibrary.Storage.Search
 
                     return this.CompileTagRelation(TagOperator.Implication, field.Value);
 
+                case "similar":
+                    {
+                        if (field.Operator != FieldTerm.EqualsOperator)
+                        {
+                            throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                        }
+
+                        var visualHash = Convert.ToUInt64(field.Value, 16);
+                        return this.ParentCompiler.CompileDisjunction(
+                            AverageIntensityHash.Expand(visualHash, mode: 1).Select(h => this.Details(ImageDetailRecognizer.Properties.AverageIntensityHash, FieldTerm.EqualsOperator, (long)h)));
+                    }
+
                 case "copies":
                     if (!int.TryParse(field.Value, out var copies))
                     {
@@ -187,6 +200,8 @@ namespace MediaLibrary.Storage.Search
         }
 
         public abstract T Copies(string @operator, int value);
+
+        public abstract T Details(string detailsField, string @operator, object value);
 
         public abstract T Hash(string @operator, string value);
 

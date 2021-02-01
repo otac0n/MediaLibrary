@@ -253,19 +253,16 @@ namespace MediaLibrary
         {
             switch (fileType)
             {
-                case "audio":
-                case string type when type.StartsWith("audio/", StringComparison.InvariantCulture):
+                case string type when FileTypeHelper.IsAudio(type):
                     return "audio-file";
 
                 case "image/gif":
                     return "video-file";
 
-                case "image":
-                case string type when type.StartsWith("image/", StringComparison.InvariantCulture):
+                case string type when FileTypeHelper.IsImage(type):
                     return "image-file";
 
-                case "video":
-                case string type when type.StartsWith("video/", StringComparison.InvariantCulture):
+                case string type when FileTypeHelper.IsVideo(type):
                     return "modern-tv-flat";
 
                 default: return "common-file";

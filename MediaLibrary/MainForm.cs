@@ -14,6 +14,7 @@ namespace MediaLibrary
     using MediaLibrary.Properties;
     using MediaLibrary.Search;
     using MediaLibrary.Storage;
+    using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;
 
     public partial class MainForm : Form
@@ -305,6 +306,16 @@ namespace MediaLibrary
             }
         }
 
+        private async void FindSimilarMenuItem_Click(object sender, EventArgs e)
+        {
+            var searchResult = this.listView.SelectedResults.Single();
+            var details = await this.index.GetHashDetails(searchResult.Hash).ConfigureAwait(true);
+            if (details.TryGetValue(ImageDetailRecognizer.Properties.AverageIntensityHash, out var value) && value is long hash)
+            {
+                this.searchBox.Text = new FieldTerm("similar", ((ulong)hash).ToString("x16")).ToString();
+            }
+        }
+
         private IEnumerable<string> GetSelectedPaths()
         {
             foreach (var item in this.listView.SelectedResults)
@@ -340,6 +351,7 @@ namespace MediaLibrary
                     this.favoriteContextMenuItem.Tag = searchResults;
                     this.editTagsContextMenuItem.Tag = searchResults;
                     this.addPeopleContextMenuItem.Tag = searchResults;
+                    this.findSimilarMenuItem.Enabled = searchResults.Count == 1 && FileTypeHelper.IsImage(searchResults.Single().FileType);
                     this.itemContextMenu.Show(Cursor.Position);
                 }
             }

@@ -88,6 +88,12 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine(") c ON h.Hash = c.Hash");
             }
 
+            if (this.dialect.JoinDetails)
+            {
+                sb
+                    .AppendLine("LEFT JOIN HashDetails d ON h.Hash = d.Hash");
+            }
+
             if (this.dialect.JoinTagCount)
             {
                 sb
@@ -193,6 +199,8 @@ namespace MediaLibrary.Storage.Search
 
             public bool JoinCopies { get; private set; }
 
+            public bool JoinDetails { get; private set; }
+
             public bool JoinPersonCount { get; private set; }
 
             public bool JoinStars { get; private set; }
@@ -203,6 +211,12 @@ namespace MediaLibrary.Storage.Search
             {
                 this.JoinCopies = true;
                 return $"COALESCE(c.Copies, 0) {ConvertOperator(@operator)} {value}";
+            }
+
+            public override string Details(string detailsField, string @operator, object value)
+            {
+                this.JoinDetails = true;
+                return $"d.{EscapeName(detailsField)} {ConvertOperator(@operator)} {Literal(value)}";
             }
 
             public override string Hash(string @operator, string value) => $"Hash {ConvertOperator(@operator)} {Literal(value)}";

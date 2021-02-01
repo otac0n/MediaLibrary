@@ -77,6 +77,12 @@ namespace MediaLibrary.Storage.Search
                 return x => op(x.Paths.Count.CompareTo(value));
             }
 
+            public override Predicate<SearchResult> Details(string detailsField, string @operator, object value)
+            {
+                var op = ConvertOperator(@operator);
+                throw new NotImplementedException("Query hash details table and compare to this result.");
+            }
+
             public override Predicate<SearchResult> Hash(string @operator, string value)
             {
                 var op = ConvertOperator(@operator);

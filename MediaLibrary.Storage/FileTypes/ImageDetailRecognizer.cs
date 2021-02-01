@@ -12,25 +12,25 @@ namespace MediaLibrary.Storage.FileTypes
     {
         private static readonly PropertyParserList PropertyTags = new PropertyParserList
         {
-            { "GpsTime", ReadGpsDateTime(PropertyTag.GpsDate, PropertyTag.GpsTime) },
-            { "DocumentName", ReadString(PropertyTag.DocumentName) },
-            { "ImageDescription", ReadString(PropertyTag.ImageDescription) },
-            { "PageName", ReadString(PropertyTag.PageName) },
-            { "PageNumber", ReadUInt16(PropertyTag.PageNumber) },
-            { "DateTime", ReadDate(PropertyTag.DateTime, PropertyTag.DateTimeSubSecond) },
-            { "OriginalDateTime", ReadDate(PropertyTag.DateTimeOriginal, PropertyTag.DateTimeOriginalSubSecond) },
-            { "DigitizedDateTime", ReadDate(PropertyTag.DateTimeDigitized, PropertyTag.DateTimeDigitizedSubSecond) },
-            { "Artist", ReadString(PropertyTag.Artist) },
-            { "ImageTitle", ReadString(PropertyTag.ImageTitle) },
-            { "FrameDelay", ReadUInt32(PropertyTag.FrameDelay) },
-            { "LoopCount", ReadUInt16(PropertyTag.LoopCount) },
-            { "Copyright", ReadString(PropertyTag.Copyright) },
-            { "MakerNote", ReadString(PropertyTag.MakerNote) },
-            { "UserComment", ReadString(PropertyTag.UserComment) },
-            { "Width", img => img.Width },
-            { "Height", img => img.Height },
+            { Properties.GpsTime, ReadGpsDateTime(PropertyTag.GpsDate, PropertyTag.GpsTime) },
+            { Properties.DocumentName, ReadString(PropertyTag.DocumentName) },
+            { Properties.ImageDescription, ReadString(PropertyTag.ImageDescription) },
+            { Properties.PageName, ReadString(PropertyTag.PageName) },
+            { Properties.PageNumber, ReadUInt16(PropertyTag.PageNumber) },
+            { Properties.DateTime, ReadDate(PropertyTag.DateTime, PropertyTag.DateTimeSubSecond) },
+            { Properties.OriginalDateTime, ReadDate(PropertyTag.DateTimeOriginal, PropertyTag.DateTimeOriginalSubSecond) },
+            { Properties.DigitizedDateTime, ReadDate(PropertyTag.DateTimeDigitized, PropertyTag.DateTimeDigitizedSubSecond) },
+            { Properties.Artist, ReadString(PropertyTag.Artist) },
+            { Properties.ImageTitle, ReadString(PropertyTag.ImageTitle) },
+            { Properties.FrameDelay, ReadUInt32(PropertyTag.FrameDelay) },
+            { Properties.LoopCount, ReadUInt16(PropertyTag.LoopCount) },
+            { Properties.Copyright, ReadString(PropertyTag.Copyright) },
+            { Properties.MakerNote, ReadString(PropertyTag.MakerNote) },
+            { Properties.UserComment, ReadString(PropertyTag.UserComment) },
+            { Properties.Width, img => img.Width },
+            { Properties.Height, img => img.Height },
             {
-                "AverageIntensityHash",
+                Properties.AverageIntensityHash,
                 AverageIntensityHash.GetImageHash
             },
         };
@@ -433,6 +433,28 @@ namespace MediaLibrary.Storage.FileTypes
             public uint Numerator { get; }
 
             public double Value => (double)this.Numerator / this.Denominator;
+        }
+
+        public static class Properties
+        {
+            public static readonly string Artist = "Artist";
+            public static readonly string AverageIntensityHash = "AverageIntensityHash";
+            public static readonly string Copyright = "Copyright";
+            public static readonly string DateTime = "DateTime";
+            public static readonly string DigitizedDateTime = "DigitizedDateTime";
+            public static readonly string DocumentName = "DocumentName";
+            public static readonly string FrameDelay = "FrameDelay";
+            public static readonly string GpsTime = "GpsTime";
+            public static readonly string Height = "Height";
+            public static readonly string ImageDescription = "ImageDescription";
+            public static readonly string ImageTitle = "ImageTitle";
+            public static readonly string LoopCount = "LoopCount";
+            public static readonly string MakerNote = "MakerNote";
+            public static readonly string OriginalDateTime = "OriginalDateTime";
+            public static readonly string PageName = "PageName";
+            public static readonly string PageNumber = "PageNumber";
+            public static readonly string UserComment = "UserComment";
+            public static readonly string Width = "Width";
         }
 
         private abstract class PropertyParser

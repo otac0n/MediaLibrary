@@ -30,6 +30,8 @@ namespace MediaLibrary
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            System.Windows.Forms.ToolStripSeparator toolStripActionSeparator;
+            System.Windows.Forms.ToolStripSeparator toolStripSeparator12;
             this.mainMenu = new System.Windows.Forms.MenuStrip();
             this.optionsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addIndexedFolderMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -102,10 +104,12 @@ namespace MediaLibrary
             this.favoriteContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editTagsContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addPeopleContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripActionSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.openContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
+            this.findSimilarMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripActionSeparator = new System.Windows.Forms.ToolStripSeparator();
+            toolStripSeparator12 = new System.Windows.Forms.ToolStripSeparator();
             this.mainMenu.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.toolStrip.SuspendLayout();
@@ -668,14 +672,14 @@ namespace MediaLibrary
             this.refreshMenuItem.Image = global::MediaLibrary.Properties.Resources.button_refresh_arrow;
             this.refreshMenuItem.Name = "refreshMenuItem";
             this.refreshMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F5;
-            this.refreshMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.refreshMenuItem.Size = new System.Drawing.Size(154, 22);
             this.refreshMenuItem.Text = "&Refresh";
             this.refreshMenuItem.Click += new System.EventHandler(this.RefreshMenuItem_Click);
             // 
             // toolStripSeparator11
             // 
             this.toolStripSeparator11.Name = "toolStripSeparator11";
-            this.toolStripSeparator11.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator11.Size = new System.Drawing.Size(151, 6);
             // 
             // showPreviewMenuItem
             // 
@@ -684,14 +688,14 @@ namespace MediaLibrary
             this.showPreviewMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.showPreviewMenuItem.Image = global::MediaLibrary.Properties.Resources.view_square;
             this.showPreviewMenuItem.Name = "showPreviewMenuItem";
-            this.showPreviewMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.showPreviewMenuItem.Size = new System.Drawing.Size(154, 22);
             this.showPreviewMenuItem.Text = "Show Preview";
             this.showPreviewMenuItem.CheckedChanged += new System.EventHandler(this.ShowPreviewMenuItem_CheckedChanged);
             // 
             // toolStripSeparator8
             // 
             this.toolStripSeparator8.Name = "toolStripSeparator8";
-            this.toolStripSeparator8.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator8.Size = new System.Drawing.Size(151, 6);
             // 
             // detailsMenuItem
             // 
@@ -700,7 +704,7 @@ namespace MediaLibrary
             this.detailsMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.detailsMenuItem.Image = global::MediaLibrary.Properties.Resources.list_bullets_1;
             this.detailsMenuItem.Name = "detailsMenuItem";
-            this.detailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.detailsMenuItem.Size = new System.Drawing.Size(154, 22);
             this.detailsMenuItem.Text = "Details";
             this.detailsMenuItem.Click += new System.EventHandler(this.DetailsMenuItem_Click);
             // 
@@ -709,14 +713,14 @@ namespace MediaLibrary
             this.thumbnailsMenuItem.CheckOnClick = true;
             this.thumbnailsMenuItem.Image = global::MediaLibrary.Properties.Resources.picture_landscape;
             this.thumbnailsMenuItem.Name = "thumbnailsMenuItem";
-            this.thumbnailsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.thumbnailsMenuItem.Size = new System.Drawing.Size(154, 22);
             this.thumbnailsMenuItem.Text = "Thumbnails";
             this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
             // 
             // toolStripSeparator9
             // 
             this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator9.Size = new System.Drawing.Size(151, 6);
             // 
             // savedSearchesMenuItem
             // 
@@ -724,7 +728,7 @@ namespace MediaLibrary
             this.saveThisSearchMenuItem,
             this.savedSearchesSeparator});
             this.savedSearchesMenuItem.Name = "savedSearchesMenuItem";
-            this.savedSearchesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.savedSearchesMenuItem.Size = new System.Drawing.Size(154, 22);
             this.savedSearchesMenuItem.Text = "&Saved Searches";
             // 
             // saveThisSearchMenuItem
@@ -781,17 +785,19 @@ namespace MediaLibrary
             this.favoriteContextMenuItem,
             this.editTagsContextMenuItem,
             this.addPeopleContextMenuItem,
-            this.toolStripActionSeparator,
+            toolStripActionSeparator,
             this.openContextMenuItem,
+            this.findSimilarMenuItem,
+            toolStripSeparator12,
             this.copyContextMenuItem});
             this.itemContextMenu.Name = "itemContextMenu";
-            this.itemContextMenu.Size = new System.Drawing.Size(145, 120);
+            this.itemContextMenu.Size = new System.Drawing.Size(181, 170);
             // 
             // favoriteContextMenuItem
             // 
             this.favoriteContextMenuItem.Image = global::MediaLibrary.Properties.Resources.love_it;
             this.favoriteContextMenuItem.Name = "favoriteContextMenuItem";
-            this.favoriteContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.favoriteContextMenuItem.Size = new System.Drawing.Size(180, 22);
             this.favoriteContextMenuItem.Text = "&Favorite";
             this.favoriteContextMenuItem.Click += new System.EventHandler(this.FavoriteToolStripMenuItem_Click);
             // 
@@ -799,7 +805,7 @@ namespace MediaLibrary
             // 
             this.editTagsContextMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_edit;
             this.editTagsContextMenuItem.Name = "editTagsContextMenuItem";
-            this.editTagsContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.editTagsContextMenuItem.Size = new System.Drawing.Size(180, 22);
             this.editTagsContextMenuItem.Text = "Edit &Tags...";
             this.editTagsContextMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
             // 
@@ -807,19 +813,19 @@ namespace MediaLibrary
             // 
             this.addPeopleContextMenuItem.Image = global::MediaLibrary.Properties.Resources.single_neutral;
             this.addPeopleContextMenuItem.Name = "addPeopleContextMenuItem";
-            this.addPeopleContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.addPeopleContextMenuItem.Size = new System.Drawing.Size(180, 22);
             this.addPeopleContextMenuItem.Text = "Add &People...";
             this.addPeopleContextMenuItem.Click += new System.EventHandler(this.AddPeopleMenuItem_Click);
             // 
             // toolStripActionSeparator
             // 
-            this.toolStripActionSeparator.Name = "toolStripActionSeparator";
-            this.toolStripActionSeparator.Size = new System.Drawing.Size(141, 6);
+            toolStripActionSeparator.Name = "toolStripActionSeparator";
+            toolStripActionSeparator.Size = new System.Drawing.Size(177, 6);
             // 
             // openContextMenuItem
             // 
             this.openContextMenuItem.Name = "openContextMenuItem";
-            this.openContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.openContextMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openContextMenuItem.Text = "&Open...";
             this.openContextMenuItem.Click += new System.EventHandler(this.OpenMenuItem_Click);
             // 
@@ -827,7 +833,7 @@ namespace MediaLibrary
             // 
             this.copyContextMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_double;
             this.copyContextMenuItem.Name = "copyContextMenuItem";
-            this.copyContextMenuItem.Size = new System.Drawing.Size(144, 22);
+            this.copyContextMenuItem.Size = new System.Drawing.Size(180, 22);
             this.copyContextMenuItem.Text = "&Copy";
             this.copyContextMenuItem.Click += new System.EventHandler(this.CopyMenuItem_Click);
             // 
@@ -839,6 +845,18 @@ namespace MediaLibrary
             this.splitContainer.Size = new System.Drawing.Size(800, 379);
             this.splitContainer.SplitterDistance = 462;
             this.splitContainer.TabIndex = 6;
+            // 
+            // findSimilarMenuItem
+            // 
+            this.findSimilarMenuItem.Name = "findSimilarMenuItem";
+            this.findSimilarMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.findSimilarMenuItem.Text = "Find &Similar...";
+            this.findSimilarMenuItem.Click += new System.EventHandler(this.FindSimilarMenuItem_Click);
+            // 
+            // toolStripSeparator12
+            // 
+            toolStripSeparator12.Name = "toolStripSeparator12";
+            toolStripSeparator12.Size = new System.Drawing.Size(177, 6);
             // 
             // MainForm
             // 
@@ -937,7 +955,6 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripSeparator savedSearchesSeparator;
         private System.Windows.Forms.ToolStripMenuItem copyContextMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripActionSeparator;
         private System.Windows.Forms.ToolStripMenuItem openContextMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem copyMainMenuItem;
@@ -948,5 +965,6 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem newCategoryMenuItem;
         private System.Windows.Forms.ToolStripMenuItem refreshMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
+        private System.Windows.Forms.ToolStripMenuItem findSimilarMenuItem;
     }
 }

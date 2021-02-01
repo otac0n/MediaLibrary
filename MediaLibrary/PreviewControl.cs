@@ -57,7 +57,7 @@ namespace MediaLibrary
         }
 
         public static bool IsImage(SearchResult searchResult) =>
-            searchResult != null && (searchResult.FileType == "image" || searchResult.FileType.StartsWith("image/", StringComparison.Ordinal));
+            searchResult != null && FileTypeHelper.IsImage(searchResult.FileType);
 
         protected override void OnVisibleChanged(EventArgs e)
         {

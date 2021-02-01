@@ -10,41 +10,46 @@ namespace MediaLibrary.Storage.FileTypes
     using System.Linq;
     using System.Runtime.InteropServices;
 
-    internal class AverageIntensityHash
+    public class AverageIntensityHash
     {
         /// <summary>
         /// Computes the minimum difference between flips and rotations of two hashes.
         /// </summary>
         /// <param name="a">The first hash to compare.</param>
         /// <param name="b">The second hash to compare.</param>
+        /// <param name="mode">The flip/rotate mode. <c>0</c>, to not flip or rotate, <c>1</c> to flip horizontally, <c>2</c> to flip and rotate in all directions.</param>
         /// <returns>The minimum distance between the two hashes, considering flips and rotations.</returns>
-        public static int Distance(ulong a, ulong b)
+        public static int Distance(ulong a, ulong b, int mode = 0)
         {
-            var expandedA = Expand(a);
-            var expandedB = Expand(b);
+            var expandedA = Expand(a, mode);
             return (from ea in expandedA
-                    from eb in expandedB
-                    select CountBits(ea ^ eb)).Min();
+                    select CountBits(ea ^ b)).Min();
         }
 
         /// <summary>
         /// Gets the rotation and flip variations of the specified <paramref name="hash"/>.
         /// </summary>
         /// <param name="hash">The hash to rotate and flip.</param>
+        /// <param name="mode">The flip/rotate mode. <c>0</c>, to not flip or rotate, <c>1</c> to flip horizontally, <c>2</c> to flip and rotate in all directions.</param>
         /// <returns>The distinct variations of the specified <paramref name="hash"/>.</returns>
-        public static HashSet<ulong> Expand(ulong hash)
+        public static HashSet<ulong> Expand(ulong hash, int mode = 0)
         {
-            var hashLR = FlipLeftRight(hash);
-
             var samples = new HashSet<ulong>
             {
                 hash,
-                hashLR,
-                FlipTopBottom(hash),
-                FlipTopBottom(hashLR),
             };
 
-            samples.UnionWith(samples.Select(RotateQuarterTurnClockwise).ToList());
+            if (mode > 0)
+            {
+                var hashLR = FlipLeftRight(hash);
+                samples.Add(hashLR);
+                if (mode > 1)
+                {
+                    samples.Add(FlipTopBottom(hash));
+                    samples.Add(FlipTopBottom(hashLR));
+                    samples.UnionWith(samples.Select(RotateQuarterTurnClockwise).ToList());
+                }
+            }
 
             return samples;
         }

@@ -274,6 +274,38 @@ namespace MediaLibrary.Storage
             }
         }
 
+        public Task<Dictionary<string, object>> GetHashDetails(string hash) =>
+            this.IndexRead(conn =>
+            {
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = Queries.GetHashDetails;
+                    cmd.Parameters.AddWithValue("Hash", hash);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        var result = new Dictionary<string, object>();
+
+                        if (reader.Read())
+                        {
+                            for (var c = 0; c < reader.FieldCount; c++)
+                            {
+                                var name = reader.GetName(c);
+                                if (name != "Hash")
+                                {
+                                    var value = reader.GetValue(c);
+                                    if (!(value is DBNull || value == null))
+                                    {
+                                        result.Add(name, value);
+                                    }
+                                }
+                            }
+                        }
+
+                        return result;
+                    }
+                }
+            });
+
         public Task<List<HashTag>> GetHashTags(string hash) =>
             this.IndexRead(conn =>
                 conn.Query<HashTag>(HashTag.Queries.GetHashTags, new { Hash = hash }).ToList());
@@ -908,7 +940,7 @@ namespace MediaLibrary.Storage
             Dictionary<string, object> details = null;
             try
             {
-                if (hashInfo.FileType == "image" || hashInfo.FileType.StartsWith("image/", StringComparison.Ordinal))
+                if (FileTypeHelper.IsImage(hashInfo.FileType))
                 {
                     using (var image = Image.FromStream(file))
                     {
@@ -931,9 +963,8 @@ namespace MediaLibrary.Storage
 
             details.Remove("Hash");
 
-            string EscapeKey(string key) => $"[{key.Replace("]", "]]")}]";
             var keys = details.Keys.ToList();
-            var detailsColumns = string.Concat(keys.Select(k => $", {EscapeKey(k)}"));
+            var detailsColumns = string.Concat(keys.Select(k => $", {QueryBuilder.EscapeName(k)}"));
             var parameterNames = string.Concat(Enumerable.Range(0, keys.Count).Select(i => $", @p{i}"));
             var param = new DynamicParameters();
             param.Add("Hash", hashInfo.Hash);
@@ -961,7 +992,7 @@ namespace MediaLibrary.Storage
                 {
                     if (!this.detailsColumns.Contains(key))
                     {
-                        conn.Execute($"ALTER TABLE HashDetails ADD COLUMN {EscapeKey(key)}");
+                        conn.Execute($"ALTER TABLE HashDetails ADD COLUMN {QueryBuilder.EscapeName(key)}");
                         this.detailsColumns.Add(key);
                     }
                 }
@@ -1120,6 +1151,13 @@ namespace MediaLibrary.Storage
                 ALTER TABLE TagRules ADD COLUMN Category text NOT NULL DEFAULT '';
                 ALTER TABLE TagRules ADD COLUMN [Order] integer NOT NULL DEFAULT (0);
                 CREATE UNIQUE INDEX PK_Category ON TagRules(Category);
+            ";
+
+            public static readonly string GetHashDetails = @"
+                SELECT
+                    *
+                FROM HashDetails
+                WHERE Hash = @Hash
             ";
 
             public static readonly string GetIndexedPaths = @"
