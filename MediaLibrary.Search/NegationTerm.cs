@@ -2,8 +2,6 @@
 
 namespace MediaLibrary.Search
 {
-    using System;
-
     public class NegationTerm : Term
     {
         public static readonly int Precedence = 2;
@@ -16,6 +14,7 @@ namespace MediaLibrary.Search
         public Term Negated { get; }
 
         /// <inheritdoc/>
-        public override string ToString() => GetPrecedence(this.Negated) < Precedence ? $"-({this.Negated})" : this.Negated.ToString();
+        public override string ToString() =>
+            GetPrecedence(this.Negated) <= Precedence ? $"-({this.Negated})" : $"-{this.Negated}";
     }
 }

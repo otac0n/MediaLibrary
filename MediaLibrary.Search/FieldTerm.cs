@@ -1,5 +1,7 @@
 // Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
+using System.Text.RegularExpressions;
+
 namespace MediaLibrary.Search
 {
     public class FieldTerm : Term
@@ -32,7 +34,7 @@ namespace MediaLibrary.Search
         /// <inheritdoc/>
         public override string ToString()
         {
-            var valueEscaped = "\"" + this.Value.Replace("\"", "\"\"") + "\"";
+            var valueEscaped = QuoteIfNecessary(this.Value);
 
             if (this.Operator == EqualsOperator)
             {
@@ -41,15 +43,28 @@ namespace MediaLibrary.Search
                     case null:
                         return valueEscaped;
 
-                    case "tag":
+                    case "tag" when this.Operator == LessThanOrEqualOperator:
                         return $"#{valueEscaped}";
 
-                    case "@":
-                        return $"@{valueEscaped}";
+                    case "rejected" when this.Operator == GreaterThanOrEqualOperator:
+                        return $"!{valueEscaped}";
+
+                    case "@" when this.Operator == EqualsOperator:
+                    case "~" when this.Operator == EqualsOperator:
+                    case "?" when this.Operator == EqualsOperator:
+                    case "^" when this.Operator == EqualsOperator:
+                        return $"{this.Field}{valueEscaped}";
                 }
             }
 
-            return $"\"{this.Field.Replace("\"", "\"\"")}\"{this.Operator}{valueEscaped}";
+            return $"{QuoteIfNecessary(this.Field)}{this.Operator}{valueEscaped}";
+        }
+
+        internal static string QuoteIfNecessary(string value)
+        {
+            return Regex.IsMatch(value, "[a-zA-Z0-9][-a-zA-Z0-9]*")
+                ? value
+                : "\"" + value.Replace("\"", "\"\"") + "\"";
         }
     }
 }
