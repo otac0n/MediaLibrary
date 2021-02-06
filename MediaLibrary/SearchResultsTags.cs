@@ -13,10 +13,10 @@ namespace MediaLibrary
 
     public class SearchResultsTags : FlowLayoutPanel
     {
-        private readonly MediaIndex index;
+        private readonly IMediaIndex index;
         private ImmutableList<SearchResult> searchResults;
 
-        public SearchResultsTags(MediaIndex index)
+        public SearchResultsTags(IMediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.index.HashTagAdded += this.Index_HashTagAdded;

@@ -11,11 +11,11 @@ namespace MediaLibrary
 
     public partial class AddPeopleForm : Form
     {
-        private readonly MediaIndex index;
+        private readonly IMediaIndex index;
         private readonly Dictionary<int, PersonControl> personControls = new Dictionary<int, PersonControl>();
         private readonly IList<SearchResult> searchResults;
 
-        public AddPeopleForm(MediaIndex index, IList<SearchResult> searchResults)
+        public AddPeopleForm(IMediaIndex index, IList<SearchResult> searchResults)
         {
             this.InitializeComponent();
             this.index = index;

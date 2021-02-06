@@ -15,13 +15,13 @@ namespace MediaLibrary
 
     public partial class EditTagsForm : Form
     {
-        private readonly MediaIndex index;
+        private readonly IMediaIndex index;
         private readonly HashSet<string> rejectedTags = new HashSet<string>();
         private readonly IList<SearchResult> searchResults;
         private readonly Dictionary<string, TagControl> tagControls = new Dictionary<string, TagControl>();
         private Dictionary<string, int> tagCounts;
 
-        public EditTagsForm(MediaIndex index, IList<SearchResult> searchResults)
+        public EditTagsForm(IMediaIndex index, IList<SearchResult> searchResults)
         {
             this.InitializeComponent();
             this.index = index;

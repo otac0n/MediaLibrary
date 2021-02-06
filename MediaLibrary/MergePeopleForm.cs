@@ -17,10 +17,10 @@ namespace MediaLibrary
 
     public partial class MergePeopleForm : Form
     {
-        private readonly MediaIndex index;
+        private readonly IMediaIndex index;
         private List<Person> people;
 
-        public MergePeopleForm(MediaIndex index)
+        public MergePeopleForm(IMediaIndex index)
         {
             this.InitializeComponent();
             this.index = index;

@@ -19,7 +19,7 @@ namespace MediaLibrary
 
     public partial class FindDuplicatesForm : Form
     {
-        private readonly MediaIndex index;
+        private readonly IMediaIndex index;
         private readonly Dictionary<string, PathModel> pathModels = new Dictionary<string, PathModel>();
         private readonly Dictionary<string, ResultModel> resultModels = new Dictionary<string, ResultModel>();
         private readonly PredicateSearchCompiler searchCompiler;
@@ -30,7 +30,7 @@ namespace MediaLibrary
         private bool synchronizeTreeView;
         private Predicate<SearchResult> visiblePredicate;
 
-        public FindDuplicatesForm(MediaIndex index)
+        public FindDuplicatesForm(IMediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.searchCompiler = new PredicateSearchCompiler(index.TagEngine, excludeHidden: false, _ => null); // TODO: Support saved searches.

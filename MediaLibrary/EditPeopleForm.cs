@@ -12,11 +12,11 @@ namespace MediaLibrary
 
     public partial class EditPeopleForm : Form
     {
-        private readonly MediaIndex index;
+        private readonly IMediaIndex index;
         private List<Person> people;
         private int update;
 
-        public EditPeopleForm(MediaIndex index)
+        public EditPeopleForm(IMediaIndex index)
         {
             this.InitializeComponent();
             this.index = index;

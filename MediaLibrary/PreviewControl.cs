@@ -19,7 +19,7 @@ namespace MediaLibrary
         private SearchResultsTags existingTags;
         private ImmutableList<SearchResult> previewItems;
 
-        public PreviewControl(MediaIndex index)
+        public PreviewControl(IMediaIndex index)
         {
             this.InitializeComponent();
 

@@ -11,9 +11,9 @@ namespace MediaLibrary
 
     public partial class EditTagRulesForm : Form
     {
-        private readonly MediaIndex index;
+        private readonly IMediaIndex index;
 
-        public EditTagRulesForm(MediaIndex index)
+        public EditTagRulesForm(IMediaIndex index)
         {
             this.index = index;
             this.InitializeComponent();

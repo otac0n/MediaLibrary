@@ -24,7 +24,7 @@ namespace MediaLibrary.Storage
     using Nito.AsyncEx;
     using TaggingLibrary;
 
-    public class MediaIndex : IDisposable
+    public class MediaIndex : IMediaIndex
     {
         public static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
 
@@ -248,33 +248,6 @@ namespace MediaLibrary.Storage
         public Task<List<string>> GetAllTags() =>
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<string>(HashTag.Queries.GetAllTags).ConfigureAwait(false)).ToList());
-
-        public async Task<SQLiteConnection> GetConnection(bool readOnly = false)
-        {
-            var connectionString = new SQLiteConnectionStringBuilder
-            {
-                DataSource = this.indexPath,
-                ReadOnly = readOnly,
-            };
-
-            SQLiteConnection connection = null;
-            try
-            {
-                connection = new SQLiteConnection(connectionString.ToString());
-                await connection.OpenAsync().ConfigureAwait(false);
-
-                var result = connection;
-                connection = null;
-                return result;
-            }
-            finally
-            {
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
-            }
-        }
 
         public Task<Dictionary<string, object>> GetHashDetails(string hash) =>
             this.IndexReadAsync(async conn =>
@@ -601,6 +574,33 @@ namespace MediaLibrary.Storage
             finally
             {
                 watcher?.Dispose();
+            }
+        }
+
+        private async Task<SQLiteConnection> GetConnection(bool readOnly = false)
+        {
+            var connectionString = new SQLiteConnectionStringBuilder
+            {
+                DataSource = this.indexPath,
+                ReadOnly = readOnly,
+            };
+
+            SQLiteConnection connection = null;
+            try
+            {
+                connection = new SQLiteConnection(connectionString.ToString());
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                var result = connection;
+                connection = null;
+                return result;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    connection.Dispose();
+                }
             }
         }
 

@@ -22,12 +22,12 @@ namespace MediaLibrary
     {
         private readonly ImmutableDictionary<Column, ColumnDefinition> columnDefinitions;
         private readonly Dictionary<Column, OLVColumn> columns = new Dictionary<Column, OLVColumn>();
-        private readonly MediaIndex index;
+        private readonly IMediaIndex index;
         private readonly List<SearchResult> orderdResults = new List<SearchResult>();
         private bool columnsSized = false;
         private TagComparer tagComparer;
 
-        public VirtualSearchResultsView(MediaIndex index)
+        public VirtualSearchResultsView(IMediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.AllowColumnReorder = true;
