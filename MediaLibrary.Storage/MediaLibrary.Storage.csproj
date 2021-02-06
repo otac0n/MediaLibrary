@@ -15,6 +15,7 @@
     <PackageReference Include="FixMe" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="GitVersionTask" Version="5.5.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8" PrivateAssets="All" />
+    <PackageReference Include="Nito.AsyncEx" Version="5.1.0" />
     <PackageReference Include="Pegasus" Version="4.1.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All" />
     <PackageReference Include="System.Collections.Immutable" Version="1.7.1" />
