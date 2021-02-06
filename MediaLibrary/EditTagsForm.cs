@@ -103,8 +103,9 @@ namespace MediaLibrary
 
         private async Task PopulateExistingTags()
         {
+            var tagComparer = this.index.TagEngine.GetTagComparer();
             this.tagCounts = this.CountTags();
-            foreach (var tag in this.tagCounts)
+            foreach (var tag in this.tagCounts.OrderBy(t => t.Key, tagComparer))
             {
                 this.AddTagControl(tag.Key, tag.Value != this.searchResults.Count);
             }
