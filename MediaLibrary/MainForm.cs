@@ -312,7 +312,7 @@ namespace MediaLibrary
             var details = await this.index.GetHashDetails(searchResult.Hash).ConfigureAwait(true);
             if (details.TryGetValue(ImageDetailRecognizer.Properties.AverageIntensityHash, out var value) && value is long hash)
             {
-                this.searchBox.Text = new FieldTerm("similar", ((ulong)hash).ToString("x16")).ToString();
+                this.Search(new FieldTerm("similar", ((ulong)hash).ToString("x16")));
             }
         }
 
@@ -467,6 +467,7 @@ namespace MediaLibrary
 
         private async Task PerformSearch(bool throttle = false)
         {
+            var searchText = this.searchBox.Text;
             var selectedHashes = new HashSet<string>(this.listView.SelectedResults.Select(r => r.Hash));
             var searchVersion = Interlocked.Increment(ref this.searchVersion);
             if (throttle)
@@ -481,7 +482,7 @@ namespace MediaLibrary
             IList<SearchResult> data;
             try
             {
-                data = await this.index.SearchIndex(this.searchBox.Text).ConfigureAwait(true);
+                data = await this.index.SearchIndex(searchText).ConfigureAwait(true);
             }
             catch
             {
@@ -529,8 +530,8 @@ namespace MediaLibrary
         private void SavedSearchMenuItem_Click(object sender, EventArgs e)
         {
             var savedSearch = (SavedSearch)((ToolStripMenuItem)sender).Tag;
-            this.searchBox.Text = new SavedSearchTerm(savedSearch.Name).ToString();
             this.viewButton.HideDropDown();
+            this.Search(new SavedSearchTerm(savedSearch.Name));
         }
 
         private async void SaveThisSearchMenuItem_Click(object sender, EventArgs e)
@@ -547,6 +548,13 @@ namespace MediaLibrary
             }
         }
 
+        private void Search(Term searchTerm) => this.Search(searchTerm?.ToString());
+
+        private void Search(string search)
+        {
+            this.searchBox.Text = search ?? string.Empty;
+        }
+
         private void SearchBookmark_Click(object sender, EventArgs e)
         {
             string tag = null;
@@ -559,7 +567,7 @@ namespace MediaLibrary
                 tag = toolStripItem.Tag as string;
             }
 
-            this.searchBox.Text = tag ?? string.Empty;
+            this.Search(tag);
         }
 
         private async void SearchBox_TextChangedAsync(object sender, EventArgs e)

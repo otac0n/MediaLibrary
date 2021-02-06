@@ -29,9 +29,9 @@ namespace MediaLibrary
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             System.Windows.Forms.ToolStripSeparator toolStripActionSeparator;
             System.Windows.Forms.ToolStripSeparator toolStripSeparator12;
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.mainMenu = new System.Windows.Forms.MenuStrip();
             this.optionsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addIndexedFolderMainMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -105,9 +105,9 @@ namespace MediaLibrary
             this.editTagsContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addPeopleContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.findSimilarMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
-            this.findSimilarMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripActionSeparator = new System.Windows.Forms.ToolStripSeparator();
             toolStripSeparator12 = new System.Windows.Forms.ToolStripSeparator();
             this.mainMenu.SuspendLayout();
@@ -117,6 +117,16 @@ namespace MediaLibrary
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.SuspendLayout();
             this.SuspendLayout();
+            // 
+            // toolStripActionSeparator
+            // 
+            toolStripActionSeparator.Name = "toolStripActionSeparator";
+            toolStripActionSeparator.Size = new System.Drawing.Size(142, 6);
+            // 
+            // toolStripSeparator12
+            // 
+            toolStripSeparator12.Name = "toolStripSeparator12";
+            toolStripSeparator12.Size = new System.Drawing.Size(142, 6);
             // 
             // mainMenu
             // 
@@ -461,8 +471,8 @@ namespace MediaLibrary
             // 
             this.starredFilesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_star;
             this.starredFilesMenuItem.Name = "starredFilesMenuItem";
-            this.starredFilesMenuItem.Size = new System.Drawing.Size(112, 22);
-            this.starredFilesMenuItem.Tag = "stars:>=3";
+            this.starredFilesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.starredFilesMenuItem.Tag = "stars>=3";
             this.starredFilesMenuItem.Text = "Files";
             this.starredFilesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
@@ -475,8 +485,8 @@ namespace MediaLibrary
             // 
             this.starredAudioMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_star;
             this.starredAudioMenuItem.Name = "starredAudioMenuItem";
-            this.starredAudioMenuItem.Size = new System.Drawing.Size(112, 22);
-            this.starredAudioMenuItem.Tag = "stars:>=3 type:audio";
+            this.starredAudioMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.starredAudioMenuItem.Tag = "stars>=3 type:audio";
             this.starredAudioMenuItem.Text = "Audio";
             this.starredAudioMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
@@ -484,8 +494,8 @@ namespace MediaLibrary
             // 
             this.starredImagesMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_star;
             this.starredImagesMenuItem.Name = "starredImagesMenuItem";
-            this.starredImagesMenuItem.Size = new System.Drawing.Size(112, 22);
-            this.starredImagesMenuItem.Tag = "stars:>=3 type:image";
+            this.starredImagesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.starredImagesMenuItem.Tag = "stars>=3 type:image";
             this.starredImagesMenuItem.Text = "Images";
             this.starredImagesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
@@ -493,8 +503,8 @@ namespace MediaLibrary
             // 
             this.starredVideoMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_star;
             this.starredVideoMenuItem.Name = "starredVideoMenuItem";
-            this.starredVideoMenuItem.Size = new System.Drawing.Size(112, 22);
-            this.starredVideoMenuItem.Tag = "stars:>=3 type:video";
+            this.starredVideoMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.starredVideoMenuItem.Tag = "stars>=3 type:video";
             this.starredVideoMenuItem.Text = "Video";
             this.starredVideoMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
@@ -541,8 +551,8 @@ namespace MediaLibrary
             // 
             this.audioStarsMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_star;
             this.audioStarsMenuItem.Name = "audioStarsMenuItem";
-            this.audioStarsMenuItem.Size = new System.Drawing.Size(151, 22);
-            this.audioStarsMenuItem.Tag = "type:audio stars:>=3";
+            this.audioStarsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.audioStarsMenuItem.Tag = "type:audio stars>=3";
             this.audioStarsMenuItem.Text = "Starred Audio";
             this.audioStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
@@ -589,8 +599,8 @@ namespace MediaLibrary
             // 
             this.imageStarsMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_star;
             this.imageStarsMenuItem.Name = "imageStarsMenuItem";
-            this.imageStarsMenuItem.Size = new System.Drawing.Size(157, 22);
-            this.imageStarsMenuItem.Tag = "type:image stars:>=3";
+            this.imageStarsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.imageStarsMenuItem.Tag = "type:image stars>=3";
             this.imageStarsMenuItem.Text = "Starred Images";
             this.imageStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
@@ -637,8 +647,8 @@ namespace MediaLibrary
             // 
             this.videoStarsMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_star;
             this.videoStarsMenuItem.Name = "videoStarsMenuItem";
-            this.videoStarsMenuItem.Size = new System.Drawing.Size(149, 22);
-            this.videoStarsMenuItem.Tag = "type:video stars:>=3";
+            this.videoStarsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.videoStarsMenuItem.Tag = "type:video stars>=3";
             this.videoStarsMenuItem.Text = "Starred Video";
             this.videoStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
             // 
@@ -791,13 +801,13 @@ namespace MediaLibrary
             toolStripSeparator12,
             this.copyContextMenuItem});
             this.itemContextMenu.Name = "itemContextMenu";
-            this.itemContextMenu.Size = new System.Drawing.Size(181, 170);
+            this.itemContextMenu.Size = new System.Drawing.Size(146, 148);
             // 
             // favoriteContextMenuItem
             // 
             this.favoriteContextMenuItem.Image = global::MediaLibrary.Properties.Resources.love_it;
             this.favoriteContextMenuItem.Name = "favoriteContextMenuItem";
-            this.favoriteContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.favoriteContextMenuItem.Size = new System.Drawing.Size(145, 22);
             this.favoriteContextMenuItem.Text = "&Favorite";
             this.favoriteContextMenuItem.Click += new System.EventHandler(this.FavoriteToolStripMenuItem_Click);
             // 
@@ -805,7 +815,7 @@ namespace MediaLibrary
             // 
             this.editTagsContextMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_edit;
             this.editTagsContextMenuItem.Name = "editTagsContextMenuItem";
-            this.editTagsContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editTagsContextMenuItem.Size = new System.Drawing.Size(145, 22);
             this.editTagsContextMenuItem.Text = "Edit &Tags...";
             this.editTagsContextMenuItem.Click += new System.EventHandler(this.AddTagsToolStripMenuItem_Click);
             // 
@@ -813,27 +823,29 @@ namespace MediaLibrary
             // 
             this.addPeopleContextMenuItem.Image = global::MediaLibrary.Properties.Resources.single_neutral;
             this.addPeopleContextMenuItem.Name = "addPeopleContextMenuItem";
-            this.addPeopleContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addPeopleContextMenuItem.Size = new System.Drawing.Size(145, 22);
             this.addPeopleContextMenuItem.Text = "Add &People...";
             this.addPeopleContextMenuItem.Click += new System.EventHandler(this.AddPeopleMenuItem_Click);
-            // 
-            // toolStripActionSeparator
-            // 
-            toolStripActionSeparator.Name = "toolStripActionSeparator";
-            toolStripActionSeparator.Size = new System.Drawing.Size(177, 6);
             // 
             // openContextMenuItem
             // 
             this.openContextMenuItem.Name = "openContextMenuItem";
-            this.openContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openContextMenuItem.Size = new System.Drawing.Size(145, 22);
             this.openContextMenuItem.Text = "&Open...";
             this.openContextMenuItem.Click += new System.EventHandler(this.OpenMenuItem_Click);
+            // 
+            // findSimilarMenuItem
+            // 
+            this.findSimilarMenuItem.Name = "findSimilarMenuItem";
+            this.findSimilarMenuItem.Size = new System.Drawing.Size(145, 22);
+            this.findSimilarMenuItem.Text = "Find &Similar...";
+            this.findSimilarMenuItem.Click += new System.EventHandler(this.FindSimilarMenuItem_Click);
             // 
             // copyContextMenuItem
             // 
             this.copyContextMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_double;
             this.copyContextMenuItem.Name = "copyContextMenuItem";
-            this.copyContextMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.copyContextMenuItem.Size = new System.Drawing.Size(145, 22);
             this.copyContextMenuItem.Text = "&Copy";
             this.copyContextMenuItem.Click += new System.EventHandler(this.CopyMenuItem_Click);
             // 
@@ -845,18 +857,6 @@ namespace MediaLibrary
             this.splitContainer.Size = new System.Drawing.Size(800, 379);
             this.splitContainer.SplitterDistance = 462;
             this.splitContainer.TabIndex = 6;
-            // 
-            // findSimilarMenuItem
-            // 
-            this.findSimilarMenuItem.Name = "findSimilarMenuItem";
-            this.findSimilarMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.findSimilarMenuItem.Text = "Find &Similar...";
-            this.findSimilarMenuItem.Click += new System.EventHandler(this.FindSimilarMenuItem_Click);
-            // 
-            // toolStripSeparator12
-            // 
-            toolStripSeparator12.Name = "toolStripSeparator12";
-            toolStripSeparator12.Size = new System.Drawing.Size(177, 6);
             // 
             // MainForm
             // 
