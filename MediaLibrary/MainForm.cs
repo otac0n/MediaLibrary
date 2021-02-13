@@ -308,11 +308,21 @@ namespace MediaLibrary
 
         private async void FindSimilarMenuItem_Click(object sender, EventArgs e)
         {
-            var searchResult = this.listView.SelectedResults.Single();
-            var details = await this.index.GetHashDetails(searchResult.Hash).ConfigureAwait(true);
-            if (details.TryGetValue(ImageDetailRecognizer.Properties.AverageIntensityHash, out var value) && value is long hash)
+            var searchResults = this.listView.SelectedResults;
+            var getDetailsTasks = searchResults.Select(r => this.index.GetHashDetails(r.Hash)).ToArray();
+            await Task.WhenAll(getDetailsTasks).ConfigureAwait(true);
+
+            var termsFromTasks =
+                (from t in getDetailsTasks
+                 let details = t.Result
+                 where details.ContainsKey(ImageDetailRecognizer.Properties.AverageIntensityHash)
+                 let hashObj = details[ImageDetailRecognizer.Properties.AverageIntensityHash]
+                 where hashObj is long
+                 select new FieldTerm("similar", ((ulong)(long)hashObj).ToString("x16"))).ToList();
+
+            if (termsFromTasks.Count > 0)
             {
-                this.Search(new FieldTerm("similar", ((ulong)hash).ToString("x16")));
+                this.Search(new DisjunctionTerm(termsFromTasks));
             }
         }
 
@@ -351,7 +361,7 @@ namespace MediaLibrary
                     this.favoriteContextMenuItem.Tag = searchResults;
                     this.editTagsContextMenuItem.Tag = searchResults;
                     this.addPeopleContextMenuItem.Tag = searchResults;
-                    this.findSimilarMenuItem.Enabled = searchResults.Count == 1 && FileTypeHelper.IsImage(searchResults.Single().FileType);
+                    this.findSimilarMenuItem.Enabled = searchResults.All(r => FileTypeHelper.IsImage(r.FileType));
                     this.itemContextMenu.Show(Cursor.Position);
                 }
             }
