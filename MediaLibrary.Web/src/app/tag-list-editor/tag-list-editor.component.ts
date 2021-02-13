@@ -1,6 +1,7 @@
 import { Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 
 import { SearchResult } from '../../schema';
+import * as StaticData from '../static-data';
 import { TaggingService } from '../tagging.service';
 
 @Component({
@@ -34,6 +35,8 @@ export class TagListEditorComponent implements OnChanges {
     }
 
     public addTag(tag: string) {
+        tag = StaticData.allTags[tag]?.tag ?? tag;
+
         const ix = this.editStack.indexOf(tag);
         if (ix !== -1) {
             this.editStack.splice(ix, 1);

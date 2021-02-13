@@ -1,4 +1,6 @@
 <div class="tag-list">
-  <app-tag-list [tags]="searchResult?.tags" [excludeFavorite]="excludeFavorite" [editable]="true" (editTag)="editTag($event)" (removeTag)="removeTag($event)" (rejectTag)="rejectTag($event)"></app-tag-list>
+  <ng-container *ngFor="let tag of searchResult?.tags">
+    <app-tag *ngIf="!excludeFavorite || tag != 'favorite'" [tag]="tag" [allowDelete]="true" (edit)="editTag(tag)" (remove)="removeTag(tag)" (reject)="rejectTag(tag)"></app-tag>
+  </ng-container>
   <input #tagInput (keydown)="keydown($event)" (keypress)="keypress($event)" (click)="click($event)" [(ngModel)]="inputValue" />
 </div>
