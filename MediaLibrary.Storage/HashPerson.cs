@@ -17,6 +17,7 @@ namespace MediaLibrary.Storage
         internal static class Queries
         {
             public static readonly string AddHashPerson = @"
+                DELETE FROM RejectedPerson WHERE Hash = @Hash AND PersonId = @PersonId;
                 INSERT OR REPLACE INTO HashPerson (Hash, PersonId) VALUES (@Hash, @PersonId)
             ";
 
@@ -26,6 +27,11 @@ namespace MediaLibrary.Storage
                     PersonId
                 FROM HashPerson
                 WHERE Hash = @Hash
+            ";
+
+            public static readonly string RejectHashPerson = @"
+                DELETE FROM HashPerson WHERE Hash = @Hash AND PersonId = @PersonId;
+                INSERT OR REPLACE INTO RejectedPerson (Hash, PersonId) VALUES (@Hash, @PersonId)
             ";
 
             public static readonly string RemoveHashPerson = @"

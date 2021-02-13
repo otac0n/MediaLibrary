@@ -75,6 +75,7 @@ namespace MediaLibrary
         {
             var personControl = new PersonControl { Person = person, Indeterminate = indeterminate };
             personControl.DeleteClick += this.PersonControl_DeleteClick;
+            personControl.ContextMenuStrip = this.personContextMenu;
             this.existingPeople.Controls.Add(this.personControls[person.PersonId] = personControl);
             return personControl;
         }
@@ -82,12 +83,11 @@ namespace MediaLibrary
         private async void PersonControl_DeleteClick(object sender, EventArgs e)
         {
             var personControl = (PersonControl)sender;
-            personControl.DeleteClick -= this.PersonControl_DeleteClick;
-            this.existingPeople.Controls.Remove(personControl);
+            var personId = personControl.Person.PersonId;
+            this.RemovePersonControl(personControl);
 
             foreach (var searchResult in this.searchResults)
             {
-                var personId = personControl.Person.PersonId;
                 await this.index.RemoveHashPerson(new HashPerson(searchResult.Hash, personId)).ConfigureAwait(false);
             }
         }
@@ -127,6 +127,30 @@ namespace MediaLibrary
         {
             var people = await this.index.GetAllPeople().ConfigureAwait(true);
             this.personSearchBox.Items = people;
+        }
+
+        private async void RejectPersonMenuItem_Click(object sender, EventArgs e)
+        {
+            var personControl = (PersonControl)((sender as ToolStripMenuItem)?.Owner as ContextMenuStrip)?.SourceControl;
+            var personId = personControl.Person.PersonId;
+            this.RemovePersonControl(personControl);
+
+            foreach (var searchResult in this.searchResults)
+            {
+                await this.index.RemoveHashPerson(new HashPerson(searchResult.Hash, personId), rejectPerson: true).ConfigureAwait(false);
+            }
+        }
+
+        private void RemovePersonControl(PersonControl personControl)
+        {
+            personControl.DeleteClick -= this.PersonControl_DeleteClick;
+            this.existingPeople.Controls.Remove(personControl);
+        }
+
+        private void RemovePersonMenuItem_Click(object sender, EventArgs e)
+        {
+            var context = ((sender as ToolStripMenuItem)?.Owner as ContextMenuStrip)?.SourceControl;
+            this.PersonControl_DeleteClick(context, e);
         }
 
         private void UpdateTitle()

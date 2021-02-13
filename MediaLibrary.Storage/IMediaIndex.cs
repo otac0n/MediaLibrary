@@ -72,7 +72,7 @@ namespace MediaLibrary.Storage
 
         Task RemoveFilePath(string path);
 
-        Task RemoveHashPerson(HashPerson hashPerson);
+        Task RemoveHashPerson(HashPerson hashPerson, bool rejectPerson = false);
 
         Task RemoveHashTag(HashTag hashTag, bool rejectTag = false);
 

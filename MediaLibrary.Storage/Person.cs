@@ -92,6 +92,16 @@ namespace MediaLibrary.Storage
                 DELETE FROM HashPerson
                 WHERE PersonId = @DuplicateId;
 
+                INSERT OR REPLACE INTO RejectedPerson (Hash, PersonId)
+                SELECT
+                    Hash,
+                    @TargetId PersonId
+                FROM RejectedPerson
+                WHERE PersonId = @DuplicateId;
+
+                DELETE FROM RejectedPerson
+                WHERE PersonId = @DuplicateId;
+
                 DELETE FROM Person
                 WHERE PersonId = @DuplicateId
             ";
@@ -99,6 +109,7 @@ namespace MediaLibrary.Storage
             public static readonly string RemovePerson = @"
                 DELETE FROM Alias WHERE PersonId = @PersonId;
                 DELETE FROM HashPerson WHERE PersonId = @PersonId;
+                DELETE FROM RejectedPerson WHERE PersonId = @PersonId;
                 DELETE FROM Person WHERE PersonId = @PersonId
             ";
 

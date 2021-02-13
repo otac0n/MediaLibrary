@@ -343,14 +343,14 @@ namespace MediaLibrary.Storage
             this.IndexWriteAsync(conn =>
                 conn.ExecuteAsync(FilePath.Queries.RemoveFilePathByPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) }));
 
-        public async Task RemoveHashPerson(HashPerson hashPerson)
+        public async Task RemoveHashPerson(HashPerson hashPerson, bool rejectPerson = false)
         {
             if (hashPerson == null)
             {
                 throw new ArgumentNullException(nameof(hashPerson));
             }
 
-            await this.IndexWriteAsync(conn => conn.ExecuteAsync(HashPerson.Queries.RemoveHashPerson, hashPerson)).ConfigureAwait(false);
+            await this.IndexWriteAsync(conn => conn.ExecuteAsync(rejectPerson ? HashPerson.Queries.RejectHashPerson : HashPerson.Queries.RemoveHashPerson, hashPerson)).ConfigureAwait(false);
 
             var hash = hashPerson.Hash;
             if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.People.FirstOrDefault(p => p.PersonId == hashPerson.PersonId) is Person person)
@@ -1098,6 +1098,15 @@ namespace MediaLibrary.Storage
                 );
 
                 CREATE TABLE IF NOT EXISTS HashPerson
+                (
+                    Hash text NOT NULL,
+                    PersonId integer NOT NULL,
+                    PRIMARY KEY (Hash, PersonId),
+                    FOREIGN KEY (Hash) REFERENCES HashInfo (Hash) ON DELETE CASCADE,
+                    FOREIGN KEY (PersonId) REFERENCES Person (PersonId) ON DELETE CASCADE
+                );
+
+                CREATE TABLE IF NOT EXISTS RejectedPerson
                 (
                     Hash text NOT NULL,
                     PersonId integer NOT NULL,
