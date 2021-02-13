@@ -46,7 +46,7 @@ namespace MediaLibrary
             {
                 if (IconCache.TryGetValue(baseUri.ToString(), out image))
                 {
-                    return image;
+                    return (Image)image.Clone();
                 }
 
                 string key;
@@ -136,7 +136,7 @@ namespace MediaLibrary
                 }
             }
 
-            return image;
+            return (Image)image.Clone();
         }
 
         private static List<Uri> FindFaviconLinks(HtmlDocument doc, Uri baseUri)
