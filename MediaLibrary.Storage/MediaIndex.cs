@@ -193,7 +193,19 @@ namespace MediaLibrary.Storage
         }
 
         public Task<Person> AddPerson(string name) =>
-            this.IndexUpdateAsync(async conn => (await conn.QueryAsync<Person>(Person.Queries.AddPerson, new { Name = name }).ConfigureAwait(false)).Single());
+            this.IndexUpdateAsync(async conn =>
+            {
+                var person = (await conn.QueryAsync<Person>(Person.Queries.AddPerson, new { Name = name }).ConfigureAwait(false)).Single();
+                person.Aliases = ImmutableHashSet<Alias>.Empty;
+                return this.personCache.AddOrUpdate(
+                    person.PersonId,
+                    id => person,
+                    (id, p) =>
+                    {
+                        p.Name = person.Name;
+                        p.Aliases = person.Aliases;
+                    });
+            });
 
         public Task<SavedSearch> AddSavedSearch(string name, string query) =>
             this.IndexUpdateAsync(async conn => (await conn.QueryAsync<SavedSearch>(SavedSearch.Queries.AddSavedSearch, new { Name = name, Query = query }).ConfigureAwait(false)).Single());
