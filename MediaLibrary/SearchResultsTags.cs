@@ -8,6 +8,7 @@ namespace MediaLibrary
     using System.ComponentModel;
     using System.Linq;
     using System.Windows.Forms;
+    using MediaLibrary.Properties;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
 
@@ -97,7 +98,41 @@ namespace MediaLibrary
             else
             {
                 var write = 0;
-                foreach (var tag in tagCounts.OrderBy(t => t.Key, tagComparer))
+
+                if (tagCounts.TryGetValue("favorite", out var favoriteCount))
+                {
+                    var targetImage = favoriteCount != searchResults.Count
+                        ? Resources.love_it
+                        : Resources.love_it_filled;
+                    if (this.Controls.Count > 0 && this.Controls[write] is PictureBox favoriteImage)
+                    {
+                        favoriteImage.Image = targetImage;
+                        write++;
+                    }
+                    else
+                    {
+                        var fontHeight = (int)Math.Round(this.Font.GetHeight()) + 3 * 2;
+                        favoriteImage = new PictureBox
+                        {
+                            Image = targetImage,
+                            Width = fontHeight,
+                            Height = fontHeight,
+                            SizeMode = PictureBoxSizeMode.Zoom,
+                        };
+                        this.Controls.Add(favoriteImage);
+                        this.Controls.SetChildIndex(favoriteImage, write++);
+                    }
+                }
+                else
+                {
+                    if (this.Controls.Count > 0 && this.Controls[write] is PictureBox favoriteImage)
+                    {
+                        this.Controls.RemoveAt(write);
+                        favoriteImage.Dispose();
+                    }
+                }
+
+                foreach (var tag in tagCounts.Where(t => t.Key != "favorite").OrderBy(t => t.Key, tagComparer))
                 {
                     TagControl tagControl;
 

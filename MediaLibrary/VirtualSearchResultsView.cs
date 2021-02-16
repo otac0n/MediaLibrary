@@ -98,13 +98,8 @@ namespace MediaLibrary
                             xOffset += size + padding;
                         }
 
-                        foreach (var tag in r.Tags.OrderBy(t => t, tagComparer))
+                        foreach (var tag in r.Tags.Where(t => t != "favorite").OrderBy(t => t, tagComparer))
                         {
-                            if (tag == "favorite")
-                            {
-                                continue;
-                            }
-
                             var backgroundColor = tagComparer.GetTagColor(tag) ?? SystemColors.Info;
                             var textColor = ColorService.ContrastColor(backgroundColor);
                             var size = g.MeasureString(tag, this.Font);
@@ -116,6 +111,7 @@ namespace MediaLibrary
                                 g.DrawString(tag, this.Font, textBrush, topLeft);
                             }
 
+                            // TODO: Break on out-of-bounds.
                             xOffset += size.Width + padding;
                         }
                     }
