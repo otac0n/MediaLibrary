@@ -114,6 +114,7 @@ namespace MediaLibrary
             | System.Windows.Forms.AnchorStyles.Right)));
             this.rules.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.rules.Location = new System.Drawing.Point(0, 0);
+            this.rules.MaxLength = 0;
             this.rules.Multiline = true;
             this.rules.Name = "rules";
             this.rules.ScrollBars = System.Windows.Forms.ScrollBars.Both;
@@ -128,13 +129,13 @@ namespace MediaLibrary
             this.removeCategoryMenuItem,
             this.addCategoryMenuItem});
             this.tabContextMenu.Name = "tabContextMenu";
-            this.tabContextMenu.Size = new System.Drawing.Size(181, 92);
+            this.tabContextMenu.Size = new System.Drawing.Size(169, 70);
             // 
             // renameMenuItem
             // 
             this.renameMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_edit;
             this.renameMenuItem.Name = "renameMenuItem";
-            this.renameMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.renameMenuItem.Size = new System.Drawing.Size(168, 22);
             this.renameMenuItem.Text = "Re&name...";
             this.renameMenuItem.Click += new System.EventHandler(this.RenameMenuItem_Click);
             // 
@@ -142,7 +143,7 @@ namespace MediaLibrary
             // 
             this.removeCategoryMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_remove;
             this.removeCategoryMenuItem.Name = "removeCategoryMenuItem";
-            this.removeCategoryMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.removeCategoryMenuItem.Size = new System.Drawing.Size(168, 22);
             this.removeCategoryMenuItem.Text = "&Remove Category";
             this.removeCategoryMenuItem.Click += new System.EventHandler(this.RemoveCategoryMenuItem_Click);
             // 
@@ -150,7 +151,7 @@ namespace MediaLibrary
             // 
             this.addCategoryMenuItem.Image = global::MediaLibrary.Properties.Resources.tags_add;
             this.addCategoryMenuItem.Name = "addCategoryMenuItem";
-            this.addCategoryMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addCategoryMenuItem.Size = new System.Drawing.Size(168, 22);
             this.addCategoryMenuItem.Text = "&Add Category...";
             this.addCategoryMenuItem.Click += new System.EventHandler(this.AddCategoryMenuItem_Click);
             // 

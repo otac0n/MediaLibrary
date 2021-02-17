@@ -52,6 +52,7 @@ namespace MediaLibrary
             newRules.AcceptsReturn = this.rules.AcceptsReturn;
             newRules.AcceptsTab = this.rules.AcceptsTab;
             newRules.Multiline = this.rules.Multiline;
+            newRules.MaxLength = this.rules.MaxLength;
             newRules.WordWrap = this.rules.WordWrap;
             newRules.Font = this.rules.Font;
             newRules.ScrollBars = this.rules.ScrollBars;
