@@ -84,9 +84,7 @@ namespace MediaLibrary
 
         private void AdvancedButton_Click(object sender, EventArgs e)
         {
-            var control = (Control)sender;
-            var offset = new Point(0, control.Height);
-            this.advancedMenuStrip.Show(control, offset);
+            this.advancedMenuStrip.PopUnder((Control)sender);
         }
 
         private async void AliasControl_DeleteClick(object sender, EventArgs e)

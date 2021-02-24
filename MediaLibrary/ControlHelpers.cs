@@ -46,6 +46,12 @@ namespace MediaLibrary
             }
         }
 
+        public static void PopUnder(this ContextMenuStrip contextMenu, Control control)
+        {
+            var offset = new Point(0, control.Height);
+            contextMenu.Show(control, offset);
+        }
+
         public static void UpdateControlsCollection<TItem, TControl>(this Control control, IList<TItem> items, Func<TControl> create, Action<TControl> destroy, Action<TControl, TItem> update)
             where TControl : Control
         {
