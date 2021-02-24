@@ -397,7 +397,8 @@ namespace MediaLibrary
             this.rateAllButton.Enabled = false;
             await this.index.Initialize().ConfigureAwait(true);
 
-            foreach (var savedSearch in await this.index.GetAllSavedSearches().ConfigureAwait(true))
+            var savedSearches = await this.index.GetAllSavedSearches().ConfigureAwait(true);
+            foreach (var savedSearch in savedSearches.OrderBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase))
             {
                 this.AddSavedSearchMenuItem(savedSearch);
             }
