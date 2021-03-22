@@ -107,7 +107,7 @@ namespace MediaLibrary
             if (e.KeyCode == Keys.Down && e.Modifiers == Keys.None)
             {
                 e.Handled = true;
-                this.AdvancedButton_Click(sender, e);
+                this.advancedMenuStrip.PopUnder((Control)sender, focusFirstItem: true);
             }
         }
 
