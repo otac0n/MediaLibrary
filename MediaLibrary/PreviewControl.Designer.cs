@@ -29,9 +29,8 @@ namespace MediaLibrary
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PreviewControl));
-            this.thumbnail = new System.Windows.Forms.PictureBox();
+            this.thumbnail = new MediaLibrary.ImagePreviewControl();
             this.mediaPlayer = new AxWMPLib.AxWindowsMediaPlayer();
-            ((System.ComponentModel.ISupportInitialize)(this.thumbnail)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.mediaPlayer)).BeginInit();
             this.SuspendLayout();
             // 
@@ -41,7 +40,6 @@ namespace MediaLibrary
             this.thumbnail.Location = new System.Drawing.Point(0, 0);
             this.thumbnail.Name = "thumbnail";
             this.thumbnail.Size = new System.Drawing.Size(150, 150);
-            this.thumbnail.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.thumbnail.TabIndex = 0;
             this.thumbnail.TabStop = false;
             // 
@@ -64,7 +62,6 @@ namespace MediaLibrary
             this.Controls.Add(this.mediaPlayer);
             this.Controls.Add(this.thumbnail);
             this.Name = "PreviewControl";
-            ((System.ComponentModel.ISupportInitialize)(this.thumbnail)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.mediaPlayer)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -73,7 +70,7 @@ namespace MediaLibrary
 
         #endregion
 
-        private System.Windows.Forms.PictureBox thumbnail;
+        private MediaLibrary.ImagePreviewControl thumbnail;
         private AxWMPLib.AxWindowsMediaPlayer mediaPlayer;
     }
 }
