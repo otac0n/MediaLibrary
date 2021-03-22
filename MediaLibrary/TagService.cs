@@ -24,7 +24,7 @@ namespace MediaLibrary
         public static Color? GetTagColor(this TagRuleEngine tagEngine, string tag) =>
             ColorService.ParseColor(tagEngine.GetPropertyValue(tag, "color"));
 
-        public static TagComparer GetTagComparer(this TagRuleEngine tagEngine) => new TagComparer(tagEngine);
+        public static TagComparer GetTagComparer(this TagRuleEngine tagEngine, StringComparer nameComparer = null) => new TagComparer(tagEngine, nameComparer);
 
         public static double GetTagOrder(this TagRuleEngine tagEngine, string tag)
         {

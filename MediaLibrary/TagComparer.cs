@@ -5,17 +5,20 @@ namespace MediaLibrary
     using System;
     using System.Collections.Generic;
     using System.Drawing;
+    using System.Linq;
     using TaggingLibrary;
 
-    public class TagComparer : IComparer<string>
+    public class TagComparer : IComparer<string>, IComparer<IList<string>>, IComparer<ISet<string>>
     {
         private readonly Dictionary<string, Color?> colorCache = new Dictionary<string, Color?>();
+        private readonly StringComparer nameComparer;
         private readonly Dictionary<string, double> orderCache = new Dictionary<string, double>();
         private readonly TagRuleEngine tagEngine;
 
-        public TagComparer(TagRuleEngine tagEngine)
+        public TagComparer(TagRuleEngine tagEngine, StringComparer nameComparer = null)
         {
             this.tagEngine = tagEngine;
+            this.nameComparer = nameComparer ?? StringComparer.CurrentCultureIgnoreCase;
         }
 
         public int Compare(string a, string b)
@@ -57,7 +60,48 @@ namespace MediaLibrary
                 return comp;
             }
 
-            return StringComparer.CurrentCultureIgnoreCase.Compare(a, b);
+            return this.nameComparer.Compare(a, b);
+        }
+
+        public int Compare(IList<string> a, IList<string> b)
+        {
+            var comp = b.Count.CompareTo(a.Count);
+            if (comp != 0)
+            {
+                return comp;
+            }
+
+            var aSorted = a.OrderBy(t => t, this);
+            var bSorted = b.OrderBy(t => t, this);
+            return aSorted.Zip(bSorted, this.Compare).Where(c => c != 0).FirstOrDefault();
+        }
+
+        public int Compare(ISet<string> a, ISet<string> b)
+        {
+            IEnumerable<IGrouping<double, string>> Group(ISet<string> set) =>
+                from t in set
+                group t by this.GetTagOrder(t) into g
+                orderby g.Key
+                select g;
+
+            var aGrouped = Group(a).ToList();
+            var bGrouped = Group(b).ToList();
+            var comp = aGrouped.Zip(bGrouped, (gA, gB) =>
+            {
+                var gComp = gA.Key.CompareTo(gB.Key);
+                if (gComp != 0)
+                {
+                    return gComp;
+                }
+
+                return this.Compare(gA.ToList(), gB.ToList());
+            }).Where(c => c != 0).FirstOrDefault();
+            if (comp != 0)
+            {
+                return comp;
+            }
+
+            return b.Count.CompareTo(a.Count);
         }
 
         public Color? GetTagColor(string tag)

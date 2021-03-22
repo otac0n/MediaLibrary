@@ -70,20 +70,7 @@ namespace MediaLibrary
                     Column.Tags,
                     r => r.Tags,
                     value => string.Join("; ", value),
-                    (a, b) =>
-                    {
-                        var comp = a.Tags.Count.CompareTo(b.Tags.Count);
-                        if (comp != 0 || a.Tags.Count == 0)
-                        {
-                            return comp;
-                        }
-
-                        var tagComparer = this.TagComparer;
-                        var aSorted = a.Tags.OrderBy(t => t, tagComparer);
-                        var bSorted = b.Tags.OrderBy(t => t, tagComparer);
-
-                        return aSorted.Zip(bSorted, tagComparer.Compare).Select(c => -Math.Sign(c)).Where(c => c != 0).FirstOrDefault();
-                    },
+                    (a, b) => this.TagComparer.Compare(a.Tags, b.Tags),
                     (g, bounds, r) =>
                     {
                         var tagComparer = this.TagComparer;
@@ -167,6 +154,7 @@ namespace MediaLibrary
             }
 
             this.ColumnWidthChanged += this.Internal_ColumnWidthChanged;
+            this.BeforeSorting += this.Internal_BeforeSorting;
         }
 
         private enum Column
@@ -231,7 +219,7 @@ namespace MediaLibrary
 
         public string SortColumn
         {
-            get => this.PrimarySortColumn.Name;
+            get => this.PrimarySortColumn?.Name;
             set => this.PrimarySortColumn = this.AllColumns.Where(c => c.Name == value).FirstOrDefault();
         }
 
@@ -296,6 +284,15 @@ namespace MediaLibrary
         private void Index_TagRulesUpdated(object sender, ItemUpdatedEventArgs<TagRuleEngine> e)
         {
             this.tagComparer = null;
+        }
+
+        private void Internal_BeforeSorting(object sender, BeforeSortingEventArgs e)
+        {
+            if (this.LastSortColumn != e.ColumnToSort)
+            {
+                e.SecondaryColumnToSort = this.SecondarySortColumn = this.LastSortColumn;
+                e.SecondarySortOrder = this.SecondarySortOrder = this.LastSortOrder;
+            }
         }
 
         private void Internal_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
@@ -447,10 +444,16 @@ namespace MediaLibrary
             {
                 if (sortOrder != SortOrder.None)
                 {
+                    var orderBuilder = ImmutableList.CreateBuilder<(Column column, bool descending)>();
+                    orderBuilder.Add(((Column)column.Index, sortOrder == SortOrder.Descending));
+                    if (this.listView.SecondarySortColumn != null)
+                    {
+                        orderBuilder.Add(((Column)this.listView.SecondarySortColumn.Index, this.listView.SecondarySortOrder == SortOrder.Descending));
+                    }
+
                     var comparer = new SearchResultsComparer(this.columnDefinitions)
                     {
-                        SortColumn = (Column)column.Index,
-                        Descending = sortOrder == SortOrder.Descending,
+                        SortOrder = orderBuilder.ToImmutable(),
                     };
 
                     this.ObjectList.Sort(comparer);
@@ -470,18 +473,24 @@ namespace MediaLibrary
                 this.columnDefinitions = columnDefinitions;
             }
 
-            public bool Descending { get; set; }
-
-            public Column SortColumn { get; set; }
+            public ImmutableList<(Column column, bool descending)> SortOrder { get; set; }
 
             public int Compare(SearchResult a, SearchResult b)
             {
-                var column = this.columnDefinitions[this.SortColumn];
-                var value = column.Comparison(a, b);
+                foreach (var (sortColumn, sortDescending) in this.SortOrder)
+                {
+                    var column = this.columnDefinitions[sortColumn];
+                    var value = column.Comparison(a, b);
 
-                return
-                    !this.Descending || value == 0 ? value :
-                    value > 0 ? -1 : 1;
+                    if (value != 0)
+                    {
+                        return !sortDescending
+                            ? value
+                            : (value > 0 ? -1 : 1);
+                    }
+                }
+
+                return 0;
             }
 
             public int Compare(object a, object b) => this.Compare((SearchResult)a, (SearchResult)b);
