@@ -82,9 +82,6 @@ namespace MediaLibrary
             }
         }
 
-        private static double GetExpected(ItemInfo left, ItemInfo right) =>
-            1.0 / (1.0 + Math.Pow(10.0, (left.Rating.Value - right.Rating.Value) / 400.0));
-
         private async Task LoadNextComparison(int? leftIndex = null, int? rightIndex = null)
         {
             int RandomIndex(Mode mode = Mode.PickByFrequency, int? avoid = null)
@@ -162,7 +159,7 @@ namespace MediaLibrary
             var rightRating = await this.index.GetRating(rightResult.Hash, this.category).ConfigureAwait(true) ?? new Rating(rightResult.Hash, this.category, Rating.DefaultRating, 0);
             var left = new ItemInfo(leftIx, leftRating);
             var right = new ItemInfo(rightIx, rightRating);
-            var expected = GetExpected(left, right);
+            var expected = Rating.GetExpectedScore(leftRating, rightRating);
 
             this.CompareInfo = (left, right);
             this.ratingBar.Value = this.ratingBar.Minimum + (int)Math.Round(expected * (this.ratingBar.Maximum - this.ratingBar.Minimum));
@@ -175,22 +172,11 @@ namespace MediaLibrary
             try
             {
                 var (left, right) = this.CompareInfo.Value;
-                var expected = GetExpected(left, right);
+                var leftRating = left.Rating;
+                var rightRating = right.Rating;
+
                 var actual = (double)(this.ratingBar.Value - this.ratingBar.Minimum) / (this.ratingBar.Maximum - this.ratingBar.Minimum);
-                var averageCount = (left.Rating.Count + right.Rating.Count) / 2.0;
-                var k = 15 + 15.0 / (0.14 * averageCount + 1);
-
-                var leftRating = new Rating(
-                    left.Rating.Hash,
-                    left.Rating.Category,
-                    left.Rating.Value + k * (expected - actual),
-                    left.Rating.Count + 1);
-
-                var rightRating = new Rating(
-                    right.Rating.Hash,
-                    right.Rating.Category,
-                    right.Rating.Value + k * (actual - expected),
-                    right.Rating.Count + 1);
+                Rating.ApplyScore(actual, ref leftRating, ref rightRating);
 
                 await this.index.UpdateRating(leftRating).ConfigureAwait(true);
                 await this.index.UpdateRating(rightRating).ConfigureAwait(true);
