@@ -2,6 +2,7 @@
 
 namespace MediaLibrary.Web.Hosting
 {
+    using System;
     using System.IO;
     using System.Reflection;
 
@@ -9,9 +10,13 @@ namespace MediaLibrary.Web.Hosting
     {
         public static Assembly ContentAssembly = Assembly.GetExecutingAssembly();
 
-        public static Stream GetContent(string path = null)
+        public static Stream GetContent(string path)
         {
-            path = path ?? "index.html";
+            if (path == null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
             path = path.ToLowerInvariant().Replace('\\', '.').Replace('/', '.');
             return ContentAssembly.GetManifestResourceStream($"MediaLibrary.Web.{path}");
         }
