@@ -22,6 +22,13 @@ export interface Alias {
     site?: string;
 }
 
+export interface Rating {
+    category: string;
+    count: number;
+    hash: string;
+    value: number;
+}
+
 export interface SavedSearch {
     searchId: number;
     name: string;
