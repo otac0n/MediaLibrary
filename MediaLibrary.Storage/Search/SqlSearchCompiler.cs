@@ -69,12 +69,12 @@ namespace MediaLibrary.Storage.Search
             {
                 sb
                     .AppendLine("DROP TABLE IF EXISTS temp.SearchHashInfo;")
-                    .AppendLine("CREATE TEMP TABLE temp.SearchHashInfo (Hash text, FileSize integer, FileType text, PRIMARY KEY (Hash));")
-                    .AppendLine("INSERT INTO temp.SearchHashInfo (Hash, FileSize, FileType)");
+                    .AppendLine("CREATE TEMP TABLE temp.SearchHashInfo (Hash text, FileSize integer, FileType text, Version integer, PRIMARY KEY (Hash));")
+                    .AppendLine("INSERT INTO temp.SearchHashInfo (Hash, FileSize, FileType, Version)");
             }
 
             sb
-                .AppendLine("SELECT h.Hash, h.FileSize, h.FileType")
+                .AppendLine("SELECT h.Hash, h.FileSize, h.FileType, h.Version")
                 .AppendLine("FROM HashInfo h");
 
             if (this.dialect.JoinCopies)

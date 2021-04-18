@@ -2,11 +2,14 @@
 
 namespace MediaLibrary.Storage.FileTypes
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
     internal sealed class FileTypeRecognizer
     {
+        public static readonly long Version = 1;
+
         /// <remarks>
         /// From
         /// * https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -54,7 +57,9 @@ namespace MediaLibrary.Storage.FileTypes
             { "video/mp4",       null, null, null, null, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x53, 0x4e, 0x56 },
             { "video/mp4",       null, null, null, null, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f },
             { "video/mp4",       null, null, null, null, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x70, 0x34, 0x32 },
+            { "video/x-m4v",     null, null, null, null, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x56, 0x20 },
             { "video/quicktime", null, null, null, null, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74, 0x20, 0x20 },
+            { "video",           null, null, null, null, 0x66, 0x74, 0x79, 0x70 }, // MP4-like catch-all.
             { "video/quicktime", null, null, null, null, 0x6d, 0x6f, 0x6f, 0x76 },
             { "video/quicktime", null, null, null, null, 0x66, 0x72, 0x65, 0x65 },
             { "video/quicktime", null, null, null, null, 0x6d, 0x64, 0x61, 0x74 },
@@ -88,8 +93,17 @@ namespace MediaLibrary.Storage.FileTypes
             return done;
         }
 
-        public static string GetType(State[] states) =>
-            string.Join(";", states.Where(s => s.Matches).Select(s => s.Type).Distinct().OrderBy(s => s));
+        public static string GetType(State[] states)
+        {
+            var group =
+                (from s in states
+                 where s.Matches
+                 group s.Type by s.Priority into g
+                 orderby g.Key descending
+                 select g).Take(1).SelectMany(g => g).Distinct().OrderBy(s => s);
+
+            return string.Join(";", group);
+        }
 
         public static State[] Initialize()
         {
@@ -121,6 +135,8 @@ namespace MediaLibrary.Storage.FileTypes
             }
 
             public bool Matches => this.matches && this.index >= this.recognizer.Pattern.Length;
+
+            public int Priority => this.recognizer.Pattern.Length;
 
             public string Type => this.recognizer.Type;
 

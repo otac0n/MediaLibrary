@@ -80,5 +80,25 @@ namespace MediaLibrary.Storage
                 return true;
             }
         }
+
+        public bool TryUpdate(TKey key, Action<TKey, TValue> updateValue)
+        {
+            if (updateValue == null)
+            {
+                throw new ArgumentNullException(nameof(updateValue));
+            }
+
+            lock (this.storage)
+            {
+                if (this.storage.TryGetValue(key, out var weakReference) &&
+                    weakReference.TryGetTarget(out var value))
+                {
+                    updateValue(key, value);
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

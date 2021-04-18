@@ -106,6 +106,7 @@ namespace MediaLibrary.Storage
                     Hash,
                     FileSize,
                     FileType,
+                    Version,
                     CASE WHEN Hash IN (SELECT Hash FROM HashDetails) THEN TRUE ELSE FALSE END AS HasHashDetails
                 FROM HashInfo
                 WHERE Hash IN (SELECT LastHash FROM temp.GetFilePathsUnder);

@@ -124,7 +124,7 @@ namespace MediaLibrary.Storage
                 sb.Append(hash[i].ToString("x2", CultureInfo.InvariantCulture));
             }
 
-            return new HashInfo(sb.ToString(), fileSize, FileTypeRecognizer.GetType(recognizerState));
+            return new HashInfo(sb.ToString(), fileSize, FileTypeRecognizer.GetType(recognizerState), FileTypeRecognizer.Version);
         }
 
         public Task<Alias> AddAlias(Alias alias) =>
@@ -325,6 +325,15 @@ namespace MediaLibrary.Storage
                         tran.Commit();
                     }
                 }
+
+                if (!(await conn.QueryAsync<string>("SELECT name FROM pragma_table_info('HashInfo') WHERE name = 'Version'").ConfigureAwait(false)).Any())
+                {
+                    using (var tran = conn.BeginTransaction())
+                    {
+                        await conn.ExecuteAsync(Queries.CreateSchema_02_AddHashInfoVersion, transaction: tran).ConfigureAwait(false);
+                        tran.Commit();
+                    }
+                }
             }).ConfigureAwait(false);
 
             var ruleCategories = await this.GetAllRuleCategories().ConfigureAwait(false);
@@ -477,8 +486,8 @@ namespace MediaLibrary.Storage
                         hash.Hash,
                         key => new SearchResult(
                             key,
-                            hash.FileType,
                             hash.FileSize,
+                            hash.FileType,
                             updatedRating,
                             updatedTags,
                             updatedPaths,
@@ -762,12 +771,43 @@ namespace MediaLibrary.Storage
                     hasDetails = null;
                 }
 
-                if (hashInfo == null || forceRehash || !(hasDetails ?? false))
+                var previousHash = hashInfo?.Hash;
+                if (hashInfo == null || hashInfo.Version < FileTypeRecognizer.Version || forceRehash || !(hasDetails ?? false))
                 {
                     using (var file = File.Open(extendedPath, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
                         hashInfo = await HashFileAsync(file).ConfigureAwait(false);
                         await this.IndexWriteAsync(conn => conn.ExecuteAsync(HashInfo.Queries.AddHashInfo, hashInfo)).ConfigureAwait(false); // TODO: Get hasDetails here.
+
+                        if (hashInfo.Hash == previousHash)
+                        {
+                            this.searchResultsCache.TryUpdate(
+                                hashInfo.Hash,
+                                (_, searchResult) =>
+                                {
+                                    searchResult.FileType = hashInfo.FileType;
+                                });
+                        }
+                        else
+                        {
+                            if (previousHash != null)
+                            {
+                                this.searchResultsCache.TryUpdate(
+                                    previousHash,
+                                    (_, searchResult) =>
+                                    {
+                                        searchResult.Paths = searchResult.Paths.Remove(path);
+                                    });
+                            }
+
+                            this.searchResultsCache.TryUpdate(
+                                hashInfo.Hash,
+                                (_, searchResult) =>
+                                {
+                                    searchResult.Paths = searchResult.Paths.Add(path);
+                                });
+                        }
+
                         filePath = new FilePath(path, hashInfo.Hash, modifiedTime, missingSince: null);
                         await this.AddFilePath(filePath).ConfigureAwait(false);
 
@@ -1044,6 +1084,7 @@ namespace MediaLibrary.Storage
                     Hash text NOT NULL,
                     FileSize integer NOT NULL,
                     FileType text NOT NULL,
+                    Version integer NOT NULL DEFAULT (0),
                     PRIMARY KEY (Hash)
                 );
 
@@ -1149,6 +1190,10 @@ namespace MediaLibrary.Storage
                 ALTER TABLE TagRules ADD COLUMN Category text NOT NULL DEFAULT '';
                 ALTER TABLE TagRules ADD COLUMN [Order] integer NOT NULL DEFAULT (0);
                 CREATE UNIQUE INDEX PK_Category ON TagRules(Category);
+            ";
+
+            public static readonly string CreateSchema_02_AddHashInfoVersion = @"
+                ALTER TABLE HashInfo ADD COLUMN Version integer NOT NULL DEFAULT (0);
             ";
 
             public static readonly string GetHashDetails = @"

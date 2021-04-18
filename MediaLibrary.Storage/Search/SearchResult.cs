@@ -6,7 +6,7 @@ namespace MediaLibrary.Storage.Search
 
     public class SearchResult
     {
-        public SearchResult(string hash, string fileType, long fileSize, Rating rating, ImmutableHashSet<string> tags, ImmutableHashSet<string> paths, ImmutableHashSet<Person> people)
+        public SearchResult(string hash, long fileSize, string fileType, Rating rating, ImmutableHashSet<string> tags, ImmutableHashSet<string> paths, ImmutableHashSet<Person> people)
         {
             this.Hash = hash;
             this.FileType = fileType;
@@ -19,7 +19,7 @@ namespace MediaLibrary.Storage.Search
 
         public long FileSize { get; }
 
-        public string FileType { get; }
+        public string FileType { get; set; }
 
         public string Hash { get; }
 
@@ -32,14 +32,15 @@ namespace MediaLibrary.Storage.Search
         public ImmutableHashSet<string> Tags { get; set; }
 
         public SearchResult With(
+            string fileType = null,
             Rating rating = null,
             ImmutableHashSet<string> tags = null,
             ImmutableHashSet<string> paths = null,
             ImmutableHashSet<Person> people = null) =>
             new SearchResult(
                 this.Hash,
-                this.FileType,
                 this.FileSize,
+                fileType ?? this.FileType,
                 rating ?? this.Rating,
                 tags ?? this.Tags,
                 paths ?? this.Paths,
