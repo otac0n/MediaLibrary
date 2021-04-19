@@ -976,6 +976,10 @@ namespace MediaLibrary.Storage
                         details = ImageDetailRecognizer.Recognize(image);
                     }
                 }
+                else if (FileTypeHelper.IsVideo(hashInfo.FileType))
+                {
+                    details = IsoBaseMediaFormatRecognizer.Recognize(file);
+                }
                 else
                 {
                     details = new Dictionary<string, object>();

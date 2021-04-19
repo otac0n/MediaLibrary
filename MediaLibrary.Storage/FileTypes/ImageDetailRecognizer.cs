@@ -10,7 +10,7 @@ namespace MediaLibrary.Storage.FileTypes
 
     public static class ImageDetailRecognizer
     {
-        private static readonly PropertyParserList PropertyTags = new PropertyParserList
+        private static readonly PropertyParserList<Image> PropertyTags = new PropertyParserList<Image>
         {
             { Properties.GpsTime, ReadGpsDateTime(PropertyTag.GpsDate, PropertyTag.GpsTime) },
             { Properties.DocumentName, ReadString(PropertyTag.DocumentName) },
@@ -34,8 +34,6 @@ namespace MediaLibrary.Storage.FileTypes
                 AverageIntensityHash.GetImageHash
             },
         };
-
-        private delegate bool PropertyGetter<T>(Image image, out T value);
 
         /// <remarks>
         /// See:
@@ -117,19 +115,7 @@ namespace MediaLibrary.Storage.FileTypes
             SRational = 10,
         }
 
-        public static Dictionary<string, object> Recognize(Image image)
-        {
-            var result = new Dictionary<string, object>();
-            foreach (var item in PropertyTags)
-            {
-                if (item.TryGet(image, out var value))
-                {
-                    result[item.Name] = value;
-                }
-            }
-
-            return result;
-        }
+        public static Dictionary<string, object> Recognize(Image image) => PropertyTags.Recognize(image);
 
         internal static double GetGamma(Image img)
         {
@@ -267,7 +253,7 @@ namespace MediaLibrary.Storage.FileTypes
             }
         }
 
-        private static PropertyGetter<DateTime> ReadDate(PropertyTag dateTag, PropertyTag subSecondTag)
+        private static PropertyGetter<Image, DateTime> ReadDate(PropertyTag dateTag, PropertyTag subSecondTag)
         {
             string[] exifDateFormats =
             {
@@ -302,7 +288,7 @@ namespace MediaLibrary.Storage.FileTypes
             };
         }
 
-        private static PropertyGetter<FractionUInt32[]> ReadFractionUInt32Array(PropertyTag tag, int? count = null)
+        private static PropertyGetter<Image, FractionUInt32[]> ReadFractionUInt32Array(PropertyTag tag, int? count = null)
         {
             return (Image img, out FractionUInt32[] value) =>
             {
@@ -316,7 +302,7 @@ namespace MediaLibrary.Storage.FileTypes
             };
         }
 
-        private static PropertyGetter<DateTime> ReadGpsDateTime(PropertyTag dateTag, PropertyTag timeTag)
+        private static PropertyGetter<Image, DateTime> ReadGpsDateTime(PropertyTag dateTag, PropertyTag timeTag)
         {
             string[] gpsDateFormats = { "yyyy:MM:dd" };
             var readDate = ReadString(dateTag);
@@ -360,7 +346,7 @@ namespace MediaLibrary.Storage.FileTypes
             return false;
         }
 
-        private static PropertyGetter<string> ReadString(PropertyTag tag)
+        private static PropertyGetter<Image, string> ReadString(PropertyTag tag)
         {
             return (Image img, out string value) =>
             {
@@ -375,7 +361,7 @@ namespace MediaLibrary.Storage.FileTypes
             };
         }
 
-        private static PropertyGetter<ushort> ReadUInt16(PropertyTag tag)
+        private static PropertyGetter<Image, ushort> ReadUInt16(PropertyTag tag)
         {
             return (Image img, out ushort value) =>
             {
@@ -390,7 +376,7 @@ namespace MediaLibrary.Storage.FileTypes
             };
         }
 
-        private static PropertyGetter<uint> ReadUInt32(PropertyTag tag)
+        private static PropertyGetter<Image, uint> ReadUInt32(PropertyTag tag)
         {
             return (Image img, out uint value) =>
             {
@@ -455,53 +441,6 @@ namespace MediaLibrary.Storage.FileTypes
             public static readonly string PageNumber = "PageNumber";
             public static readonly string UserComment = "UserComment";
             public static readonly string Width = "Width";
-        }
-
-        private abstract class PropertyParser
-        {
-            protected PropertyParser(string name)
-            {
-                this.Name = name;
-            }
-
-            public string Name { get; }
-
-            public abstract bool TryGet(Image image, out object value);
-        }
-
-        private class PropertyParser<T> : PropertyParser
-        {
-            public PropertyParser(string name, PropertyGetter<T> getter)
-                : base(name)
-            {
-                this.Getter = getter ?? throw new ArgumentNullException(nameof(getter));
-            }
-
-            public PropertyGetter<T> Getter { get; }
-
-            public override bool TryGet(Image image, out object value)
-            {
-                var result = this.Getter(image, out var valueOfT);
-                value = valueOfT;
-                return result;
-            }
-        }
-
-        private class PropertyParserList : List<PropertyParser>
-        {
-            public void Add<T>(string name, PropertyGetter<T> getter)
-            {
-                this.Add(new PropertyParser<T>(name, getter));
-            }
-
-            public void Add<T>(string name, Func<Image, T> getter)
-            {
-                this.Add(name, (Image image, out T value) =>
-                {
-                    value = getter(image);
-                    return true;
-                });
-            }
         }
     }
 }
