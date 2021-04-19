@@ -219,6 +219,8 @@ namespace MediaLibrary.Storage.Search
                 return $"d.{EscapeName(detailsField)} {ConvertOperator(@operator)} {Literal(value)}";
             }
 
+            public override string FileSize(string @operator, long value) => $"FileSize {ConvertOperator(@operator)} {value}";
+
             public override string Hash(string @operator, string value) => $"Hash {ConvertOperator(@operator)} {Literal(value)}";
 
             public override string PersonCount(string @operator, int value)

@@ -191,6 +191,26 @@ namespace MediaLibrary.Storage.Search
 
                     return this.Stars(field.Operator, stars);
 
+                case "size":
+                    // TODO: Parse filesizes.
+                    if (!long.TryParse(field.Value, out var fileSize))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return this.FileSize(field.Operator, fileSize);
+
+                case "duration":
+                case "length":
+                case "time":
+                    // TODO: Parse timestamps.
+                    if (!double.TryParse(field.Value, out var duration))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return this.Details(ImageDetailRecognizer.Properties.Duration, field.Operator, duration);
+
                 case "hash":
                     return this.Hash(field.Operator, field.Value);
 
@@ -202,6 +222,8 @@ namespace MediaLibrary.Storage.Search
         public abstract T Copies(string @operator, int value);
 
         public abstract T Details(string detailsField, string @operator, object value);
+
+        public abstract T FileSize(string @operator, long value);
 
         public abstract T Hash(string @operator, string value);
 

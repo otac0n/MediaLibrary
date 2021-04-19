@@ -83,6 +83,12 @@ namespace MediaLibrary.Storage.Search
                 throw new NotImplementedException("Query hash details table and compare to this result.");
             }
 
+            public override Predicate<SearchResult> FileSize(string @operator, long value)
+            {
+                var op = ConvertOperator(@operator);
+                return x => op(x.FileSize.CompareTo(value));
+            }
+
             public override Predicate<SearchResult> Hash(string @operator, string value)
             {
                 var op = ConvertOperator(@operator);
