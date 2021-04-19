@@ -5,7 +5,9 @@ namespace MediaLibrary.Storage.FileTypes
     using System;
     using System.Collections.Generic;
     using System.Drawing;
+    using System.Drawing.Imaging;
     using System.Globalization;
+    using System.Linq;
     using System.Text;
 
     public static class ImageDetailRecognizer
@@ -22,7 +24,7 @@ namespace MediaLibrary.Storage.FileTypes
             { Properties.DigitizedDateTime, ReadDate(PropertyTag.DateTimeDigitized, PropertyTag.DateTimeDigitizedSubSecond) },
             { Properties.Artist, ReadString(PropertyTag.Artist) },
             { Properties.ImageTitle, ReadString(PropertyTag.ImageTitle) },
-            { Properties.FrameDelay, ReadUInt32(PropertyTag.FrameDelay) },
+            { Properties.Duration, ReconstructDuration() },
             { Properties.LoopCount, ReadUInt16(PropertyTag.LoopCount) },
             { Properties.Copyright, ReadString(PropertyTag.Copyright) },
             { Properties.MakerNote, ReadString(PropertyTag.MakerNote) },
@@ -391,6 +393,40 @@ namespace MediaLibrary.Storage.FileTypes
             };
         }
 
+        private static PropertyGetter<Image, double> ReconstructDuration()
+        {
+            return (Image image, out double value) =>
+            {
+                value = default;
+                if (image.FrameDimensionsList.Length == 0)
+                {
+                    return false;
+                }
+
+                var dimension = new FrameDimension(image.FrameDimensionsList.First());
+                var frames = image.GetFrameCount(dimension);
+                if (frames <= 1)
+                {
+                    return false;
+                }
+
+                var minFrameTime = image.RawFormat.Guid == ImageFormat.Gif.Guid ? 1 / 60.0 : 0.0;
+                if (!ReadProperty(image, PropertyTag.FrameDelay, PropertyTagType.UInt32, sizeof(uint) * frames, out uint[] frameTimes) || !(frameTimes?.Length == frames))
+                {
+                    return false;
+                }
+
+                var duration = 0.0;
+                for (var i = 0; i < frames; i++)
+                {
+                    duration += Math.Max(frameTimes[i] / 100.0, minFrameTime);
+                }
+
+                value = duration;
+                return duration != 0;
+            };
+        }
+
         private struct FractionInt32
         {
             public FractionInt32(int numerator, int denominator)
@@ -429,7 +465,7 @@ namespace MediaLibrary.Storage.FileTypes
             public static readonly string DateTime = "DateTime";
             public static readonly string DigitizedDateTime = "DigitizedDateTime";
             public static readonly string DocumentName = "DocumentName";
-            public static readonly string FrameDelay = "FrameDelay";
+            public static readonly string Duration = "Duration";
             public static readonly string GpsTime = "GpsTime";
             public static readonly string Height = "Height";
             public static readonly string ImageDescription = "ImageDescription";
