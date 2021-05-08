@@ -18,7 +18,7 @@ namespace MediaLibrary
         private readonly IMediaIndex index;
         private readonly HashSet<string> rejectedTags = new HashSet<string>();
         private readonly IList<SearchResult> searchResults;
-        private readonly Dictionary<string, TagControl> tagControls = new Dictionary<string, TagControl>();
+        private readonly List<string> tagsInEntryOrder = new List<string>();
         private Dictionary<string, int> tagCounts;
 
         public EditTagsForm(IMediaIndex index, IList<SearchResult> searchResults)
@@ -59,33 +59,22 @@ namespace MediaLibrary
 
         private async Task AddTagAndUpdate(string tag)
         {
-            if (this.tagControls.TryGetValue(tag, out var tagControl))
-            {
-                tagControl.Indeterminate = false;
-            }
-            else
-            {
-                tagControl = this.AddTagControl(tag, indeterminate: false);
-            }
-
             foreach (var searchResult in this.searchResults)
             {
                 await this.index.AddHashTag(new HashTag(searchResult.Hash, tag)).ConfigureAwait(true);
             }
 
+            if (!this.tagCounts.ContainsKey(tag))
+            {
+                this.tagsInEntryOrder.Add(tag);
+            }
+
             this.tagCounts[tag] = this.searchResults.Count;
             this.rejectedTags.Remove(tag);
-            this.RefreshSuggestions();
-            this.tagLayoutPanel.ScrollControlIntoView(tagControl);
-        }
 
-        private TagControl AddTagControl(string tag, bool indeterminate)
-        {
-            var tagControl = new TagControl { Text = tag, Tag = tag, Indeterminate = indeterminate };
-            tagControl.DeleteClick += this.TagControl_DeleteClick;
-            tagControl.ContextMenuStrip = this.tagContextMenu;
-            this.existingTags.Controls.Add(this.tagControls[tag] = tagControl);
-            return tagControl;
+            this.RefreshTags();
+
+            this.tagLayoutPanel.ScrollControlIntoView(this.existingTags.Controls.OfType<TagControl>().Where(c => c.Text == tag).Single());
         }
 
         private void AddTagsForm_KeyDown(object sender, KeyEventArgs e)
@@ -142,10 +131,7 @@ namespace MediaLibrary
         {
             var tagComparer = this.index.TagEngine.GetTagComparer();
             this.tagCounts = this.CountTags();
-            foreach (var tag in this.tagCounts.OrderBy(t => t.Key, tagComparer))
-            {
-                this.AddTagControl(tag.Key, tag.Value != this.searchResults.Count);
-            }
+            this.tagsInEntryOrder.AddRange(this.tagCounts.Keys.OrderBy(t => t, tagComparer));
 
             foreach (var searchResult in this.searchResults)
             {
@@ -153,7 +139,7 @@ namespace MediaLibrary
                     (await this.index.GetRejectedTags(searchResult.Hash).ConfigureAwait(true)).Select(t => t.Tag));
             }
 
-            this.RefreshSuggestions();
+            this.RefreshTags();
         }
 
         private async void PopulateTagsCombo()
@@ -166,7 +152,7 @@ namespace MediaLibrary
             this.tagSearchBox.Text = text;
         }
 
-        private void RefreshSuggestions()
+        private void RefreshTags()
         {
             this.toolTip.Hide(this);
             var threshold = this.searchResults.Count / 2 + 1;
@@ -174,7 +160,44 @@ namespace MediaLibrary
             var allMissingTags = new HashSet<string>(analysisResult.MissingTagSets.SelectMany(t => t.Result));
             var missingTags = new HashSet<string>(analysisResult.MissingTagSets.Where(t => t.Result.Count == 1).SelectMany(t => t.Result));
 
-            var tagComparer = this.index.TagEngine.GetTagComparer();
+            this.existingTags.UpdateControlsCollection(
+                this.tagsInEntryOrder,
+                () =>
+                {
+                    TagControl tagControl = null;
+                    try
+                    {
+                        tagControl = new TagControl
+                        {
+                            AllowDelete = true,
+                            ContextMenuStrip = this.tagContextMenu,
+                            Cursor = Cursors.Hand,
+                        };
+                        tagControl.DeleteClick += this.TagControl_DeleteClick;
+                        var result = tagControl;
+                        tagControl = null;
+                        return result;
+                    }
+                    finally
+                    {
+                        tagControl?.Dispose();
+                    }
+                },
+                tagControl =>
+                {
+                    tagControl.DeleteClick -= this.TagControl_DeleteClick;
+                    tagControl.Dispose();
+                },
+                (tagControl, tag) =>
+                {
+                    var indeterminate = this.tagCounts[tag] != this.searchResults.Count;
+                    var error = analysisResult.ExistingRejectedTags.Contains(tag);
+                    tagControl.Text = tag;
+                    tagControl.Tag = tag;
+                    tagControl.Indeterminate = indeterminate;
+                    tagControl.TagColor = error ? Color.Red : default(Color?);
+                });
+
             var rulesLookup = analysisResult.SuggestedTags.ToLookup(r => r.Result, r => r.Rules);
             this.suggestedTags.UpdateControlsCollection(
                 rulesLookup.OrderByDescending(g => missingTags.Contains(g.Key)).ThenByDescending(g => g.Count()).ToList(),
@@ -243,19 +266,15 @@ namespace MediaLibrary
 
         private async Task RejectTagAndUpdate(string tag)
         {
-            if (this.tagControls.TryGetValue(tag, out var tagControl))
-            {
-                this.RemoveTagControl(tagControl, destroy: true);
-            }
-
             foreach (var searchResult in this.searchResults)
             {
                 await this.index.RemoveHashTag(new HashTag(searchResult.Hash, tag), rejectTag: true).ConfigureAwait(true);
             }
 
             this.tagCounts.Remove(tag);
+            this.tagsInEntryOrder.Remove(tag);
             this.rejectedTags.Add(tag);
-            this.RefreshSuggestions();
+            this.RefreshTags();
         }
 
         private async void RejectTagMenuItem_Click(object sender, EventArgs e)
@@ -263,18 +282,6 @@ namespace MediaLibrary
             var tagControl = (TagControl)((sender as ToolStripMenuItem)?.Owner as ContextMenuStrip)?.SourceControl;
             var tag = tagControl.Text;
             await this.RejectTagAndUpdate(tag).ConfigureAwait(true);
-        }
-
-        private void RemoveTagControl(TagControl tagControl, bool destroy)
-        {
-            this.existingTags.Controls.Remove(tagControl);
-            if (destroy)
-            {
-                var tag = tagControl.Text;
-                tagControl.DeleteClick -= this.TagControl_DeleteClick;
-                this.tagControls.Remove(tag);
-                tagControl.Dispose();
-            }
         }
 
         private void RemoveTagMenuItem_Click(object sender, EventArgs e)
@@ -331,9 +338,7 @@ namespace MediaLibrary
 
         private async void TagControl_DeleteClick(object sender, EventArgs e)
         {
-            var tagControl = (TagControl)sender;
-            var tag = tagControl.Text;
-            this.RemoveTagControl(tagControl, destroy: true);
+            var tag = ((TagControl)sender).Text;
 
             foreach (var searchResult in this.searchResults)
             {
@@ -341,7 +346,9 @@ namespace MediaLibrary
             }
 
             this.tagCounts.Remove(tag);
-            this.RefreshSuggestions();
+            this.tagsInEntryOrder.Remove(tag);
+
+            this.RefreshTags();
         }
 
         private void TagSearchBox_TextUpdate(object sender, EventArgs e)
