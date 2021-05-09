@@ -36,11 +36,13 @@ export class RatingsService {
     }
 
     public rate(score: number, left: Rating, right: Rating): Promise<void> {
-        if (left.category !== right.category) {
+        const leftCategory = left.category || '';
+        const rightCategory = right.category || '';
+        if (leftCategory !== rightCategory) {
             throw new Error(`Rating categories must match. Cannot rate across the categories '${left.category}' and '${right.category}'`);
         }
 
-        const uri = left.category
+        const uri = leftCategory
             ? `ratings/${encodeURIComponent(left.category)}/rate`
             : `ratings/rate`;
         return this.http.post<void>(uri, { score, leftHash: left.hash, rightHash: right.hash }).toPromise();
