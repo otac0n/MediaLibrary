@@ -32,6 +32,10 @@ namespace MediaLibrary.Web.Controllers
             return this.index.GetRating(id, category);
         }
 
+        [Route("files/{id}")]
+        [HttpGet]
+        public Task<Rating> GetDefault(string id) => this.Get(id, null);
+
         [Route("{category}/rate")]
         [HttpPost]
         public async Task Rate(string category, [FromBody] RateRequest rateRequest)
@@ -42,6 +46,10 @@ namespace MediaLibrary.Web.Controllers
             await this.index.UpdateRating(leftRating).ConfigureAwait(true);
             await this.index.UpdateRating(rightRating).ConfigureAwait(true);
         }
+
+        [Route("rate")]
+        [HttpPost]
+        public Task RateDefault([FromBody] RateRequest rateRequest) => this.Rate(null, rateRequest);
 
         public class RateRequest
         {

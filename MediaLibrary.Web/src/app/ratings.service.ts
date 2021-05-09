@@ -17,7 +17,10 @@ export class RatingsService {
     }
 
     public get(id: string, category: string): Promise<Rating> {
-        return this.http.get<Rating>(`ratings/${encodeURIComponent(category)}/files/${encodeURIComponent(id)}`).toPromise();
+        const uri = category
+            ? `ratings/${encodeURIComponent(category)}/files/${encodeURIComponent(id)}`
+            : `ratings/files/${encodeURIComponent(id)}`;
+        return this.http.get<Rating>(uri).toPromise();
     }
 
     public getExpectedScore(left: number | Rating, right: number | Rating) {
@@ -37,6 +40,9 @@ export class RatingsService {
             throw new Error(`Rating categories must match. Cannot rate across the categories '${left.category}' and '${right.category}'`);
         }
 
-        return this.http.post<void>(`ratings/${encodeURIComponent(left.category)}`, { score, leftHash: left.hash, rightHash: right.hash }).toPromise();
+        const uri = left.category
+            ? `ratings/${encodeURIComponent(left.category)}/rate`
+            : `ratings/rate`;
+        return this.http.post<void>(uri, { score, leftHash: left.hash, rightHash: right.hash }).toPromise();
     }
 }
