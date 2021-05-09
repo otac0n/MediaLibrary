@@ -6,6 +6,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { CompareComponent } from './compare/compare.component';
 import { DisplayComponent } from './display/display.component';
 import { FileNamePipe } from './file-name.pipe';
 import { HeartComponent } from './heart/heart.component';
@@ -22,6 +23,7 @@ import { UrlEncodePipe } from './url-encode.pipe';
 @NgModule({
     declarations: [
         AppComponent,
+        CompareComponent,
         DisplayComponent,
         FileNamePipe,
         HeartComponent,

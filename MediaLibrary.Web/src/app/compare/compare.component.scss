@@ -1,0 +1,63 @@
+#compare {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    z-index: 1040;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .close {
+        color: white;
+        font-size: 250%;
+        position: fixed;
+        right: 0;
+        top: 0;
+        box-sizing: border-box;
+        padding: 0 0.3em;
+        cursor: pointer;
+    }
+
+    .displays {
+        width: 100%;
+        height: auto;
+        max-height: 90%;
+        display: flex;
+        flex-direction: row;
+
+        .side {
+            flex: 1;
+        }
+    }
+
+    .rate {
+        box-sizing: border-box;
+        padding: 0 5%;
+        display: flex;
+        flex-direction: column;
+        width: 50%;
+        min-width: min(15em, 50%);
+        max-width: 100%;
+
+        input {
+            width: 100%;
+            margin: 1em;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+
+            button {
+                margin: 1em;
+            }
+        }
+    }
+}

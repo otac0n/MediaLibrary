@@ -14,20 +14,31 @@
       <button class="btn btn-primary" type="button" (click)="search()">Search</button>
     </div>
   </div>
+  <div id="tools" *ngIf="resultsPage.length">
+    <div class="btn-group" ngbDropdown role="group">
+      <button class="btn btn-light" (click)="rate(null)">Rate</button>
+      <button class="btn btn-light dropdown-toggle-split" ngbDropdownToggle></button>
+      <div class="dropdown-menu" ngbDropdownMenu>
+        <div class="rating-categories">
+          <button *ngFor="let category of ratingCategories" ngbDropdownItem (click)="rate(category)">{{category}}</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <div id="results">
   <div *ngFor="let result of resultsPage" [ngClass]="{ 'result': true, 'selected': result == selectedItem }" (click)="select(result)">
-    {{result.paths[0] | fileName}}
-    <br />
-    <app-heart [favorite]="result.tags.indexOf('favorite') > -1" (favorited)="favorite(result)" (unfavorited)="unfavorite(result)"></app-heart>
-    <app-person-list [people]="result.people"></app-person-list>
-    <app-tag-list [tags]="result.tags" [excludeFavorite]="true"></app-tag-list>
+    <div>
+      <input type="checkbox" [checked]="selectedHashes[result.hash]" (change)="toggleCheck($event, result)" (click)="stopClick($event)" />
+    </div>
+    <div>
+      {{result.paths[0] | fileName}}
+      <br />
+      <app-heart [favorite]="result.tags.indexOf('favorite') > -1" (favorited)="favorite(result)" (unfavorited)="unfavorite(result)"></app-heart>
+      <app-person-list [people]="result.people"></app-person-list>
+      <app-tag-list [tags]="result.tags" [excludeFavorite]="true"></app-tag-list>
+    </div>
   </div>
 </div>
-<app-preview [searchResult]="previewItem ? selectedItem : null" (requestClose)="close()" (requestPrevious)="previous()" (requestNext)="next()"></app-preview>
-
-<script>
-    function selectResult($result) {
-        result.scrollIntoView();
-    }
-</script>
+<app-preview [searchResult]="previewItem ? selectedItem : null" (requestClose)="closePreview()" (requestPrevious)="previous()" (requestNext)="next()"></app-preview>
+<app-compare [category]="ratingCategory" [searchResults]="compareResults" (requestClose)="closeCompare()"></app-compare>

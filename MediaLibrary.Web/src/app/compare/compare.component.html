@@ -1,0 +1,14 @@
+<div *ngIf="searchResults" id="compare">
+  <div class="displays" *ngIf="leftItem && rightItem">
+    <app-display class="side" [searchResult]="searchResults[leftItem.index]"></app-display>
+    <app-display class="side" [searchResult]="searchResults[rightItem.index]"></app-display>
+  </div>
+  <span class="close" (click)="close()">&times;</span>
+  <div class="rate">
+    <input type="range" min="0" max="1" step="0.01" [(ngModel)]="score" />
+    <div class="actions">
+      <button type="button" class="btn btn-light" (click)="rate()">Rate</button>
+      <button type="button" class="btn btn-light" (click)="skip()">Skip</button>
+    </div>
+  </div>
+</div>
