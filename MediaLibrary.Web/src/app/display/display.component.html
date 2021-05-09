@@ -1,0 +1,2 @@
+<img *ngIf="searchResult?.fileType == 'image' || searchResult?.fileType.startsWith('image/')" src="files/{{searchResult?.hash | urlEncode}}" />
+<video *ngIf="searchResult?.fileType == 'video' || searchResult?.fileType.startsWith('video/')" autoplay controls muted src="files/{{searchResult?.hash | urlEncode}}"></video>
