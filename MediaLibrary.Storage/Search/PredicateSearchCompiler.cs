@@ -111,6 +111,12 @@ namespace MediaLibrary.Storage.Search
                 return x => op((x.Rating?.Value ?? Storage.Rating.DefaultRating).CompareTo(value));
             }
 
+            public override Predicate<SearchResult> RatingsCount(string @operator, int value)
+            {
+                var op = ConvertOperator(@operator);
+                return x => op((x.Rating?.Count ?? 0).CompareTo(value));
+            }
+
             public override Predicate<SearchResult> RejectedTag(ImmutableHashSet<string> value) => x => x.RejectedTags.Any(value.Contains);
 
             public override Predicate<SearchResult> Stars(string @operator, int value)

@@ -179,6 +179,14 @@ namespace MediaLibrary.Storage.Search
 
                     return this.Rating(field.Operator, rating);
 
+                case "ratings":
+                    if (!int.TryParse(field.Value, out var ratings))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return this.RatingsCount(field.Operator, ratings);
+
                 case "stars":
                     if (!int.TryParse(field.Value, out var stars))
                     {
@@ -236,6 +244,8 @@ namespace MediaLibrary.Storage.Search
         public abstract T PersonName(string value);
 
         public abstract T Rating(string @operator, double value);
+
+        public abstract T RatingsCount(string @operator, int value);
 
         public abstract T RejectedTag(ImmutableHashSet<string> value);
 

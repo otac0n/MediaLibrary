@@ -114,12 +114,12 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine(") pc ON h.Hash = pc.Hash");
             }
 
-            if (this.dialect.JoinStars)
+            if (this.dialect.JoinRatings)
             {
                 sb
                     .AppendLine("LEFT JOIN (")
-                    .AppendLine("    SELECT Hash, CASE WHEN NTile < 2 THEN 1 WHEN NTile < 4 THEN 2 WHEN NTile < 8 THEN 3 WHEN NTile < 10 THEN 4 ELSE 5 END AS Stars FROM (")
-                    .AppendLine("        SELECT Hash, NTILE(10) OVER (PARTITION BY Category ORDER BY Value) NTile")
+                    .AppendLine("    SELECT Hash, Value, Count, CASE WHEN NTile < 2 THEN 1 WHEN NTile < 4 THEN 2 WHEN NTile < 8 THEN 3 WHEN NTile < 10 THEN 4 ELSE 5 END AS Stars FROM (")
+                    .AppendLine("        SELECT Hash, Value, Count, NTILE(10) OVER (PARTITION BY Category ORDER BY Value) NTile")
                     .AppendLine("        FROM Rating")
                     .AppendLine("        WHERE Category = ''")
                     .AppendLine("    ) z")
@@ -213,7 +213,7 @@ namespace MediaLibrary.Storage.Search
 
             public bool JoinPersonCount { get; private set; }
 
-            public bool JoinStars { get; private set; }
+            public bool JoinRatings { get; private set; }
 
             public bool JoinTagCount { get; private set; }
 
@@ -245,15 +245,21 @@ namespace MediaLibrary.Storage.Search
 
             public override string Rating(string @operator, double value)
             {
-                this.JoinStars = true;
-                return $"COALESCE(s.Rating, {Storage.Rating.DefaultRating}) {ConvertOperator(@operator)} {value}";
+                this.JoinRatings = true;
+                return $"COALESCE(s.Value, {Storage.Rating.DefaultRating}) {ConvertOperator(@operator)} {value}";
+            }
+
+            public override string RatingsCount(string @operator, int value)
+            {
+                this.JoinRatings = true;
+                return $"COALESCE(s.Count, 0) {ConvertOperator(@operator)} {value}";
             }
 
             public override string RejectedTag(ImmutableHashSet<string> value) => $"EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", value.Select(Literal))}))";
 
             public override string Stars(string @operator, int value)
             {
-                this.JoinStars = true;
+                this.JoinRatings = true;
                 return $"COALESCE(s.Stars, 3) {ConvertOperator(@operator)} {value}";
             }
 
