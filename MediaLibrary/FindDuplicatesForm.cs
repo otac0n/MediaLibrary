@@ -26,6 +26,7 @@ namespace MediaLibrary
         private CancellationTokenSource cancel = new CancellationTokenSource();
         private bool initialized;
         private bool running;
+        private Dictionary<string, SavedSearch> savedSearches;
         private int searchVersion;
         private bool synchronizeTreeView;
         private Predicate<SearchResult> visiblePredicate;
@@ -33,9 +34,11 @@ namespace MediaLibrary
         public FindDuplicatesForm(IMediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
-            this.searchCompiler = new PredicateSearchCompiler(index.TagEngine, excludeHidden: false, _ => null); // TODO: Support saved searches.
             this.visiblePredicate = x => true;
             this.InitializeComponent();
+            this.searchBox.Enabled = false;
+            var grammar = new SearchGrammar();
+            this.searchCompiler = new PredicateSearchCompiler(index.TagEngine, excludeHidden: false, name => this.savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
         }
 
         private static string FindBestPath(IEnumerable<string> paths)
@@ -206,6 +209,8 @@ namespace MediaLibrary
 
         private async void FindDuplicatesForm_Load(object sender, System.EventArgs e)
         {
+            this.savedSearches = (await this.index.GetAllSavedSearches().ConfigureAwait(false)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase);
+            this.searchBox.Enabled = true;
             var results = await this.index.SearchIndex("copies>1", excludeHidden: false).ConfigureAwait(true);
             this.UpdateSearchResults(results);
         }

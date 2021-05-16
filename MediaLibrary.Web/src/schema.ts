@@ -7,9 +7,11 @@ export interface SearchResult {
     hash: string;
     fileSize: number;
     fileType: string;
+    tags: string[];
+    rejectedTags: string[];
     paths: string[];
     people: Person[];
-    tags: string[];
+    rejectedPeople: Person[];
 }
 
 export interface Person {

@@ -376,7 +376,12 @@ namespace MediaLibrary.Storage
             var hash = hashPerson.Hash;
             if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.People.FirstOrDefault(p => p.PersonId == hashPerson.PersonId) is Person person)
             {
+                // TODO: Use Whisk to do this atomically.
                 searchResult.People = searchResult.People.Remove(person);
+                if (rejectPerson)
+                {
+                    searchResult.RejectedPeople = searchResult.People.Add(person);
+                }
             }
 
             this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
@@ -395,7 +400,12 @@ namespace MediaLibrary.Storage
             var hash = hashTag.Hash;
             if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.Tags.Contains(hashTag.Tag))
             {
+                // TODO: Use Whisk to do this atomically.
                 searchResult.Tags = searchResult.Tags.Remove(hashTag.Tag);
+                if (rejectTag)
+                {
+                    searchResult.RejectedTags.Add(hashTag.Tag);
+                }
             }
 
             this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
@@ -459,18 +469,22 @@ namespace MediaLibrary.Storage
             using (var conn = await this.GetConnection().ConfigureAwait(false))
             {
                 ILookup<string, HashTag> tags;
+                ILookup<string, HashTag> rejectedTags;
                 ILookup<string, FilePath> fileNames;
-                Dictionary<int, Person> people;
-                ILookup<string, HashPerson> hashPeople;
+                Dictionary<int, Person> peopleLookup;
+                ILookup<string, HashPerson> people;
+                ILookup<string, HashPerson> rejectedPeople;
                 ILookup<string, Rating> hashRatings;
                 IList<HashInfo> hashes;
                 using (await this.dbLock.ReaderLockAsync())
                 {
                     var reader = await conn.QueryMultipleAsync(sqlQuery).ConfigureAwait(false);
                     tags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
+                    rejectedTags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
                     fileNames = (await reader.ReadAsync<FilePath>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.LastHash);
-                    people = (await this.ReadPeopleAsync(reader).ConfigureAwait(false)).ToDictionary(p => p.PersonId);
-                    hashPeople = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
+                    peopleLookup = (await this.ReadPeopleAsync(reader).ConfigureAwait(false)).ToDictionary(p => p.PersonId);
+                    people = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
+                    rejectedPeople = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
                     hashRatings = (await reader.ReadAsync<Rating>(buffered: false).ConfigureAwait(false)).ToLookup(r => r.Hash);
                     hashes = (await reader.ReadAsync<HashInfo>(buffered: false).ConfigureAwait(false)).ToList();
                 }
@@ -479,8 +493,10 @@ namespace MediaLibrary.Storage
                 foreach (var hash in hashes)
                 {
                     var updatedTags = tags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet();
+                    var updatedRejectedTags = rejectedTags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet();
                     var updatedPaths = fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet();
-                    var updatedPeople = hashPeople[hash.Hash].Select(p => people[p.PersonId]).ToImmutableHashSet();
+                    var updatedPeople = people[hash.Hash].Select(p => peopleLookup[p.PersonId]).ToImmutableHashSet();
+                    var updatedRejectedPeople = rejectedPeople[hash.Hash].Select(p => peopleLookup[p.PersonId]).ToImmutableHashSet();
                     var updatedRating = hashRatings[hash.Hash].Where(p => string.IsNullOrEmpty(p.Category)).SingleOrDefault();
                     results.Add(this.searchResultsCache.AddOrUpdate(
                         hash.Hash,
@@ -490,8 +506,10 @@ namespace MediaLibrary.Storage
                             hash.FileType,
                             updatedRating,
                             updatedTags,
+                            updatedRejectedTags,
                             updatedPaths,
-                            updatedPeople),
+                            updatedPeople,
+                            updatedRejectedPeople),
                         (key, searchResult) =>
                         {
                             if (searchResult.Rating != updatedRating)
@@ -504,6 +522,11 @@ namespace MediaLibrary.Storage
                                 searchResult.Tags = updatedTags;
                             }
 
+                            if (!searchResult.RejectedTags.SetEquals(updatedRejectedTags))
+                            {
+                                searchResult.RejectedTags = updatedRejectedTags;
+                            }
+
                             if (!searchResult.Paths.SetEquals(updatedPaths))
                             {
                                 searchResult.Paths = updatedPaths;
@@ -512,6 +535,11 @@ namespace MediaLibrary.Storage
                             if (!searchResult.People.SetEquals(updatedPeople))
                             {
                                 searchResult.People = updatedPeople;
+                            }
+
+                            if (!searchResult.RejectedPeople.SetEquals(updatedRejectedPeople))
+                            {
+                                searchResult.RejectedPeople = updatedRejectedPeople;
                             }
                         }));
                 }

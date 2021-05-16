@@ -135,8 +135,7 @@ namespace MediaLibrary
 
             foreach (var searchResult in this.searchResults)
             {
-                this.rejectedTags.UnionWith(
-                    (await this.index.GetRejectedTags(searchResult.Hash).ConfigureAwait(true)).Select(t => t.Tag));
+                this.rejectedTags.UnionWith(searchResult.RejectedTags);
             }
 
             this.RefreshTags();

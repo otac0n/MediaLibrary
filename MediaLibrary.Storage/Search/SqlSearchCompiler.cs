@@ -144,6 +144,7 @@ namespace MediaLibrary.Storage.Search
             if (fetchTags)
             {
                 sb.AppendLine("SELECT t.* FROM temp.SearchHashInfo h INNER JOIN HashTag t ON h.Hash = t.Hash;");
+                sb.AppendLine("SELECT r.* FROM temp.SearchHashInfo h INNER JOIN RejectedTags r ON h.Hash = r.Hash;");
             }
 
             if (fetchPaths)
@@ -158,16 +159,25 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine("CREATE TEMP TABLE temp.SearchHashPerson (Hash text, PersonId int, PRIMARY KEY (Hash, PersonId));")
                     .AppendLine("INSERT INTO temp.SearchHashPerson (Hash, PersonId)")
                     .AppendLine("SELECT hp.* FROM temp.SearchHashInfo h INNER JOIN HashPerson hp ON h.Hash = hp.Hash;");
+                sb
+                    .AppendLine("DROP TABLE IF EXISTS temp.SearchRejectedPerson;")
+                    .AppendLine("CREATE TEMP TABLE temp.SearchRejectedPerson (Hash text, PersonId int, PRIMARY KEY (Hash, PersonId));")
+                    .AppendLine("INSERT INTO temp.SearchRejectedPerson (Hash, PersonId)")
+                    .AppendLine("SELECT rp.* FROM temp.SearchHashInfo h INNER JOIN RejectedPerson rp ON h.Hash = rp.Hash;");
 
                 if (fetchAliases)
                 {
-                    sb.AppendLine("SELECT PersonId, Site, Name FROM Alias WHERE PersonId IN (SELECT PersonId FROM temp.SearchHashPerson);");
+                    sb.AppendLine("SELECT PersonId, Site, Name FROM Alias WHERE PersonId IN (SELECT PersonId FROM temp.SearchHashPerson UNION SELECT PersonId FROM temp.SearchRejectedPerson);");
                 }
 
                 sb
-                    .AppendLine("SELECT PersonId, Name FROM Person WHERE PersonId IN (SELECT PersonId FROM temp.SearchHashPerson);")
+                    .AppendLine("SELECT PersonId, Name FROM Person WHERE PersonId IN (SELECT PersonId FROM temp.SearchHashPerson UNION SELECT PersonId FROM temp.SearchRejectedPerson);");
+                sb
                     .AppendLine("SELECT * FROM temp.SearchHashPerson;")
                     .AppendLine("DROP TABLE temp.SearchHashPerson;");
+                sb
+                    .AppendLine("SELECT * FROM temp.SearchRejectedPerson;")
+                    .AppendLine("DROP TABLE temp.SearchRejectedPerson;");
             }
 
             if (fetchRatings)

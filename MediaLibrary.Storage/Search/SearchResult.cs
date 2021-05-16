@@ -6,15 +6,17 @@ namespace MediaLibrary.Storage.Search
 
     public class SearchResult
     {
-        public SearchResult(string hash, long fileSize, string fileType, Rating rating, ImmutableHashSet<string> tags, ImmutableHashSet<string> paths, ImmutableHashSet<Person> people)
+        public SearchResult(string hash, long fileSize, string fileType, Rating rating, ImmutableHashSet<string> tags, ImmutableHashSet<string> rejectedTags, ImmutableHashSet<string> paths, ImmutableHashSet<Person> people, ImmutableHashSet<Person> rejectedPeople)
         {
             this.Hash = hash;
             this.FileType = fileType;
             this.FileSize = fileSize;
             this.Rating = rating;
             this.Tags = tags;
+            this.RejectedTags = rejectedTags;
             this.Paths = paths;
             this.People = people;
+            this.RejectedPeople = rejectedPeople;
         }
 
         public long FileSize { get; }
@@ -29,21 +31,29 @@ namespace MediaLibrary.Storage.Search
 
         public Rating Rating { get; set; }
 
+        public ImmutableHashSet<Person> RejectedPeople { get; set; }
+
+        public ImmutableHashSet<string> RejectedTags { get; set; }
+
         public ImmutableHashSet<string> Tags { get; set; }
 
         public SearchResult With(
             string fileType = null,
             Rating rating = null,
             ImmutableHashSet<string> tags = null,
+            ImmutableHashSet<string> rejectedTags = null,
             ImmutableHashSet<string> paths = null,
-            ImmutableHashSet<Person> people = null) =>
+            ImmutableHashSet<Person> people = null,
+            ImmutableHashSet<Person> rejectedPeople = null) =>
             new SearchResult(
                 this.Hash,
                 this.FileSize,
                 fileType ?? this.FileType,
                 rating ?? this.Rating,
                 tags ?? this.Tags,
+                rejectedTags ?? this.RejectedTags,
                 paths ?? this.Paths,
-                people ?? this.People);
+                people ?? this.People,
+                rejectedPeople ?? this.RejectedPeople);
     }
 }

@@ -111,10 +111,7 @@ namespace MediaLibrary.Storage.Search
                 return x => op((x.Rating?.Value ?? Storage.Rating.DefaultRating).CompareTo(value));
             }
 
-            public override Predicate<SearchResult> RejectedTag(ImmutableHashSet<string> value)
-            {
-                throw new NotImplementedException("Query rejection table and compare to the hash of this result.");
-            }
+            public override Predicate<SearchResult> RejectedTag(ImmutableHashSet<string> value) => x => x.RejectedTags.Any(value.Contains);
 
             public override Predicate<SearchResult> Stars(string @operator, int value)
             {
