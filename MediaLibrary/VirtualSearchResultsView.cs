@@ -25,6 +25,7 @@ namespace MediaLibrary
         private readonly IMediaIndex index;
         private readonly List<SearchResult> orderdResults = new List<SearchResult>();
         private bool columnsSized = false;
+        private bool selectionChangedInvoked;
         private TagComparer tagComparer;
 
         public VirtualSearchResultsView(IMediaIndex index)
@@ -230,6 +231,26 @@ namespace MediaLibrary
         }
 
         private TagComparer TagComparer => this.tagComparer ?? (this.tagComparer = this.index.TagEngine.GetTagComparer());
+
+        /// <inheritdoc/>
+        public override void SetObjects(IEnumerable collection, bool preserveState)
+        {
+            var before = new HashSet<int>(this.SelectedIndices.Cast<int>());
+            this.selectionChangedInvoked = false;
+            base.SetObjects(collection, preserveState);
+            if (!before.SetEquals(this.SelectedIndices.Cast<int>()) && !this.selectionChangedInvoked)
+            {
+                // TODO: this.TriggerDeferredSelectionChangedEvent(); after v2.9.1
+                this.OnSelectionChanged(EventArgs.Empty);
+            }
+        }
+
+        /// <inheritdoc/>
+        protected override void OnSelectionChanged(EventArgs e)
+        {
+            this.selectionChangedInvoked = true;
+            base.OnSelectionChanged(e);
+        }
 
         private static string GetBestPath(SearchResult searchResult) => searchResult == null ? null : searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
 

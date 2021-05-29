@@ -44,7 +44,7 @@ namespace MediaLibrary
             };
             this.listView.MouseClick += this.ListView_MouseClick;
             this.listView.MouseDoubleClick += this.ListView_DoubleClick;
-            this.listView.SelectedIndexChanged += this.ListView_SelectedIndexChanged;
+            this.listView.SelectionChanged += this.ListView_SelectionChanged;
 
             this.preview = new PreviewControl(index)
             {
@@ -367,7 +367,7 @@ namespace MediaLibrary
             }
         }
 
-        private void ListView_SelectedIndexChanged(object sender, EventArgs e)
+        private void ListView_SelectionChanged(object sender, EventArgs e)
         {
             this.CloseSelectionDialogs();
             this.UpdatePreview();
