@@ -217,9 +217,13 @@ namespace MediaLibrary
 
         private void CopyMenuItem_Click(object sender, EventArgs e)
         {
-            // HACK: Exclude one text box, to avoid clobbering the clipboard.
             if (this.searchBox.Focused)
             {
+                if (this.searchBox.SelectionLength > 0)
+                {
+                    Clipboard.SetText(this.searchBox.SelectedText);
+                }
+
                 return;
             }
 
