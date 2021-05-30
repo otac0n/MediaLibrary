@@ -161,32 +161,13 @@ namespace MediaLibrary
 
             this.existingTags.UpdateControlsCollection(
                 this.tagsInEntryOrder,
-                () =>
+                tag => ControlHelpers.Construct<TagControl>(t =>
                 {
-                    TagControl tagControl = null;
-                    try
-                    {
-                        tagControl = new TagControl
-                        {
-                            AllowDelete = true,
-                            ContextMenuStrip = this.tagContextMenu,
-                            Cursor = Cursors.Hand,
-                        };
-                        tagControl.DeleteClick += this.TagControl_DeleteClick;
-                        var result = tagControl;
-                        tagControl = null;
-                        return result;
-                    }
-                    finally
-                    {
-                        tagControl?.Dispose();
-                    }
-                },
-                tagControl =>
-                {
-                    tagControl.DeleteClick -= this.TagControl_DeleteClick;
-                    tagControl.Dispose();
-                },
+                    t.AllowDelete = true;
+                    t.ContextMenuStrip = this.tagContextMenu;
+                    t.Cursor = Cursors.Hand;
+                    t.DeleteClick += this.TagControl_DeleteClick;
+                }),
                 (tagControl, tag) =>
                 {
                     var indeterminate = this.tagCounts[tag] != this.searchResults.Count;
@@ -195,44 +176,26 @@ namespace MediaLibrary
                     tagControl.Tag = tag;
                     tagControl.Indeterminate = indeterminate;
                     tagControl.TagColor = error ? Color.Red : default(Color?);
+                },
+                tagControl =>
+                {
+                    tagControl.DeleteClick -= this.TagControl_DeleteClick;
+                    tagControl.Dispose();
                 });
 
             var rulesLookup = analysisResult.SuggestedTags.ToLookup(r => r.Result, r => r.Rules);
             this.suggestedTags.UpdateControlsCollection(
                 rulesLookup.OrderByDescending(g => missingTags.Contains(g.Key)).ThenByDescending(g => g.Count()).ToList(),
-                () =>
+                tag => ControlHelpers.Construct<TagControl>(t =>
                 {
-                    TagControl tagControl = null;
-                    try
-                    {
-                        tagControl = new TagControl
-                        {
-                            AllowDelete = true,
-                            ContextMenuStrip = this.suggestionContextMenu,
-                            Cursor = Cursors.Hand,
-                        };
-                        tagControl.MouseClick += this.SuggestionControl_MouseClick;
-                        tagControl.DeleteClick += this.SuggestionControl_DeleteClick;
-                        tagControl.MouseEnter += this.SuggestionControl_MouseEnter;
-                        tagControl.MouseLeave += this.SuggestionControl_MouseLeave;
-                        var result = tagControl;
-                        tagControl = null;
-                        return result;
-                    }
-                    finally
-                    {
-                        tagControl?.Dispose();
-                    }
-                },
-                tagControl =>
-                {
-                    tagControl.MouseClick -= this.SuggestionControl_MouseClick;
-                    tagControl.DeleteClick -= this.SuggestionControl_DeleteClick;
-                    tagControl.MouseEnter -= this.SuggestionControl_MouseEnter;
-                    tagControl.MouseLeave -= this.SuggestionControl_MouseLeave;
-                    this.toolTip.SetToolTip(tagControl, null);
-                    tagControl.Dispose();
-                },
+                    t.AllowDelete = true;
+                    t.ContextMenuStrip = this.suggestionContextMenu;
+                    t.Cursor = Cursors.Hand;
+                    t.MouseClick += this.SuggestionControl_MouseClick;
+                    t.DeleteClick += this.SuggestionControl_DeleteClick;
+                    t.MouseEnter += this.SuggestionControl_MouseEnter;
+                    t.MouseLeave += this.SuggestionControl_MouseLeave;
+                }),
                 (tagControl, tag) =>
                 {
                     var toolTip = string.Join(Environment.NewLine, tag.Select(r => string.Join(Environment.NewLine, r)));
@@ -242,6 +205,15 @@ namespace MediaLibrary
                     tagControl.Text = tag.Key;
                     tagControl.Tag = toolTip;
                     tagControl.Indeterminate = !isMissing; // TODO: Third state for !isInMissingGroups,
+                },
+                tagControl =>
+                {
+                    tagControl.MouseClick -= this.SuggestionControl_MouseClick;
+                    tagControl.DeleteClick -= this.SuggestionControl_DeleteClick;
+                    tagControl.MouseEnter -= this.SuggestionControl_MouseEnter;
+                    tagControl.MouseLeave -= this.SuggestionControl_MouseLeave;
+                    this.toolTip.SetToolTip(tagControl, null);
+                    tagControl.Dispose();
                 });
         }
 

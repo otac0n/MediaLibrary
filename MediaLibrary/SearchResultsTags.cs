@@ -84,106 +84,38 @@ namespace MediaLibrary
                 tagCounts[tag] = tagCounts.TryGetValue(tag, out var count) ? count + 1 : 1;
             }
 
-            this.SuspendLayout();
-
-            if (tagCounts.Count == 0)
-            {
-                foreach (var control in this.Controls)
+            this.UpdateControlsCollection(
+                tagCounts.Keys.OrderByDescending(k => k == "favorite").ThenBy(k => k, tagComparer).ToList(),
+                tag => tag == "favorite"
+                    ? (Control)ControlHelpers.Construct<PictureBox>(p => p.SizeMode = PictureBoxSizeMode.Zoom)
+                    : (Control)ControlHelpers.Construct<TagControl>(t => t.AllowDelete = false),
+                (control, tag) => tag == "favorite"
+                    ? control is PictureBox
+                    : control is TagControl,
+                (control, tag) =>
                 {
-                    (control as IDisposable)?.Dispose();
-                }
-
-                this.Controls.Clear();
-            }
-            else
-            {
-                var write = 0;
-
-                if (tagCounts.TryGetValue("favorite", out var favoriteCount))
-                {
-                    var targetImage = favoriteCount != searchResults.Count
-                        ? Resources.love_it
-                        : Resources.love_it_filled;
-                    if (this.Controls.Count > 0 && this.Controls[write] is PictureBox favoriteImage)
+                    var indeterminate = tagCounts[tag] != searchResults.Count;
+                    if (tag == "favorite")
                     {
-                        favoriteImage.Image = targetImage;
-                        write++;
+                        var pictureBox = (PictureBox)control;
+                        var fontHeight = (int)Math.Round(this.Font.GetHeight()) + 3 * 2;
+                        pictureBox.Image = indeterminate ? Resources.love_it : Resources.love_it_filled;
+                        pictureBox.Width = fontHeight;
+                        pictureBox.Height = fontHeight;
                     }
                     else
                     {
-                        var fontHeight = (int)Math.Round(this.Font.GetHeight()) + 3 * 2;
-                        favoriteImage = new PictureBox
-                        {
-                            Image = targetImage,
-                            Width = fontHeight,
-                            Height = fontHeight,
-                            SizeMode = PictureBoxSizeMode.Zoom,
-                        };
-                        this.Controls.Add(favoriteImage);
-                        this.Controls.SetChildIndex(favoriteImage, write++);
+                        var tagControl = (TagControl)control;
+                        tagControl.Text = tag;
+                        tagControl.Tag = tag;
+                        tagControl.Indeterminate = indeterminate;
+                        tagControl.TagColor = this.index.TagEngine.GetTagColor(tag);
                     }
-                }
-                else
+                },
+                control =>
                 {
-                    if (this.Controls.Count > 0 && this.Controls[write] is PictureBox favoriteImage)
-                    {
-                        this.Controls.RemoveAt(write);
-                        favoriteImage.Dispose();
-                    }
-                }
-
-                foreach (var tag in tagCounts.Where(t => t.Key != "favorite").OrderBy(t => t.Key, tagComparer))
-                {
-                    TagControl tagControl;
-
-                    var updated = false;
-                    while (write < this.Controls.Count)
-                    {
-                        tagControl = (TagControl)this.Controls[write];
-                        var comp = tagComparer.Compare(tagControl.Text, tag.Key);
-                        if (comp < 0)
-                        {
-                            this.Controls.RemoveAt(write);
-                            tagControl.Dispose();
-                        }
-                        else if (comp == 0)
-                        {
-                            tagControl.TagColor = this.index.TagEngine.GetTagColor(tag.Key);
-                            tagControl.Indeterminate = tag.Value != searchResults.Count;
-                            write++;
-                            updated = true;
-                            break;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-
-                    if (!updated)
-                    {
-                        tagControl = null;
-                        try
-                        {
-                            tagControl = new TagControl();
-                            tagControl.AllowDelete = false;
-                            tagControl.Text = tag.Key;
-                            tagControl.TagColor = this.index.TagEngine.GetTagColor(tag.Key);
-                            tagControl.Indeterminate = tag.Value != searchResults.Count;
-
-                            this.Controls.Add(tagControl);
-                            this.Controls.SetChildIndex(tagControl, write++);
-                            tagControl = null;
-                        }
-                        finally
-                        {
-                            tagControl?.Dispose();
-                        }
-                    }
-                }
-            }
-
-            this.ResumeLayout();
+                    control.Dispose();
+                });
         }
     }
 }

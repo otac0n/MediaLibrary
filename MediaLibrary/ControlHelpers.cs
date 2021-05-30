@@ -10,6 +10,41 @@ namespace MediaLibrary
 
     internal static class ControlHelpers
     {
+        /// <summary>
+        /// A utility to construct a control, disposing of the control if an exception is thrown before completion.
+        /// </summary>
+        /// <typeparam name="TControl">The type of control being constructed.</typeparam>
+        /// <param name="update">The actions atomically performed after the construction of the control.</param>
+        /// <returns>The constructed control.</returns>
+        public static TControl Construct<TControl>(Action<TControl> update)
+            where TControl : Control, new() =>
+                Construct(() => new TControl(), update);
+
+        /// <summary>
+        /// A utility to construct a control, disposing of the control if an exception is thrown before completion.
+        /// </summary>
+        /// <typeparam name="TControl">The type of control being constructed.</typeparam>
+        /// <param name="update">The parameterless function to construct the control.</param>
+        /// <param name="update">The actions atomically performed after the construction of the control.</param>
+        /// <returns>The constructed control.</returns>
+        public static TControl Construct<TControl>(Func<TControl> constructor, Action<TControl> update)
+            where TControl : Control
+        {
+            TControl control = default;
+            try
+            {
+                control = constructor();
+                update(control);
+                var result = control;
+                control = null;
+                return result;
+            }
+            finally
+            {
+                control?.Dispose();
+            }
+        }
+
         public static int? FindTabIndex(this TabControl tabControl, Point location)
         {
             for (var i = 0; i < tabControl.TabCount; i++)
@@ -56,9 +91,22 @@ namespace MediaLibrary
             }
         }
 
-        public static void UpdateControlsCollection<TItem, TControl>(this Control control, IList<TItem> items, Func<TControl> create, Action<TControl> destroy, Action<TControl, TItem> update)
+        public static void UpdateControlsCollection<TItem, TControl>(this Control control, IList<TItem> items, Func<TItem, TControl> create, Action<TControl, TItem> update, Action<TControl> destroy)
             where TControl : Control
         {
+            control.UpdateControlsCollection(items, create, (c, i) => true, update, destroy);
+        }
+
+        public static void UpdateControlsCollection<TItem, TControl>(this Control control, IList<TItem> items, Func<TItem, TControl> create, Func<TControl, TItem, bool> canUpdate, Action<TControl, TItem> update, Action<TControl> destroy)
+            where TControl : Control
+        {
+            void RemoveAndDestroy(int index, TControl toDestroy)
+            {
+                control.Controls.RemoveAt(index);
+                destroy(toDestroy);
+                (toDestroy as IDisposable)?.Dispose();
+            }
+
             control.SuspendLayout();
             try
             {
@@ -74,18 +122,29 @@ namespace MediaLibrary
                 else
                 {
                     var write = 0;
-                    foreach (var tag in items)
+                    foreach (var item in items)
                     {
+                        var updated = false;
                         if (write < control.Controls.Count)
                         {
                             var child = (TControl)control.Controls[write];
-                            update(child, tag);
+                            if (canUpdate(child, item))
+                            {
+                                update(child, item);
+                                updated = true;
+                            }
+                            else
+                            {
+                                RemoveAndDestroy(write, child);
+                            }
                         }
-                        else
+
+                        if (!updated)
                         {
-                            var child = create();
-                            update(child, tag);
+                            var child = create(item);
+                            update(child, item);
                             control.Controls.Add(child);
+                            control.Controls.SetChildIndex(child, write);
                         }
 
                         write++;
@@ -94,9 +153,7 @@ namespace MediaLibrary
                     while (write < control.Controls.Count)
                     {
                         var child = (TControl)control.Controls[write];
-                        control.Controls.RemoveAt(write);
-                        (child as IDisposable)?.Dispose();
-                        destroy(child);
+                        RemoveAndDestroy(write, child);
                     }
                 }
             }
