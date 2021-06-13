@@ -173,7 +173,16 @@ namespace MediaLibrary
 
         private void PerformZoom(float factor, PointF fixedLocation)
         {
-            var imageSize = this.image.Size;
+            Size imageSize;
+            if (this.image is Image image)
+            {
+                imageSize = image.Size;
+            }
+            else
+            {
+                return;
+            }
+
             var controlSize = this.Size;
             var newZoom = this.Zoom * factor;
             ComputeSizeAndBaseOffset(imageSize, controlSize, this.Zoom, out var size, out var baseOffset);
