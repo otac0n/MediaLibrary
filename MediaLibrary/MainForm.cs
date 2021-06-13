@@ -59,6 +59,17 @@ namespace MediaLibrary
             this.ApplySettings();
         }
 
+        public TimeSpan AutoSearchDelay
+        {
+            get
+            {
+                const double KeyboardDelayIncrementSeconds = 0.250;
+                var systemKeyboardDelay = TimeSpan.FromSeconds(Math.Max(0.0, Math.Min(9.0, SystemInformation.KeyboardDelay)) * KeyboardDelayIncrementSeconds + KeyboardDelayIncrementSeconds);
+                var value = TimeSpan.FromSeconds(Math.Max(systemKeyboardDelay.TotalSeconds, Math.Min(Settings.Default.AutoSearchDelay.TotalSeconds, systemKeyboardDelay.TotalSeconds * 4)));
+                return value;
+            }
+        }
+
         private static bool CanDrop(DragEventArgs e) =>
             e.AllowedEffect.HasFlag(DragDropEffects.Link) &&
             e.Data.GetDataPresent(DataFormats.FileDrop) &&
@@ -487,7 +498,7 @@ namespace MediaLibrary
             var searchVersion = Interlocked.Increment(ref this.searchVersion);
             if (throttle)
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(true);
+                await Task.Delay(this.AutoSearchDelay).ConfigureAwait(true);
                 if (this.searchVersion != searchVersion)
                 {
                     return;
