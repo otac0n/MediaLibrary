@@ -18,6 +18,8 @@ namespace MediaLibrary.Storage.FileTypes
         private static readonly PropertyParserList<MediaFile> PropertyTags = new PropertyParserList<MediaFile>
         {
             { Properties.Duration, FindValue(new[] { "moov", "mvhd" }, (MovieHeaderBox box) => box.DurationInSeconds) },
+            { Properties.Width, FindValue(new[] { "moov", "trak", "tkhd" }, (TrackHeaderBox box) => box.Width) },
+            { Properties.Height, FindValue(new[] { "moov", "trak", "tkhd" }, (TrackHeaderBox box) => box.Height) },
         };
 
         private static Dictionary<string, Func<BoxInfo, Stream, Box>> BoxTypes = new Dictionary<string, Func<BoxInfo, Stream, Box>>()
@@ -28,6 +30,7 @@ namespace MediaLibrary.Storage.FileTypes
             ["moov"] = SimpleContainerBox.Read,
             ["mvhd"] = MovieHeaderBox.Read,
             ["trak"] = SimpleContainerBox.Read,
+            ["tkhd"] = TrackHeaderBox.Read,
         };
 
         private interface IBoxContainer
@@ -80,17 +83,25 @@ namespace MediaLibrary.Storage.FileTypes
 
         public static class Properties
         {
-            public static readonly string Duration = "Duration";
+            public static readonly string Duration = nameof(Duration);
+            public static readonly string Height = nameof(Height);
+            public static readonly string Width = nameof(Width);
         }
 
         private static class BigEndian
         {
+            public static short ToInt16(byte[] buffer, int offset) =>
+                (short)((buffer[offset] << 8) | buffer[offset + 1]);
+
             public static int ToInt32(byte[] buffer, int offset) =>
                 (buffer[offset] << 24) | (buffer[offset + 1] << 16) | (buffer[offset + 2] << 8) | buffer[offset + 3];
 
             public static long ToInt64(byte[] buffer, int offset) =>
                 ((long)((buffer[offset] << 24) | (buffer[offset + 1] << 16) | (buffer[offset + 2] << 8) | buffer[offset + 3]) << 32) |
                 ((long)((buffer[offset + 4] << 24) | (buffer[offset + 5] << 16) | (buffer[offset + 6] << 8) | buffer[offset + 7]));
+
+            public static ushort ToUInt16(byte[] buffer, int offset) =>
+                (ushort)ToInt16(buffer, offset);
 
             public static uint ToUInt32(byte[] buffer, int offset) =>
                 (uint)ToInt32(buffer, offset);
@@ -374,6 +385,102 @@ namespace MediaLibrary.Storage.FileTypes
             {
                 var boxes = EnumerateBoxes(stream, boxInfo.DataSize).ToImmutableList();
                 return new SimpleContainerBox(boxInfo, boxes);
+            }
+        }
+
+        [DebuggerDisplay("{BoxInfo.Type,nq} (#{TrackId,nq}, {Width,nq}x{Height,nq})")]
+        private class TrackHeaderBox : FullBox
+        {
+            public TrackHeaderBox(BoxInfo boxInfo, byte version, int flags, ulong creationTime, ulong modificationTime, uint trackId, ulong duration, ushort layer, ushort alternateGroup, ushort volume, double width, double height)
+                : base(boxInfo, version, flags)
+            {
+                this.CreationTime = creationTime;
+                this.ModificationTime = modificationTime;
+                this.TrackId = trackId;
+                this.Duration = duration;
+                this.Layer = layer;
+                this.AlternateGroup = alternateGroup;
+                this.Volume = volume;
+                this.Width = width;
+                this.Height = height;
+            }
+
+            public ushort AlternateGroup { get; }
+
+            public ulong CreationTime { get; }
+
+            public ulong Duration { get; }
+
+            public double Height { get; }
+
+            public ushort Layer { get; }
+
+            public ulong ModificationTime { get; }
+
+            public uint TrackId { get; }
+
+            public ushort Volume { get; }
+
+            public double Width { get; }
+
+            public static TrackHeaderBox Read(BoxInfo boxInfo, Stream stream)
+            {
+                var read = 0UL;
+                if (!FullBox.ReadVersion(stream, boxInfo.DataSize, ref read, out var version, out var flags))
+                {
+                    return null;
+                }
+
+                byte[] buffer;
+                ulong creationTime, modificationTime, duration;
+                uint trackId;
+                ushort layer, alternateGroup, volume;
+                double width, height;
+                switch (version)
+                {
+                    case 0:
+                        buffer = new byte[sizeof(uint) * 5];
+                        if (!Box.ReadSafe(stream, buffer, 0, buffer.Length, boxInfo.DataSize, ref read))
+                        {
+                            return null;
+                        }
+
+                        creationTime = BigEndian.ToUInt32(buffer, 0);
+                        modificationTime = BigEndian.ToUInt32(buffer, sizeof(uint) * 1);
+                        trackId = BigEndian.ToUInt32(buffer, sizeof(uint) * 2);
+                        duration = BigEndian.ToUInt32(buffer, sizeof(uint) * 4);
+                        break;
+
+                    case 1:
+                        buffer = new byte[sizeof(ulong) * 3 + sizeof(uint) * 2];
+                        if (!Box.ReadSafe(stream, buffer, 0, buffer.Length, boxInfo.DataSize, ref read))
+                        {
+                            return null;
+                        }
+
+                        creationTime = BigEndian.ToUInt64(buffer, 0);
+                        modificationTime = BigEndian.ToUInt64(buffer, sizeof(ulong) * 1);
+                        trackId = BigEndian.ToUInt32(buffer, sizeof(ulong) * 2);
+                        duration = BigEndian.ToUInt64(buffer, sizeof(ulong) * 2 + sizeof(uint) * 2);
+                        break;
+
+                    default:
+                        return null;
+                }
+
+                buffer = new byte[sizeof(uint) * 13 + sizeof(ushort) * 4];
+                if (!Box.ReadSafe(stream, buffer, 0, buffer.Length, boxInfo.DataSize, ref read))
+                {
+                    return null;
+                }
+
+                layer = BigEndian.ToUInt16(buffer, sizeof(uint) * 2);
+                alternateGroup = BigEndian.ToUInt16(buffer, sizeof(uint) * 2 + sizeof(ushort));
+                volume = BigEndian.ToUInt16(buffer, sizeof(uint) * 2 + sizeof(ushort) * 2);
+                width = (double)BigEndian.ToUInt32(buffer, sizeof(uint) * 11 + sizeof(ushort) * 4) / 0x10000;
+                height = (double)BigEndian.ToUInt32(buffer, sizeof(uint) * 12 + sizeof(ushort) * 4) / 0x10000;
+
+                return new TrackHeaderBox(boxInfo, version, flags, creationTime, modificationTime, trackId, duration, layer, alternateGroup, volume, width, height);
             }
         }
     }

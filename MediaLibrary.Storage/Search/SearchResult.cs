@@ -6,11 +6,12 @@ namespace MediaLibrary.Storage.Search
 
     public class SearchResult
     {
-        public SearchResult(string hash, long fileSize, string fileType, Rating rating, ImmutableHashSet<string> tags, ImmutableHashSet<string> rejectedTags, ImmutableHashSet<string> paths, ImmutableHashSet<Person> people, ImmutableHashSet<Person> rejectedPeople)
+        public SearchResult(string hash, long fileSize, string fileType, ImmutableDictionary<string, object> details, Rating rating, ImmutableHashSet<string> tags, ImmutableHashSet<string> rejectedTags, ImmutableHashSet<string> paths, ImmutableHashSet<Person> people, ImmutableHashSet<Person> rejectedPeople)
         {
             this.Hash = hash;
             this.FileType = fileType;
             this.FileSize = fileSize;
+            this.Details = details;
             this.Rating = rating;
             this.Tags = tags;
             this.RejectedTags = rejectedTags;
@@ -18,6 +19,8 @@ namespace MediaLibrary.Storage.Search
             this.People = people;
             this.RejectedPeople = rejectedPeople;
         }
+
+        public ImmutableDictionary<string, object> Details { get; set; }
 
         public long FileSize { get; }
 
@@ -39,6 +42,7 @@ namespace MediaLibrary.Storage.Search
 
         public SearchResult With(
             string fileType = null,
+            ImmutableDictionary<string, object> details = null,
             Rating rating = null,
             ImmutableHashSet<string> tags = null,
             ImmutableHashSet<string> rejectedTags = null,
@@ -49,6 +53,7 @@ namespace MediaLibrary.Storage.Search
                 this.Hash,
                 this.FileSize,
                 fileType ?? this.FileType,
+                details ?? this.Details,
                 rating ?? this.Rating,
                 tags ?? this.Tags,
                 rejectedTags ?? this.RejectedTags,

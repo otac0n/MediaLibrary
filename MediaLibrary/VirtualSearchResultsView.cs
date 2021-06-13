@@ -59,7 +59,7 @@ namespace MediaLibrary
                             aPath == null ? null : Path.GetFileNameWithoutExtension(aPath),
                             bPath == null ? null : Path.GetFileNameWithoutExtension(bPath));
                     },
-                    r => GetImageKey(r.FileType)
+                    r => GetImageKey(r)
                 },
                 {
                     Column.People,
@@ -254,9 +254,9 @@ namespace MediaLibrary
 
         private static string GetBestPath(SearchResult searchResult) => searchResult == null ? null : searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
 
-        private static string GetImageKey(string fileType)
+        private static string GetImageKey(SearchResult r)
         {
-            switch (fileType)
+            switch (r.FileType)
             {
                 case string type when FileTypeHelper.IsAudio(type):
                     return "audio-file";
@@ -268,6 +268,42 @@ namespace MediaLibrary
                     return "image-file";
 
                 case string type when FileTypeHelper.IsVideo(type):
+                    var sizes = new List<double>(2);
+                    if (r.Details.TryGetValue("Width", out var widthObj))
+                    {
+                        sizes.Add(Convert.ToDouble(widthObj, CultureInfo.InvariantCulture));
+                    }
+
+                    if (r.Details.TryGetValue("Height", out var heightObj))
+                    {
+                        sizes.Add(Convert.ToDouble(heightObj, CultureInfo.InvariantCulture));
+                    }
+
+                    var extents = sizes.Aggregate(
+                        new { Min = default(double?), Max = default(double?) },
+                        (a, v) => new
+                        {
+                            Min = a.Min < v ? a.Min : v,
+                            Max = a.Max > v ? a.Max : v,
+                        });
+
+                    if (extents.Max > 7680)
+                    {
+                        return "modern-tv-uhd";
+                    }
+                    else if (extents.Max > 4096)
+                    {
+                        return "modern-tv-8k";
+                    }
+                    else if (extents.Max >= 3840)
+                    {
+                        return "modern-tv-4k";
+                    }
+                    else if (extents.Min >= 1080)
+                    {
+                        return "modern-tv-hd";
+                    }
+
                     return "modern-tv-flat";
 
                 default: return "common-file";

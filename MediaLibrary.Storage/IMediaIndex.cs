@@ -4,6 +4,7 @@ namespace MediaLibrary.Storage
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Threading.Tasks;
     using MediaLibrary.Storage.Search;
     using TaggingLibrary;
@@ -56,7 +57,7 @@ namespace MediaLibrary.Storage
 
         Task<List<string>> GetAllTags();
 
-        Task<Dictionary<string, object>> GetHashDetails(string hash);
+        Task<ImmutableDictionary<string, object>> GetHashDetails(string hash);
 
         Task<List<HashTag>> GetHashTags(string hash);
 

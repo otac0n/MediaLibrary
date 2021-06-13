@@ -261,36 +261,11 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<string>(HashTag.Queries.GetAllTags).ConfigureAwait(false)).ToList());
 
-        public Task<Dictionary<string, object>> GetHashDetails(string hash) =>
+        public Task<ImmutableDictionary<string, object>> GetHashDetails(string hash) =>
             this.IndexReadAsync(async conn =>
             {
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = Queries.GetHashDetails;
-                    cmd.Parameters.AddWithValue("Hash", hash);
-                    using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
-                    {
-                        var result = new Dictionary<string, object>();
-
-                        if (await reader.ReadAsync().ConfigureAwait(false))
-                        {
-                            for (var c = 0; c < reader.FieldCount; c++)
-                            {
-                                var name = reader.GetName(c);
-                                if (name != "Hash")
-                                {
-                                    var value = reader.GetValue(c);
-                                    if (!(value is DBNull || value == null))
-                                    {
-                                        result.Add(name, value);
-                                    }
-                                }
-                            }
-                        }
-
-                        return result;
-                    }
-                }
+                var row = (await conn.QueryAsync(Queries.GetHashDetails).ConfigureAwait(false)).SingleOrDefault();
+                return ((IDictionary<string, object>)row)?.ToImmutableDictionary() ?? ImmutableDictionary<string, object>.Empty;
             });
 
         public Task<List<HashTag>> GetHashTags(string hash) =>
@@ -474,6 +449,7 @@ namespace MediaLibrary.Storage
                 Dictionary<int, Person> peopleLookup;
                 ILookup<string, HashPerson> people;
                 ILookup<string, HashPerson> rejectedPeople;
+                ILookup<string, IDictionary<string, object>> hashDetails;
                 ILookup<string, Rating> hashRatings;
                 IList<HashInfo> hashes;
                 using (await this.dbLock.ReaderLockAsync())
@@ -485,6 +461,7 @@ namespace MediaLibrary.Storage
                     peopleLookup = (await this.ReadPeopleAsync(reader).ConfigureAwait(false)).ToDictionary(p => p.PersonId);
                     people = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
                     rejectedPeople = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
+                    hashDetails = (await reader.ReadAsync(buffered: false).ConfigureAwait(false)).ToLookup(r => (string)r.Hash, r => (IDictionary<string, object>)r);
                     hashRatings = (await reader.ReadAsync<Rating>(buffered: false).ConfigureAwait(false)).ToLookup(r => r.Hash);
                     hashes = (await reader.ReadAsync<HashInfo>(buffered: false).ConfigureAwait(false)).ToList();
                 }
@@ -497,6 +474,7 @@ namespace MediaLibrary.Storage
                     var updatedPaths = fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet();
                     var updatedPeople = people[hash.Hash].Select(p => peopleLookup[p.PersonId]).ToImmutableHashSet();
                     var updatedRejectedPeople = rejectedPeople[hash.Hash].Select(p => peopleLookup[p.PersonId]).ToImmutableHashSet();
+                    var updatedDetails = hashDetails[hash.Hash].SingleOrDefault()?.ToImmutableDictionary() ?? ImmutableDictionary<string, object>.Empty;
                     var updatedRating = hashRatings[hash.Hash].Where(p => string.IsNullOrEmpty(p.Category)).SingleOrDefault();
                     results.Add(this.searchResultsCache.AddOrUpdate(
                         hash.Hash,
@@ -504,6 +482,7 @@ namespace MediaLibrary.Storage
                             key,
                             hash.FileSize,
                             hash.FileType,
+                            updatedDetails,
                             updatedRating,
                             updatedTags,
                             updatedRejectedTags,
@@ -512,6 +491,12 @@ namespace MediaLibrary.Storage
                             updatedRejectedPeople),
                         (key, searchResult) =>
                         {
+                            // TODO: Deeper inspection of changes.
+                            if (searchResult.Details != updatedDetails)
+                            {
+                                searchResult.Details = updatedDetails;
+                            }
+
                             if (searchResult.Rating != updatedRating)
                             {
                                 searchResult.Rating = updatedRating;

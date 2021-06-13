@@ -61,6 +61,7 @@ namespace MediaLibrary.Storage.Search
             var fetchPeople = true;
             var fetchAliases = true && fetchPeople;
             var fetchRatings = true;
+            var fetchDetails = true;
             var fetchAny = fetchTags || fetchPaths || fetchPeople || fetchRatings;
 
             var sb = new StringBuilder();
@@ -178,6 +179,11 @@ namespace MediaLibrary.Storage.Search
                 sb
                     .AppendLine("SELECT * FROM temp.SearchRejectedPerson;")
                     .AppendLine("DROP TABLE temp.SearchRejectedPerson;");
+            }
+
+            if (fetchDetails)
+            {
+                sb.AppendLine("SELECT d.* FROM temp.SearchHashInfo h INNER JOIN HashDetails d ON h.Hash = d.Hash;");
             }
 
             if (fetchRatings)
