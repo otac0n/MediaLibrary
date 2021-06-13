@@ -4,6 +4,7 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Linq;
     using System.Text.RegularExpressions;
     using TaggingLibrary;
@@ -47,16 +48,15 @@ namespace MediaLibrary
                 .Select(t =>
                 {
                     var tagTerms = this.ToTerms(t.Tag);
-                    var allTerms = new HashSet<string>(tagTerms, Comparer);
-                    foreach (var alias in t.Aliases)
-                    {
-                        allTerms.UnionWith(this.ToTerms(alias));
-                    }
+                    var aliasTerms = t.Aliases.ToDictionary(a => a, a => this.ToTerms(a));
+                    var allTerms = Enumerable.Aggregate(t.Aliases, tagTerms.ToImmutableHashSet(Comparer), (terms, alias) => terms.Union(aliasTerms[alias]));
 
-                    return new { TagInfo = t, TagTerms = tagTerms, AllTerms = allTerms };
+                    return new { TagInfo = t, TagTerms = tagTerms, AliasTerms = aliasTerms, AllTerms = allTerms };
                 })
                 .OrderByDescending(t => t.TagTerms.SetEquals(searchTerms))
+                .ThenByDescending(t => t.AliasTerms.Values.Any(a => a.SetEquals(searchTerms)))
                 .ThenByDescending(t => t.TagTerms.IsSupersetOf(searchTerms))
+                .ThenByDescending(t => t.AliasTerms.Values.Any(a => a.IsSupersetOf(searchTerms)))
                 .ThenByDescending(t => t.AllTerms.IsSupersetOf(searchTerms))
                 .ThenByDescending(t => Math.Max(
                     t.AllTerms.Count(n => searchTerms.Contains(n)),
