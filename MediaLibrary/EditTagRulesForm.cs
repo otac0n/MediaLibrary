@@ -3,6 +3,7 @@
 namespace MediaLibrary
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Threading.Tasks;
     using System.Windows.Forms;
@@ -64,7 +65,7 @@ namespace MediaLibrary
 
         private async void ApplyButton_Click(object sender, System.EventArgs e)
         {
-            await this.SaveChanges().ConfigureAwait(true);
+            await this.SaveChanges(swallowExceptions: true).ConfigureAwait(true);
         }
 
         private void CancelButton_Click(object sender, System.EventArgs e)
@@ -78,7 +79,7 @@ namespace MediaLibrary
             if (e.Control && e.KeyCode == Keys.S && !e.Alt && !e.Shift)
             {
                 e.Handled = true;
-                await this.SaveChanges().ConfigureAwait(true);
+                await this.SaveChanges(swallowExceptions: true).ConfigureAwait(true);
             }
         }
 
@@ -97,11 +98,20 @@ namespace MediaLibrary
             this.rulePages.Enabled = this.okButton.Enabled = this.applyButton.Enabled = true;
         }
 
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "The contract of the `SaveChanges` function allows generic exception handling.")]
         private async void OkButton_Click(object sender, EventArgs e)
         {
-            await this.SaveChanges().ConfigureAwait(true);
-            this.DialogResult = DialogResult.OK;
-            this.Hide();
+            try
+            {
+                await this.SaveChanges(swallowExceptions: false).ConfigureAwait(true);
+                this.DialogResult = DialogResult.OK;
+                this.Hide();
+            }
+            catch
+            {
+                // Allow the user to rescue the state of the rules.
+                // If the user wants to abort, a simple close or cancel action will work.
+            }
         }
 
         private void RemoveCategoryMenuItem_Click(object sender, EventArgs e)
@@ -145,10 +155,9 @@ namespace MediaLibrary
             }
         }
 
-        private async Task SaveChanges()
+        private async Task SaveChanges(bool swallowExceptions)
         {
             var success = false;
-            var abort = false;
 
             var ruleCategories = this.rulePages.TabPages.Cast<TabPage>().Select((p, i) => new RuleCategory(
                 category: i == 0 ? string.Empty : p.Text,
@@ -170,11 +179,18 @@ namespace MediaLibrary
                         var result = MessageBox.Show($"Error encountered: {ex.Message}{NewLine}{NewLine}", "Save Failed", MessageBoxButtons.RetryCancel);
                         if (result == DialogResult.Cancel)
                         {
-                            abort = true;
+                            if (swallowExceptions)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                throw;
+                            }
                         }
                     }
                 }
-                while (!success && !abort);
+                while (!success);
             }
             finally
             {
