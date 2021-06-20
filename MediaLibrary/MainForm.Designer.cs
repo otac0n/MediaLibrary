@@ -107,6 +107,7 @@ namespace MediaLibrary
             this.openContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findSimilarMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.copyHashContextMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             toolStripActionSeparator = new System.Windows.Forms.ToolStripSeparator();
             toolStripSeparator12 = new System.Windows.Forms.ToolStripSeparator();
@@ -471,7 +472,7 @@ namespace MediaLibrary
             // 
             this.starredFilesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_star;
             this.starredFilesMenuItem.Name = "starredFilesMenuItem";
-            this.starredFilesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.starredFilesMenuItem.Size = new System.Drawing.Size(112, 22);
             this.starredFilesMenuItem.Tag = "stars>=3";
             this.starredFilesMenuItem.Text = "Files";
             this.starredFilesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -485,7 +486,7 @@ namespace MediaLibrary
             // 
             this.starredAudioMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_star;
             this.starredAudioMenuItem.Name = "starredAudioMenuItem";
-            this.starredAudioMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.starredAudioMenuItem.Size = new System.Drawing.Size(112, 22);
             this.starredAudioMenuItem.Tag = "stars>=3 type:audio";
             this.starredAudioMenuItem.Text = "Audio";
             this.starredAudioMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -494,7 +495,7 @@ namespace MediaLibrary
             // 
             this.starredImagesMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_star;
             this.starredImagesMenuItem.Name = "starredImagesMenuItem";
-            this.starredImagesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.starredImagesMenuItem.Size = new System.Drawing.Size(112, 22);
             this.starredImagesMenuItem.Tag = "stars>=3 type:image";
             this.starredImagesMenuItem.Text = "Images";
             this.starredImagesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -503,7 +504,7 @@ namespace MediaLibrary
             // 
             this.starredVideoMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_star;
             this.starredVideoMenuItem.Name = "starredVideoMenuItem";
-            this.starredVideoMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.starredVideoMenuItem.Size = new System.Drawing.Size(112, 22);
             this.starredVideoMenuItem.Tag = "stars>=3 type:video";
             this.starredVideoMenuItem.Text = "Video";
             this.starredVideoMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -551,7 +552,7 @@ namespace MediaLibrary
             // 
             this.audioStarsMenuItem.Image = global::MediaLibrary.Properties.Resources.audio_file_star;
             this.audioStarsMenuItem.Name = "audioStarsMenuItem";
-            this.audioStarsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.audioStarsMenuItem.Size = new System.Drawing.Size(151, 22);
             this.audioStarsMenuItem.Tag = "type:audio stars>=3";
             this.audioStarsMenuItem.Text = "Starred Audio";
             this.audioStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -599,7 +600,7 @@ namespace MediaLibrary
             // 
             this.imageStarsMenuItem.Image = global::MediaLibrary.Properties.Resources.image_file_star;
             this.imageStarsMenuItem.Name = "imageStarsMenuItem";
-            this.imageStarsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.imageStarsMenuItem.Size = new System.Drawing.Size(157, 22);
             this.imageStarsMenuItem.Tag = "type:image stars>=3";
             this.imageStarsMenuItem.Text = "Starred Images";
             this.imageStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -647,7 +648,7 @@ namespace MediaLibrary
             // 
             this.videoStarsMenuItem.Image = global::MediaLibrary.Properties.Resources.video_file_star;
             this.videoStarsMenuItem.Name = "videoStarsMenuItem";
-            this.videoStarsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.videoStarsMenuItem.Size = new System.Drawing.Size(149, 22);
             this.videoStarsMenuItem.Tag = "type:video stars>=3";
             this.videoStarsMenuItem.Text = "Starred Video";
             this.videoStarsMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -799,9 +800,10 @@ namespace MediaLibrary
             this.openContextMenuItem,
             this.findSimilarMenuItem,
             toolStripSeparator12,
-            this.copyContextMenuItem});
+            this.copyContextMenuItem,
+            this.copyHashContextMenuItem});
             this.itemContextMenu.Name = "itemContextMenu";
-            this.itemContextMenu.Size = new System.Drawing.Size(146, 148);
+            this.itemContextMenu.Size = new System.Drawing.Size(146, 170);
             // 
             // favoriteContextMenuItem
             // 
@@ -848,6 +850,13 @@ namespace MediaLibrary
             this.copyContextMenuItem.Size = new System.Drawing.Size(145, 22);
             this.copyContextMenuItem.Text = "&Copy";
             this.copyContextMenuItem.Click += new System.EventHandler(this.CopyMenuItem_Click);
+            // 
+            // copyHashContextMenuItem
+            // 
+            this.copyHashContextMenuItem.Name = "copyHashContextMenuItem";
+            this.copyHashContextMenuItem.Size = new System.Drawing.Size(145, 22);
+            this.copyHashContextMenuItem.Text = "Copy &Hash";
+            this.copyHashContextMenuItem.Click += new System.EventHandler(this.CopyHashContextMenuItem_Click);
             // 
             // splitContainer
             // 
@@ -966,5 +975,6 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripMenuItem refreshMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
         private System.Windows.Forms.ToolStripMenuItem findSimilarMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem copyHashContextMenuItem;
     }
 }

@@ -226,6 +226,15 @@ namespace MediaLibrary
             this.selectionDialogs.Clear();
         }
 
+        private void CopyHashContextMenuItem_Click(object sender, EventArgs e)
+        {
+            var searchResults = this.listView.SelectedResults;
+            if (searchResults.Count > 0)
+            {
+                Clipboard.SetText(string.Join(Environment.NewLine, searchResults.Select(r => r.Hash)));
+            }
+        }
+
         private void CopyMenuItem_Click(object sender, EventArgs e)
         {
             if (this.searchBox.Focused)
