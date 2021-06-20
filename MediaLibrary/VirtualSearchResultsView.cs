@@ -65,7 +65,31 @@ namespace MediaLibrary
                     Column.People,
                     r => r.People,
                     value => string.Join("; ", value.Select(p => p.Name)),
-                    (a, b) => a.People.Count.CompareTo(b.People.Count)
+                    (a, b) =>
+                    {
+                        int comp;
+                        if ((comp = a.People.Count.CompareTo(b.People.Count)) != 0)
+                        {
+                            return comp;
+                        }
+
+                        var aPeople = a.People.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+                        var bPeople = b.People.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+                        for (var i = 0; i < aPeople.Count; i++)
+                        {
+                            if (aPeople[i].PersonId != bPeople[i].PersonId)
+                            {
+                                if ((comp = StringComparer.CurrentCultureIgnoreCase.Compare(aPeople[i].Name, bPeople[i].Name)) != 0)
+                                {
+                                    return comp;
+                                }
+
+                                return aPeople[i].PersonId.CompareTo(bPeople[i].PersonId);
+                            }
+                        }
+
+                        return 0;
+                    }
                 },
                 {
                     Column.Tags,
