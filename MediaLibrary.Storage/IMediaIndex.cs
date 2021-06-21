@@ -33,7 +33,7 @@ namespace MediaLibrary.Storage
 
         Task AddHashTag(HashTag hashTag);
 
-        Task AddIndexedPath(string path, IProgress<RescanProgress> progress = null);
+        Task AddIndexedPath(string path);
 
         Task<Person> AddPerson(string name);
 
@@ -83,7 +83,7 @@ namespace MediaLibrary.Storage
 
         Task RemoveSavedSearch(SavedSearch savedSearch);
 
-        Task Rescan(IProgress<RescanProgress> progress = null, bool forceRehash = false);
+        Task Rescan(bool forceRehash = false);
 
         Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true);
 

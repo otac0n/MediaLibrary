@@ -3,7 +3,6 @@
 namespace MediaLibrary.Storage
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Data.SQLite;
@@ -31,16 +30,19 @@ namespace MediaLibrary.Storage
         private readonly AsyncReaderWriterLock dbLock = new AsyncReaderWriterLock();
         private readonly HashSet<string> detailsColumns = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
         private readonly CancellationTokenSource disposeCancel = new CancellationTokenSource();
+        private readonly ChangeQueue<string, (int attempt, string path, FilePath filePath, HashInfo hashInfo, bool? hasDetails, bool forceRehash)> fileChangeQueue;
         private readonly Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
         private readonly string indexPath;
         private readonly WeakReferenceCache<long, Person> personCache = new WeakReferenceCache<long, Person>();
         private readonly WeakReferenceCache<string, SearchResult> searchResultsCache = new WeakReferenceCache<string, SearchResult>();
         private readonly TagRulesParser tagRuleParser;
+        private Task fileScanTask;
 
         public MediaIndex(string indexPath)
         {
             this.indexPath = indexPath;
             this.tagRuleParser = new TagRulesParser();
+            this.fileChangeQueue = new ChangeQueue<string, (int attempt, string path, FilePath, HashInfo, bool?, bool)>(item => item.path);
         }
 
         public event EventHandler<HashInvalidatedEventArgs> HashInvalidated;
@@ -54,6 +56,8 @@ namespace MediaLibrary.Storage
         public event EventHandler<ItemRemovedEventArgs<HashTag>> HashTagRemoved;
 
         public event EventHandler<ItemUpdatedEventArgs<Rating>> RatingUpdated;
+
+        public event EventHandler<ItemUpdatedEventArgs<RescanProgress>> RescanProgressUpdated;
 
         public event EventHandler<ItemUpdatedEventArgs<TagRuleEngine>> TagRulesUpdated;
 
@@ -175,7 +179,7 @@ namespace MediaLibrary.Storage
             this.HashTagAdded?.Invoke(this, new ItemAddedEventArgs<HashTag>(hashTag));
         }
 
-        public async Task AddIndexedPath(string path, IProgress<RescanProgress> progress = null)
+        public async Task AddIndexedPath(string path)
         {
             if (string.IsNullOrEmpty(path))
             {
@@ -188,7 +192,7 @@ namespace MediaLibrary.Storage
             }
 
             await this.IndexWriteAsync(conn => conn.ExecuteAsync(Queries.AddIndexedPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) })).ConfigureAwait(false);
-            await this.RescanIndexedPath(path, progress).ConfigureAwait(false);
+            await this.RescanIndexedPath(path, forceRehash: true).ConfigureAwait(false);
             this.AddFileSystemWatcher(path);
         }
 
@@ -399,32 +403,15 @@ namespace MediaLibrary.Storage
             this.IndexWriteAsync(conn =>
                 conn.ExecuteAsync(SavedSearch.Queries.RemoveSavedSearch, new { savedSearch.SearchId }));
 
-        public async Task Rescan(IProgress<RescanProgress> progress = null, bool forceRehash = false)
+        public async Task Rescan(bool forceRehash = false)
         {
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
 
-            var progresses = new RescanProgress[indexedPaths.Count];
-            for (var i = 0; i < indexedPaths.Count; i++)
-            {
-                progresses[i] = new RescanProgress(0, 0, 0, false);
-            }
-
             var tasks = new Task[indexedPaths.Count];
 
-            var progressSync = new object();
-            var lastProgress = 0.0;
             for (var i = 0; i < indexedPaths.Count; i++)
             {
-                var p = i; // Closure copy.
-                var pathProgress = progress == null ? null : OnProgress.Do<RescanProgress>(prog =>
-                {
-                    lock (progressSync)
-                    {
-                        progresses[p] = prog;
-                        progress?.Report(RescanProgress.Aggregate(ref lastProgress, progresses));
-                    }
-                });
-                tasks[p] = this.RescanIndexedPath(indexedPaths[p], pathProgress, forceRehash);
+                tasks[i] = this.RescanIndexedPath(indexedPaths[i], forceRehash);
             }
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -857,124 +844,151 @@ namespace MediaLibrary.Storage
             }
         }
 
-        private async Task RescanIndexedPath(string path, IProgress<RescanProgress> progress = null, bool forceRehash = false)
+        private Task RescanIndexedPath(string path, bool forceRehash = false)
         {
-            var sync = new object();
-            var lastProgress = 0.0;
-            var discoveryComplete = false;
-            var discovered = 0;
-            var processed = 0;
-            var queue = new ConcurrentQueue<(string path, FilePath filePath, HashInfo hashInfo, bool? hasDetails)>();
-            var pendingTasks = new List<Task>();
-
-            var progressTimer = Stopwatch.StartNew();
-            void ReportProgress(bool force = false)
+            this.StartFileScanTask();
+            return Task.Run(async () =>
             {
-                lock (sync)
+                var seen = new HashSet<string>();
+                foreach (var (filePath, hashInfo, hasDetails) in await this.GetIndexInfoUnder(path).ConfigureAwait(false))
                 {
-                    if (force || progressTimer.Elapsed.TotalMilliseconds > 250)
-                    {
-                        progress?.Report(RescanProgress.Aggregate(ref lastProgress, new RescanProgress(0, discovered, processed, discoveryComplete)));
-                        progressTimer.Restart();
-                    }
+                    seen.Add(filePath.Path);
+                    this.fileChangeQueue.Enqueue((0, filePath.Path, filePath, hashInfo, hasDetails, forceRehash));
                 }
-            }
 
-            var enumerateTask = Task.Run(async () =>
-            {
                 try
                 {
-                    var seen = new HashSet<string>();
-                    foreach (var (filePath, hashInfo, hasDetails) in await this.GetIndexInfoUnder(path).ConfigureAwait(false))
-                    {
-                        seen.Add(filePath.Path);
-                        Interlocked.Increment(ref discovered);
-                        queue.Enqueue((filePath.Path, filePath, hashInfo, hasDetails));
-                        ReportProgress();
-                    }
-
                     foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
                     {
                         if (seen.Add(file))
                         {
-                            Interlocked.Increment(ref discovered);
-                            queue.Enqueue((file, null, null, null));
-                            ReportProgress();
+                            this.fileChangeQueue.Enqueue((0, file, null, null, null, forceRehash));
                         }
                     }
-                }
-                finally
-                {
-                    discoveryComplete = true;
-                }
-
-                ReportProgress(force: true);
-            });
-
-            var populateTask = Task.Run(async () =>
-            {
-                while (true)
-                {
-                    if (!queue.TryDequeue(out var file))
-                    {
-                        if (discoveryComplete && queue.Count == 0)
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            await Task.Delay(TimeSpan.FromMilliseconds(10)).ConfigureAwait(false);
-                            continue;
-                        }
-                    }
-
-                    pendingTasks.Add(this.RescanFile(file.path, file.filePath, file.hashInfo, file.hasDetails, forceRehash).ContinueWith(result =>
-                    {
-                        Interlocked.Increment(ref processed);
-                        ReportProgress();
-                    }));
-                }
-            });
-
-            await Task.WhenAll(enumerateTask, populateTask).ConfigureAwait(false);
-            await Task.WhenAll(pendingTasks).ConfigureAwait(false);
-            ReportProgress(force: true);
-        }
-
-        private async Task TouchFile(string fullPath)
-        {
-            // TODO: This should act as a queue that shares resources with full-Rescans.
-            // TODO: This should detect if the path is inside some indexed folder.
-            var delay = TimeSpan.FromSeconds(1);
-            var attempts = 0;
-            while (true)
-            {
-                // Avoid attempting to hash a newly created directory.
-                if (!File.Exists(fullPath))
-                {
-                    break;
-                }
-
-                try
-                {
-                    await this.RescanFile(fullPath).ConfigureAwait(false);
-                    break;
                 }
                 catch (IOException)
                 {
-                    attempts += 1;
-                    delay += delay;
+                }
+            });
+        }
+
+        private void StartFileScanTask()
+        {
+            lock (this.fileChangeQueue)
+            {
+                if (this.fileScanTask != null)
+                {
+                    return;
                 }
 
-                if (attempts < 4)
+                var maxTasks = Math.Max(1, Environment.ProcessorCount - 1);
+                var maxDelay = TimeSpan.FromSeconds(1);
+                var progress = new RescanProgress(0, 0, 0, false);
+                var progressStopwatch = Stopwatch.StartNew();
+                var progressThreshold = TimeSpan.FromSeconds(1 / 15.0);
+                void UpdateProgress(Func<RescanProgress, RescanProgress> update, bool force = false)
                 {
-                    await Task.Delay(delay).ConfigureAwait(false);
+                    progress = update(progress);
+                    if (force || progressStopwatch.Elapsed > progressThreshold)
+                    {
+                        this.RescanProgressUpdated?.Invoke(this, new ItemUpdatedEventArgs<RescanProgress>(progress));
+                        progressStopwatch.Restart();
+                    }
                 }
-                else
+
+                this.fileScanTask = Task.Run(async () =>
                 {
-                    break;
-                }
+                    UpdateProgress(p => p, force: true);
+
+                    var tasks = new Dictionary<Task, (int attempt, string path, FilePath filePath, HashInfo hashInfo, bool? hasDetails, bool forceRehash)>();
+                    while (true)
+                    {
+                        while (tasks.Count < maxTasks && this.fileChangeQueue.Dequeue(out var next))
+                        {
+                            var task = this.RescanFile(next.path, next.filePath, next.hashInfo, next.hasDetails, next.forceRehash);
+                            tasks.Add(task, next);
+                        }
+
+                        UpdateProgress(p =>
+                            p.Update(
+                                pathsDiscovered: p.PathsProcessed + tasks.Count + this.fileChangeQueue.Count));
+
+                        if (tasks.Count > 0)
+                        {
+                            var timeoutTask = Task.Delay(maxDelay);
+                            var completed = await Task.WhenAny(tasks.Keys.Concat(new[] { timeoutTask }).ToArray()).ConfigureAwait(false);
+
+                            if (completed != timeoutTask)
+                            {
+                                var item = tasks[completed];
+                                tasks.Remove(completed);
+
+                                try
+                                {
+                                    await completed.ConfigureAwait(false);
+                                    UpdateProgress(p =>
+                                        p.Update(
+                                            pathsProcessed: p.PathsProcessed + 1));
+                                }
+                                catch (IOException)
+                                {
+                                    if (item.attempt < 4)
+                                    {
+                                        var delay = TimeSpan.FromSeconds(maxDelay.TotalSeconds * Math.Pow(2, item.attempt));
+                                        item.attempt++;
+                                        this.fileChangeQueue.Enqueue(item, delay);
+                                    }
+                                    else
+                                    {
+                                        UpdateProgress(p =>
+                                            p.Update(
+                                                pathsProcessed: p.PathsProcessed + 1));
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var delay = this.fileChangeQueue.CurrentDelay;
+                            if (delay != null)
+                            {
+                                if (delay > maxDelay)
+                                {
+                                    delay = maxDelay;
+                                }
+
+                                await Task.Delay(delay.Value).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                // TODO: Trigger cancellation when the fileChangeQueue has a new item.
+                                await Task.Delay(maxDelay).ConfigureAwait(false);
+                                lock (this.fileChangeQueue)
+                                {
+                                    if (this.fileChangeQueue.Count == 0)
+                                    {
+                                        UpdateProgress(p =>
+                                            p.Update(
+                                                pathsDiscovered: p.PathsProcessed,
+                                                discoveryComplete: true),
+                                            force: true);
+
+                                        this.fileScanTask = null;
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
             }
+        }
+
+        private void TouchFile(string fullPath, bool forceRehash = true)
+        {
+            // TODO: This should detect if the path is inside some indexed folder.
+            this.fileChangeQueue.Enqueue((0, fullPath, null, null, null, forceRehash));
+            this.StartFileScanTask();
         }
 
         private async Task UpdateHashDetails(HashInfo hashInfo, FileStream file)
@@ -1047,14 +1061,20 @@ namespace MediaLibrary.Storage
             }).ConfigureAwait(false);
         }
 
-        private async void Watcher_Changed(object sender, FileSystemEventArgs e)
+        private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            await this.TouchFile(e.FullPath).ConfigureAwait(false);
+            this.TouchFile(e.FullPath);
         }
 
-        private async void Watcher_Created(object sender, FileSystemEventArgs e)
+        private void Watcher_Created(object sender, FileSystemEventArgs e)
         {
-            await this.TouchFile(e.FullPath).ConfigureAwait(false);
+            // Avoid attempting to hash a newly created directory.
+            if (!File.Exists(e.FullPath))
+            {
+                return;
+            }
+
+            this.TouchFile(e.FullPath);
         }
 
         private async void Watcher_Deleted(object sender, FileSystemEventArgs e)
@@ -1066,7 +1086,7 @@ namespace MediaLibrary.Storage
         {
             // TODO: Race condition. Better is to set missing-since and rescan the file.
             await this.RemoveFilePath(e.OldFullPath).ConfigureAwait(false);
-            await this.TouchFile(e.FullPath).ConfigureAwait(false);
+            this.TouchFile(e.FullPath);
         }
 
         private static class Queries

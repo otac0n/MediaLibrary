@@ -20,17 +20,17 @@ namespace MediaLibrary
     public partial class MainForm : Form
     {
         private readonly MediaIndex index;
-        private readonly List<InProgressTask> tasks = new List<InProgressTask>();
-        private double lastProgress;
+        private readonly List<Task> tasks = new List<Task>();
         private VirtualSearchResultsView listView;
         private PreviewControl preview;
+        private int progressVersion;
         private int searchVersion;
         private List<Form> selectionDialogs = new List<Form>();
-        private int taskVersion;
 
         public MainForm(MediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
+            this.index.RescanProgressUpdated += this.Index_RescanProgressUpdated;
             this.InitializeComponent();
 
             this.listView = new VirtualSearchResultsView(index)
@@ -96,7 +96,7 @@ namespace MediaLibrary
 
         private void AddIndexedPath(string selectedPath)
         {
-            this.TrackTaskProgress(progress => this.index.AddIndexedPath(selectedPath, progress));
+            this.TrackTask(this.index.AddIndexedPath(selectedPath));
         }
 
         private void AddPeopleMenuItem_Click(object sender, EventArgs e)
@@ -365,6 +365,21 @@ namespace MediaLibrary
             }
         }
 
+        private void Index_RescanProgressUpdated(object sender, ItemUpdatedEventArgs<RescanProgress> args)
+        {
+            var progress = args.Item;
+            var version = Interlocked.Increment(ref this.progressVersion);
+            this.InvokeIfRequired(() =>
+            {
+                if (this.progressVersion == version)
+                {
+                    this.mainProgressBar.Value = (int)Math.Floor(progress.Estimate * this.mainProgressBar.Maximum);
+                    this.mainProgressBar.ToolTipText = $"{progress.Estimate:P0} ({progress.PathsProcessed}/{progress.PathsDiscovered}{(progress.DiscoveryComplete ? string.Empty : "?")})";
+                    this.mainProgressBar.Visible = !progress.DiscoveryComplete || progress.Estimate < 1;
+                }
+            });
+        }
+
         private async void ListView_DoubleClick(object sender, MouseEventArgs e)
         {
             if (this.listView.HitTest(e.X, e.Y).Item != null)
@@ -436,10 +451,7 @@ namespace MediaLibrary
 
             this.rateAllButton.Enabled = true;
 
-            this.TrackTaskProgress(async progress =>
-            {
-                await this.index.Rescan(progress).ConfigureAwait(true);
-            });
+            this.TrackTask(this.index.Rescan());
         }
 
         private void MergePeopleMenuItem_Click(object sender, EventArgs e)
@@ -630,86 +642,25 @@ namespace MediaLibrary
             }
         }
 
-        private void TrackTaskProgress(Func<IProgress<RescanProgress>, Task> getTask)
+        private void TrackTask(Task task)
         {
-            var task = new InProgressTask(getTask, this.UpdateProgress);
-
             lock (this.tasks)
             {
-                this.lastProgress = 0;
                 this.tasks.Add(task);
-                this.taskVersion++;
             }
 
-            this.UpdateProgress();
-
-            task.Task.ContinueWith(
-                _ =>
+            task.ContinueWith(_ =>
+            {
+                lock (this.tasks)
                 {
-                    lock (this.tasks)
-                    {
-                        this.tasks.Remove(task);
-                        this.taskVersion++;
-                    }
-
-                    this.UpdateProgress();
-                },
-                TaskScheduler.Current);
+                    this.tasks.Remove(task);
+                }
+            }, TaskScheduler.Current);
         }
 
         private void UpdatePreview()
         {
             this.preview.PreviewItems = this.listView.SelectedResults;
-        }
-
-        private void UpdateProgress()
-        {
-            RescanProgress progress;
-            int taskVersion;
-            lock (this.tasks)
-            {
-                taskVersion = this.taskVersion;
-                progress = RescanProgress.Aggregate(ref this.lastProgress, this.tasks.Select(t => t.Progress).ToArray());
-            }
-
-            this.InvokeIfRequired(() =>
-            {
-                lock (this.tasks)
-                {
-                    if (this.taskVersion != taskVersion)
-                    {
-                        return;
-                    }
-
-                    if (this.tasks.Count == 0)
-                    {
-                        this.mainProgressBar.Visible = false;
-                    }
-                    else
-                    {
-                        this.mainProgressBar.Visible = true;
-                        this.mainProgressBar.Value = (int)Math.Floor(progress.Estimate * this.mainProgressBar.Maximum);
-                        this.mainProgressBar.ToolTipText = $"{progress.Estimate:P0} ({progress.PathsProcessed}/{progress.PathsDiscovered}{(progress.DiscoveryComplete ? string.Empty : "?")})";
-                    }
-                }
-            });
-        }
-
-        private class InProgressTask
-        {
-            public InProgressTask(Func<IProgress<RescanProgress>, Task> getTask, Action updateProgress)
-            {
-                this.Progress = new RescanProgress(0, 0, 0, false);
-                this.Task = getTask(OnProgress.Do<RescanProgress>(progress =>
-                {
-                    this.Progress = progress;
-                    updateProgress();
-                }));
-            }
-
-            public RescanProgress Progress { get; private set; }
-
-            public Task Task { get; }
         }
     }
 }

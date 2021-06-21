@@ -28,7 +28,6 @@ namespace MediaLibrary.Storage
 
         public static RescanProgress Aggregate(ref double lastProgress, params RescanProgress[] progresses)
         {
-            var weight = 0.0;
             var pathsDiscovered = 0;
             var pathsProcessed = 0;
             var discoveryComplete = true;
@@ -38,15 +37,30 @@ namespace MediaLibrary.Storage
                 pathsDiscovered += p.PathsDiscovered;
                 pathsProcessed += p.PathsProcessed;
                 discoveryComplete &= p.DiscoveryComplete;
-                weight += p.DiscoveryComplete ? p.PathsDiscovered : Math.Max(p.PathsDiscovered + 100, p.PathsDiscovered * 2);
             }
 
+            var weight = discoveryComplete ? pathsDiscovered : Math.Max(pathsDiscovered + 100, pathsDiscovered / 0.99);
             var progress = weight == 0 ? 0 : pathsProcessed / weight;
             return new RescanProgress(
-                lastProgress = Math.Max(lastProgress, progress * (discoveryComplete ? 1 : 0.99)),
+                lastProgress = Math.Max(lastProgress, progress),
                 pathsDiscovered,
                 pathsProcessed,
                 discoveryComplete);
+        }
+
+        public RescanProgress Update(int? pathsDiscovered = null, int? pathsProcessed = null, bool? discoveryComplete = null)
+        {
+            var discovered = pathsDiscovered ?? this.PathsDiscovered;
+            var processed = pathsProcessed ?? this.PathsProcessed;
+            var complete = discoveryComplete ?? this.DiscoveryComplete;
+
+            var weight = complete ? discovered : Math.Max(discovered + 100, discovered / 0.99);
+            var progress = weight == 0 ? 0 : processed / weight;
+            return new RescanProgress(
+                Math.Max(this.Estimate, progress),
+                discovered,
+                processed,
+                complete);
         }
     }
 }
