@@ -419,6 +419,7 @@ namespace MediaLibrary.Storage
 
         public async Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
         {
+            await Task.Yield();
             var grammar = new SearchGrammar();
             var term = grammar.Parse(query ?? string.Empty);
             var containsSavedSearches = new ContainsSavedSearchTermCompiler().Compile(term);
@@ -728,6 +729,8 @@ namespace MediaLibrary.Storage
 
         private async Task<string> RescanFile(string path, FilePath filePath = null, HashInfo hashInfo = null, bool? hasDetails = null, bool forceRehash = false)
         {
+            await Task.Yield();
+
             if (filePath != null)
             {
                 if (filePath.Path != path)
@@ -963,24 +966,28 @@ namespace MediaLibrary.Storage
                             {
                                 // TODO: Trigger cancellation when the fileChangeQueue has a new item.
                                 await Task.Delay(maxDelay).ConfigureAwait(false);
-                                lock (this.fileChangeQueue)
+                                if (this.fileChangeQueue.Count == 0)
                                 {
-                                    if (this.fileChangeQueue.Count == 0)
-                                    {
-                                        UpdateProgress(p =>
-                                            p.Update(
-                                                pathsDiscovered: p.PathsProcessed,
-                                                discoveryComplete: true),
-                                            force: true);
+                                    UpdateProgress(p =>
+                                        p.Update(
+                                            pathsDiscovered: p.PathsProcessed,
+                                            discoveryComplete: true),
+                                        force: true);
 
-                                        this.fileScanTask = null;
-                                        return;
-                                    }
+                                    return;
                                 }
                             }
                         }
                     }
                 });
+
+                this.fileScanTask.ContinueWith(_ =>
+                {
+                    lock (this.fileChangeQueue)
+                    {
+                        this.fileScanTask = null;
+                    }
+                }, TaskScheduler.Current);
             }
         }
 
