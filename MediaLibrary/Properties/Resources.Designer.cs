@@ -271,6 +271,15 @@ namespace MediaLibrary.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Duration.
+        /// </summary>
+        internal static string DurationColumn {
+            get {
+                return ResourceManager.GetString("DurationColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap expand_full {

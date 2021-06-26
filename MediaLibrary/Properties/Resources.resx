@@ -343,4 +343,7 @@
   <data name="RatingColumn" xml:space="preserve">
     <value>Rating</value>
   </data>
+  <data name="DurationColumn" xml:space="preserve">
+    <value>Duration</value>
+  </data>
 </root>

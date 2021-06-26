@@ -136,6 +136,18 @@ namespace MediaLibrary
                     (a, b) => a.FileSize.CompareTo(b.FileSize)
                 },
                 {
+                    Column.Duration,
+                    HorizontalAlignment.Right,
+                    r => GetDetails<TimeSpan?>(r, nameof(Column.Duration), value => TimeSpan.FromSeconds(Convert.ToDouble(value, CultureInfo.InvariantCulture))),
+                    value => value.ToString(),
+                    (a, b) =>
+                    {
+                        var aValue = GetDetails<double?>(a, nameof(Column.Duration), value => Convert.ToDouble(value, CultureInfo.InvariantCulture));
+                        var bValue = GetDetails<double?>(b, nameof(Column.Duration), value => Convert.ToDouble(value, CultureInfo.InvariantCulture));
+                        return Nullable.Compare(aValue, bValue);
+                    }
+                },
+                {
                     Column.Rating,
                     HorizontalAlignment.Right,
                     r => r.Rating,
@@ -190,6 +202,7 @@ namespace MediaLibrary
             Tags,
             FileSize,
             Rating,
+            Duration,
         }
 
         public string ColumnsSettings
@@ -276,7 +289,11 @@ namespace MediaLibrary
             base.OnSelectionChanged(e);
         }
 
-        private static string GetBestPath(SearchResult searchResult) => searchResult == null ? null : searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
+        private static string GetBestPath(SearchResult searchResult) =>
+            searchResult == null ? null : searchResult.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault();
+
+        private static T GetDetails<T>(SearchResult result, string name, Func<object, T> converter) =>
+            result.Details.TryGetValue(name, out var value) && value is object ? converter(value) : default;
 
         private static string GetImageKey(SearchResult r)
         {
