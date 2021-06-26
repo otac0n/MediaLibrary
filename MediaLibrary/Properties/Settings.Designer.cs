@@ -82,5 +82,17 @@ namespace MediaLibrary.Properties {
                 this["AutoSearchDelay"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool GroupSimilar {
+            get {
+                return ((bool)(this["GroupSimilar"]));
+            }
+            set {
+                this["GroupSimilar"] = value;
+            }
+        }
     }
 }

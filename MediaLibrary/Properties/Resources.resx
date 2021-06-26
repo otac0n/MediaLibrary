@@ -346,4 +346,7 @@
   <data name="DurationColumn" xml:space="preserve">
     <value>Duration</value>
   </data>
+  <data name="VisualHashColumn" xml:space="preserve">
+    <value>Thumbprint</value>
+  </data>
 </root>

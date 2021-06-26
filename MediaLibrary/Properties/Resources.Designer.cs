@@ -812,5 +812,14 @@ namespace MediaLibrary.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Thumbprint.
+        /// </summary>
+        internal static string VisualHashColumn {
+            get {
+                return ResourceManager.GetString("VisualHashColumn", resourceCulture);
+            }
+        }
     }
 }

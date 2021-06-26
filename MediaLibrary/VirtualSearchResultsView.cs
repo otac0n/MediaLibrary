@@ -154,6 +154,19 @@ namespace MediaLibrary
                     value => value != null ? $"{Math.Round(value.Value)}{(value.Count < 15 ? "?" : string.Empty)}" : string.Empty,
                     (a, b) => Rating.Compare(a.Rating, b.Rating)
                 },
+                {
+                    Column.VisualHash,
+                    HorizontalAlignment.Left,
+                    r => GetDetails<long?>(r, "AverageIntensityHash", value => Convert.ToInt64(value, CultureInfo.InvariantCulture)),
+                    value => value != null ? $"0x{value:x16}" : string.Empty,
+                    (a, b) =>
+                    {
+                        var aValue = GetDetails<long?>(a, "AverageIntensityHash", value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
+                        var bValue = GetDetails<long?>(b, "AverageIntensityHash", value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
+                        return Nullable.Compare(aValue, bValue);
+                    },
+                    true
+                },
             }.ToImmutableDictionary(c => c.Column);
 
             this.VirtualListDataSource = new DataSource(this, this.columnDefinitions);
@@ -167,10 +180,11 @@ namespace MediaLibrary
 
             foreach (var column in this.columnDefinitions.Values.OrderBy(c => c.Index))
             {
-                var columnHeader = this.columns[column.Column] = new OLVColumn();
+                var columnHeader = new OLVColumn();
                 columnHeader.Name = column.Column.ToString();
                 columnHeader.Text = column.Name;
                 columnHeader.TextAlign = column.HorizontalAlignment;
+                columnHeader.Groupable = column.Groupable;
                 columnHeader.AspectGetter = row => row == null ? null : column.GetValue((SearchResult)row);
                 columnHeader.AspectToStringConverter = value => value == null ? null : column.FormatValue(value);
 
@@ -187,9 +201,10 @@ namespace MediaLibrary
                     columnHeader.ImageGetter = row => row == null ? null : column.GetImage((SearchResult)row);
                 }
 
-                this.Columns.Add(columnHeader);
+                this.Columns.Add(this.columns[column.Column] = columnHeader);
             }
 
+            this.AlwaysGroupByColumn = this.columns[Column.VisualHash];
             this.ColumnWidthChanged += this.Internal_ColumnWidthChanged;
             this.BeforeSorting += this.Internal_BeforeSorting;
         }
@@ -200,9 +215,10 @@ namespace MediaLibrary
             Name,
             People,
             Tags,
-            FileSize,
             Rating,
             Duration,
+            VisualHash,
+            FileSize,
         }
 
         public string ColumnsSettings
@@ -418,9 +434,10 @@ namespace MediaLibrary
                 Func<SearchResult, T> getValue,
                 Func<T, string> formatValue,
                 Comparison<SearchResult> comparison = null,
+                bool groupable = false,
                 Func<SearchResult, object> getImage = null,
                 Action<Graphics, Rectangle, SearchResult> drawSubItem = null)
-                : base(column, horizontalAlignment, r => getValue(r), value => formatValue((T)value), comparison, getImage, drawSubItem)
+                : base(column, horizontalAlignment, r => getValue(r), value => formatValue((T)value), comparison, groupable, getImage, drawSubItem)
             {
                 this.GetValue = getValue;
                 this.FormatValue = formatValue;
@@ -439,6 +456,7 @@ namespace MediaLibrary
                 Func<SearchResult, object> getValue,
                 Func<object, string> formatValue,
                 Comparison<SearchResult> comparison = null,
+                bool groupable = false,
                 Func<SearchResult, object> getImage = null,
                 Action<Graphics, Rectangle, SearchResult> drawSubItem = null)
             {
@@ -449,6 +467,7 @@ namespace MediaLibrary
                 this.GetValue = getValue ?? throw new ArgumentNullException(nameof(getValue));
                 this.FormatValue = formatValue ?? throw new ArgumentNullException(nameof(formatValue));
                 this.Comparison = comparison ?? ((a, b) => StringComparer.CurrentCultureIgnoreCase.Compare(this.GetValue(a), this.GetValue(b)));
+                this.Groupable = groupable;
                 this.GetImage = getImage;
                 this.DrawSubItem = drawSubItem;
             }
@@ -464,6 +483,8 @@ namespace MediaLibrary
             public Func<SearchResult, object> GetImage { get; }
 
             public Func<SearchResult, object> GetValue { get; }
+
+            public bool Groupable { get; }
 
             public HorizontalAlignment HorizontalAlignment { get; }
 
@@ -498,6 +519,9 @@ namespace MediaLibrary
             public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison) =>
                 this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison));
 
+            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, bool groupable) =>
+                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, groupable));
+
             public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Action<Graphics, Rectangle, SearchResult> drawSubItem) =>
                 this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, drawSubItem: drawSubItem));
 
@@ -508,7 +532,10 @@ namespace MediaLibrary
                 this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, getImage: getImage));
 
             public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Func<SearchResult, object> getImage) =>
-                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, getImage));
+                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, getImage: getImage));
+
+            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, bool groupable, Func<SearchResult, object> getImage) =>
+                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, groupable, getImage));
         }
 
         private class ColumnRenderer : BaseRenderer
