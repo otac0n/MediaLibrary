@@ -218,13 +218,6 @@ namespace MediaLibrary
                 settings.Columns = this.listView.ColumnsSettings;
                 Save();
             };
-
-            this.groupSimilarMenuItem.Checked = settings.GroupSimilar;
-            this.groupSimilarMenuItem.CheckedChanged += (sender, args) =>
-            {
-                settings.GroupSimilar = this.groupSimilarMenuItem.Checked;
-                Save();
-            };
         }
 
         private void CloseSelectionDialogs()
@@ -370,11 +363,6 @@ namespace MediaLibrary
                     }
                 }
             }
-        }
-
-        private void GroupSimilarMenuItem_CheckedChanged(object sender, EventArgs e)
-        {
-            this.listView.ShowGroups = this.groupSimilarMenuItem.Checked;
         }
 
         private void Index_RescanProgressUpdated(object sender, ItemUpdatedEventArgs<RescanProgress> args)

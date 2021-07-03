@@ -90,7 +90,6 @@ namespace MediaLibrary
             this.searchBox = new System.Windows.Forms.ToolStripTextBox();
             this.viewButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.refreshMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.groupSimilarMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator11 = new System.Windows.Forms.ToolStripSeparator();
             this.showPreviewMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
@@ -666,7 +665,6 @@ namespace MediaLibrary
             this.viewButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.viewButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.refreshMenuItem,
-            this.groupSimilarMenuItem,
             this.toolStripSeparator11,
             this.showPreviewMenuItem,
             this.toolStripSeparator8,
@@ -688,15 +686,6 @@ namespace MediaLibrary
             this.refreshMenuItem.Size = new System.Drawing.Size(188, 22);
             this.refreshMenuItem.Text = "&Refresh";
             this.refreshMenuItem.Click += new System.EventHandler(this.RefreshMenuItem_Click);
-            // 
-            // groupSimilarMenuItem
-            // 
-            this.groupSimilarMenuItem.CheckOnClick = true;
-            this.groupSimilarMenuItem.Name = "groupSimilarMenuItem";
-            this.groupSimilarMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.G)));
-            this.groupSimilarMenuItem.Size = new System.Drawing.Size(188, 22);
-            this.groupSimilarMenuItem.Text = "Group Similar";
-            this.groupSimilarMenuItem.CheckedChanged += new System.EventHandler(this.GroupSimilarMenuItem_CheckedChanged);
             // 
             // toolStripSeparator11
             // 
@@ -987,6 +976,5 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
         private System.Windows.Forms.ToolStripMenuItem findSimilarMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyHashContextMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem groupSimilarMenuItem;
     }
 }
