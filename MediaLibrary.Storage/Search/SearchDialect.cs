@@ -211,13 +211,21 @@ namespace MediaLibrary.Storage.Search
                 case "duration":
                 case "length":
                 case "time":
-                    // TODO: Parse timestamps.
-                    if (!double.TryParse(field.Value, out var duration))
                     {
-                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
-                    }
+                        if (!double.TryParse(field.Value, out var seconds))
+                        {
+                            if (TimeSpan.TryParse(field.Value, out var timeSpan))
+                            {
+                                seconds = timeSpan.TotalSeconds;
+                            }
+                            else
+                            {
+                                throw new NotSupportedException($"Cannot use non-numeric, non-timespan value '{field.Value}' with field '{field.Field}'.");
+                            }
+                        }
 
-                    return this.Details(ImageDetailRecognizer.Properties.Duration, field.Operator, duration);
+                        return this.Details(ImageDetailRecognizer.Properties.Duration, field.Operator, seconds);
+                    }
 
                 case "hash":
                     return this.Hash(field.Operator, field.Value);
