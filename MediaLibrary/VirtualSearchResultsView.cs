@@ -15,6 +15,7 @@ namespace MediaLibrary
     using ByteSizeLib;
     using MediaLibrary.Properties;
     using MediaLibrary.Storage;
+    using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;
     using TaggingLibrary;
 
@@ -157,12 +158,12 @@ namespace MediaLibrary
                 {
                     Column.VisualHash,
                     HorizontalAlignment.Left,
-                    r => GetDetails<long?>(r, "AverageIntensityHash", value => Convert.ToInt64(value, CultureInfo.InvariantCulture)),
+                    r => GetDetails<long?>(r, ImageDetailRecognizer.Properties.AverageIntensityHash, value => Convert.ToInt64(value, CultureInfo.InvariantCulture)),
                     value => value != null ? $"0x{value:x16}" : string.Empty,
                     (a, b) =>
                     {
-                        var aValue = GetDetails<long?>(a, "AverageIntensityHash", value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
-                        var bValue = GetDetails<long?>(b, "AverageIntensityHash", value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
+                        var aValue = GetDetails<long?>(a, ImageDetailRecognizer.Properties.AverageIntensityHash, value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
+                        var bValue = GetDetails<long?>(b, ImageDetailRecognizer.Properties.AverageIntensityHash, value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
                         return Nullable.Compare(aValue, bValue);
                     },
                     true
