@@ -8,6 +8,7 @@ namespace MediaLibrary.Web.Hosting
     using MediaLibrary.Storage;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
+    using Newtonsoft.Json.Serialization;
     using Owin;
     using SqueezeMe;
     using Unity;
@@ -36,7 +37,14 @@ namespace MediaLibrary.Web.Hosting
             {
                 SerializerSettings = new JsonSerializerSettings
                 {
-                    ContractResolver = new CamelCaseExceptDictionaryKeysResolver(),
+                    ContractResolver = new DefaultContractResolver
+                    {
+                        NamingStrategy = new CamelCaseNamingStrategy
+                        {
+                            ProcessDictionaryKeys = false,
+                            OverrideSpecifiedNames = true,
+                        },
+                    },
                 },
             };
             formatter.SupportedEncodings.Clear();

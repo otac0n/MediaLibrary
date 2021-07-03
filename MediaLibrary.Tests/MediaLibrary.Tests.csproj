@@ -5,7 +5,7 @@
     <CodeAnalysisRuleSet>MediaLibrary.Tests.ruleset</CodeAnalysisRuleSet>
     <DebugType>Full</DebugType>
     <IsPackable>false</IsPackable>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>net5.0-windows</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FixMe" Version="1.0.0" PrivateAssets="All" />
