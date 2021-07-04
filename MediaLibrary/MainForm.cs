@@ -493,9 +493,18 @@ namespace MediaLibrary
             if (form.StartPosition == FormStartPosition.CenterParent)
             {
                 form.StartPosition = FormStartPosition.Manual;
-                var x = this.Location.X + (this.Width - form.Width) / 2;
-                var y = this.Location.Y + (this.Height - form.Height) / 2;
-                form.Location = new Point(Math.Max(x, 0), Math.Max(y, 0));
+
+                var formBouns = this.listView.GetFormRectangle();
+
+                var formPosition = new Point(
+                    formBouns.X + (formBouns.Width - form.Width) / 2,
+                    formBouns.Y + (formBouns.Height - form.Height) / 2);
+
+                var screenPosition = new Point(
+                    Math.Max(this.Location.X + formPosition.X, 0),
+                    Math.Max(this.Location.Y + formPosition.Y, 0));
+
+                form.Location = screenPosition;
             }
 
             form.Show();
