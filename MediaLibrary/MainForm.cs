@@ -218,6 +218,12 @@ namespace MediaLibrary
                 settings.Columns = this.listView.ColumnsSettings;
                 Save();
             };
+            this.listView.AfterSorting += (sender, args) =>
+            {
+                settings.SortColumn = this.listView.SortColumn;
+                settings.SortDescending = this.listView.SortDescending;
+                Save();
+            };
         }
 
         private void CloseSelectionDialogs()

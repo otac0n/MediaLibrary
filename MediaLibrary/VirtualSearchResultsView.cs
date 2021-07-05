@@ -275,7 +275,7 @@ namespace MediaLibrary
         public string SortColumn
         {
             get => this.PrimarySortColumn?.Name;
-            set => this.PrimarySortColumn = this.AllColumns.Where(c => c.Name == value).FirstOrDefault();
+            set => this.PrimarySortColumn = Enum.TryParse<Column>(value, out var column) && this.columns.TryGetValue(column, out var header) ? header : null;
         }
 
         public bool SortDescending
