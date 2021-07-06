@@ -58,6 +58,8 @@ namespace MediaLibrary
             this.toolStripSeparator10 = new System.Windows.Forms.ToolStripSeparator();
             this.newCategoryMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.defaultMuteButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator13 = new System.Windows.Forms.ToolStripSeparator();
             this.homeButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.favoriteFilesDropDown = new System.Windows.Forms.ToolStripSplitButton();
@@ -291,6 +293,8 @@ namespace MediaLibrary
             this.shuffleAllButton,
             this.rateAllButton,
             this.toolStripSeparator1,
+            this.defaultMuteButton,
+            this.toolStripSeparator13,
             this.homeButton,
             this.toolStripSeparator2,
             this.favoriteFilesDropDown,
@@ -376,6 +380,22 @@ namespace MediaLibrary
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
             this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            // 
+            // defaultMuteButton
+            // 
+            this.defaultMuteButton.CheckOnClick = true;
+            this.defaultMuteButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.defaultMuteButton.Image = global::MediaLibrary.Properties.Resources.volume_control_full;
+            this.defaultMuteButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.defaultMuteButton.Name = "defaultMuteButton";
+            this.defaultMuteButton.Size = new System.Drawing.Size(23, 22);
+            this.defaultMuteButton.Text = "toolStripButton1";
+            this.defaultMuteButton.CheckedChanged += new System.EventHandler(this.DefaultMuteButton_CheckedChanged);
+            // 
+            // toolStripSeparator13
+            // 
+            this.toolStripSeparator13.Name = "toolStripSeparator13";
+            this.toolStripSeparator13.Size = new System.Drawing.Size(6, 25);
             // 
             // homeButton
             // 
@@ -683,14 +703,14 @@ namespace MediaLibrary
             this.refreshMenuItem.Image = global::MediaLibrary.Properties.Resources.button_refresh_arrow;
             this.refreshMenuItem.Name = "refreshMenuItem";
             this.refreshMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F5;
-            this.refreshMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.refreshMenuItem.Size = new System.Drawing.Size(154, 22);
             this.refreshMenuItem.Text = "&Refresh";
             this.refreshMenuItem.Click += new System.EventHandler(this.RefreshMenuItem_Click);
             // 
             // toolStripSeparator11
             // 
             this.toolStripSeparator11.Name = "toolStripSeparator11";
-            this.toolStripSeparator11.Size = new System.Drawing.Size(185, 6);
+            this.toolStripSeparator11.Size = new System.Drawing.Size(151, 6);
             // 
             // showPreviewMenuItem
             // 
@@ -699,14 +719,14 @@ namespace MediaLibrary
             this.showPreviewMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.showPreviewMenuItem.Image = global::MediaLibrary.Properties.Resources.view_square;
             this.showPreviewMenuItem.Name = "showPreviewMenuItem";
-            this.showPreviewMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.showPreviewMenuItem.Size = new System.Drawing.Size(154, 22);
             this.showPreviewMenuItem.Text = "Show Preview";
             this.showPreviewMenuItem.CheckedChanged += new System.EventHandler(this.ShowPreviewMenuItem_CheckedChanged);
             // 
             // toolStripSeparator8
             // 
             this.toolStripSeparator8.Name = "toolStripSeparator8";
-            this.toolStripSeparator8.Size = new System.Drawing.Size(185, 6);
+            this.toolStripSeparator8.Size = new System.Drawing.Size(151, 6);
             // 
             // detailsMenuItem
             // 
@@ -715,7 +735,7 @@ namespace MediaLibrary
             this.detailsMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.detailsMenuItem.Image = global::MediaLibrary.Properties.Resources.list_bullets_1;
             this.detailsMenuItem.Name = "detailsMenuItem";
-            this.detailsMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.detailsMenuItem.Size = new System.Drawing.Size(154, 22);
             this.detailsMenuItem.Text = "Details";
             this.detailsMenuItem.Click += new System.EventHandler(this.DetailsMenuItem_Click);
             // 
@@ -724,14 +744,14 @@ namespace MediaLibrary
             this.thumbnailsMenuItem.CheckOnClick = true;
             this.thumbnailsMenuItem.Image = global::MediaLibrary.Properties.Resources.picture_landscape;
             this.thumbnailsMenuItem.Name = "thumbnailsMenuItem";
-            this.thumbnailsMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.thumbnailsMenuItem.Size = new System.Drawing.Size(154, 22);
             this.thumbnailsMenuItem.Text = "Thumbnails";
             this.thumbnailsMenuItem.Click += new System.EventHandler(this.ThumbnailsMenuItem_Click);
             // 
             // toolStripSeparator9
             // 
             this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(185, 6);
+            this.toolStripSeparator9.Size = new System.Drawing.Size(151, 6);
             // 
             // savedSearchesMenuItem
             // 
@@ -739,7 +759,7 @@ namespace MediaLibrary
             this.saveThisSearchMenuItem,
             this.savedSearchesSeparator});
             this.savedSearchesMenuItem.Name = "savedSearchesMenuItem";
-            this.savedSearchesMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.savedSearchesMenuItem.Size = new System.Drawing.Size(154, 22);
             this.savedSearchesMenuItem.Text = "&Saved Searches";
             // 
             // saveThisSearchMenuItem
@@ -976,5 +996,7 @@ namespace MediaLibrary
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
         private System.Windows.Forms.ToolStripMenuItem findSimilarMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyHashContextMenuItem;
+        private System.Windows.Forms.ToolStripButton defaultMuteButton;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator13;
     }
 }

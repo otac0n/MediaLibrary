@@ -10,6 +10,7 @@ namespace MediaLibrary
     using System.IO;
     using System.Linq;
     using System.Windows.Forms;
+    using MediaLibrary.Properties;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
 
@@ -100,6 +101,7 @@ namespace MediaLibrary
             this.mediaPlayer.uiMode = "full";
             this.mediaPlayer.enableContextMenu = false;
             this.mediaPlayer.stretchToFit = true;
+            this.mediaPlayer.settings.mute = Settings.Default.DefaultMute;
         }
 
         private void UpdateMediaPlayerUrl(string url)

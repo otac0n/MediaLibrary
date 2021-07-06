@@ -198,15 +198,6 @@ namespace MediaLibrary
                 Save();
             };
 
-            try
-            {
-                this.listView.SortColumn = settings.SortColumn;
-                this.listView.SortDescending = settings.SortDescending;
-            }
-            catch (ArgumentException)
-            {
-            }
-
             this.listView.ColumnsSettings = settings.Columns;
             this.listView.ColumnWidthChanged += (sender, args) =>
             {
@@ -218,10 +209,27 @@ namespace MediaLibrary
                 settings.Columns = this.listView.ColumnsSettings;
                 Save();
             };
+
+            try
+            {
+                this.listView.SortColumn = settings.SortColumn;
+                this.listView.SortDescending = settings.SortDescending;
+            }
+            catch (ArgumentException)
+            {
+            }
+
             this.listView.AfterSorting += (sender, args) =>
             {
                 settings.SortColumn = this.listView.SortColumn;
                 settings.SortDescending = this.listView.SortDescending;
+                Save();
+            };
+
+            this.defaultMuteButton.Checked = settings.DefaultMute;
+            this.defaultMuteButton.CheckedChanged += (sender, args) =>
+            {
+                settings.DefaultMute = this.defaultMuteButton.Checked;
                 Save();
             };
         }
@@ -261,6 +269,11 @@ namespace MediaLibrary
                 dataObject.SetText(string.Join(Environment.NewLine, paths));
                 Clipboard.SetDataObject(dataObject, copy: true);
             }
+        }
+
+        private void DefaultMuteButton_CheckedChanged(object sender, EventArgs e)
+        {
+            this.defaultMuteButton.Image = this.defaultMuteButton.Checked ? Resources.volume_control_mute : Resources.volume_control_full;
         }
 
         private void DetailsMenuItem_Click(object sender, EventArgs e)

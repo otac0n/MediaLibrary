@@ -830,5 +830,25 @@ namespace MediaLibrary.Properties {
                 return ResourceManager.GetString("VisualHashColumn", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap volume_control_full {
+            get {
+                object obj = ResourceManager.GetObject("volume_control_full", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap volume_control_mute {
+            get {
+                object obj = ResourceManager.GetObject("volume_control_mute", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }
