@@ -7,9 +7,11 @@ namespace MediaLibrary
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Drawing;
+    using System.Drawing.Imaging;
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Runtime.InteropServices;
     using System.Windows.Forms;
     using BrightIdeasSoftware;
     using ByteSizeLib;
@@ -95,21 +97,21 @@ namespace MediaLibrary
                     r => r.Tags,
                     value => string.Join("; ", value),
                     (ISet<string> a, ISet<string> b) => this.TagComparer.Compare(a, b),
-                    drawSubItem: (g, bounds, r) =>
+                    drawSubItem: (g, bounds, tags) =>
                     {
                         var tagComparer = this.TagComparer;
                         var baseSize = g.MeasureString("#", this.Font);
                         var padding = (int)Math.Floor((bounds.Height - baseSize.Height) / 2);
 
                         var xOffset = 0f;
-                        if (r.Tags.Contains("favorite"))
+                        if (tags.Contains("favorite"))
                         {
                             var size = bounds.Height - padding * 2;
                             g.DrawImage(Resources.love_it_filled, new RectangleF(bounds.Left + xOffset, bounds.Top + padding, size, size));
                             xOffset += size + padding;
                         }
 
-                        foreach (var tag in r.Tags.Where(t => t != "favorite").OrderBy(t => t, tagComparer))
+                        foreach (var tag in tags.Where(t => t != "favorite").OrderBy(t => t, tagComparer))
                         {
                             var backgroundColor = tagComparer.GetTagColor(tag) ?? SystemColors.Info;
                             var textColor = ColorService.ContrastColor(backgroundColor);
@@ -148,9 +150,46 @@ namespace MediaLibrary
                     Column.VisualHash,
                     HorizontalAlignment.Left,
                     r => GetDetails<long?>(r, ImageDetailRecognizer.Properties.AverageIntensityHash, value => Convert.ToInt64(value, CultureInfo.InvariantCulture)),
-                    value => value != null ? $"0x{value:x16}" : string.Empty,
+                    value => value != null ? $"0x{value:X16}" : string.Empty,
                     Nullable.Compare,
-                    true),
+                    true,
+                    drawSubItem: (g, bounds, r) =>
+                    {
+                        if (r == null)
+                        {
+                            return;
+                        }
+
+                        var value = r.Value;
+
+                        const int Margin = 2; // Margin of 1px, plus an additional 1px beyond the left beyond to compensate for the system carat. This could have trouble if the selection rectangle is too fat (wider than 1px), but we assume a 1px border for now.
+                        const int HashEdgeSize = 8;
+
+                        var left = Margin;
+                        using (var bmp = new Bitmap(HashEdgeSize, HashEdgeSize))
+                        {
+                            var bmpData = bmp.LockBits(new Rectangle(0, 0, HashEdgeSize, HashEdgeSize), ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
+
+                            var colorData = new byte[1];
+                            var scan = bmpData.Scan0;
+                            for (var y = 1; y <= HashEdgeSize; y++, scan += bmpData.Stride)
+                            {
+                                colorData[0] = (byte)(~value >> ((HashEdgeSize - y) * HashEdgeSize));
+                                Marshal.Copy(colorData, 0, scan, 1);
+                            }
+
+                            bmp.UnlockBits(bmpData);
+
+                            g.DrawImageUnscaled(bmp, bounds.X + left, bounds.Top + (bounds.Height - HashEdgeSize) / 2);
+                            left += HashEdgeSize + Margin;
+                        }
+
+                        using (var textBrush = new SolidBrush(this.ForeColor))
+                        using (var monspaced = new Font(FontFamily.GenericMonospace, this.Font.Size))
+                        {
+                            g.DrawString($"{value:x16}", monspaced, textBrush, bounds.X + left, bounds.Top + Margin);
+                        }
+                    }),
                 ColumnDefinition.Create(
                     Column.Resolution,
                     HorizontalAlignment.Right,
@@ -521,7 +560,7 @@ namespace MediaLibrary
                 Comparison<T> comparison = null,
                 bool groupable = false,
                 Func<SearchResult, object> getImage = null,
-                Action<Graphics, Rectangle, SearchResult> drawSubItem = null) =>
+                Action<Graphics, Rectangle, T> drawSubItem = null) =>
                 Create(
                     column,
                     horizontalAlignment,
@@ -532,7 +571,9 @@ namespace MediaLibrary
                         : new Comparison<SearchResult>((a, b) => comparison(getValue(a), getValue(b))),
                     groupable,
                     getImage,
-                    drawSubItem);
+                    drawSubItem == null
+                        ? default(Action<Graphics, Rectangle, SearchResult>)
+                        : (g, r, t) => drawSubItem(g, r, getValue(t)));
 
             public static ColumnDefinition<T> Create<T>(
                 Column column,
