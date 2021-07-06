@@ -160,7 +160,19 @@ namespace MediaLibrary
                         var height = GetDetails<long?>(r, ImageDetailRecognizer.Properties.Height, value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
                         return width != null && height != null ? (width.Value, height.Value) : default((long width, long height)?);
                     },
-                    value => value != null ? $" ({value?.width}x{value?.height})" : string.Empty,
+                    value =>
+                    {
+                        if (value == null)
+                        {
+                            return string.Empty;
+                        }
+
+                        var (width, height) = value.Value;
+                        var byteSize = ByteSize.FromBytes(width * height);
+                        var byteSizeValue = byteSize.LargestWholeNumberDecimalValue;
+                        var byteSizeSymbol = byteSize.LargestWholeNumberDecimalSymbol.Replace('B', 'P');
+                        return $"{byteSizeValue:0.0} {byteSizeSymbol} ({width}×{height})";
+                    },
                     (a, b) => Nullable.Compare(a?.width * a?.height, b?.width * b?.height)),
             }.ToImmutableDictionary(c => c.Column);
 
