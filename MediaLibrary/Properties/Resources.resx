@@ -349,4 +349,7 @@
   <data name="VisualHashColumn" xml:space="preserve">
     <value>Thumbprint</value>
   </data>
+  <data name="ResolutionColumn" xml:space="preserve">
+    <value>Resolution</value>
+  </data>
 </root>

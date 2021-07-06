@@ -36,68 +36,66 @@ namespace MediaLibrary
             this.FullRowSelect = true;
             this.View = View.Details;
 
-            this.columnDefinitions = new ColumnDefinitionList
+            this.columnDefinitions = new List<ColumnDefinition>
             {
-                {
+                ColumnDefinition.Create(
                     Column.Path,
-                    GetBestPath,
-                    value => value == null ? string.Empty : Path.GetDirectoryName(value),
-                    (a, b) => PathComparer.Instance.Compare(GetBestPath(a), GetBestPath(b))
-                },
-                {
-                    Column.Name,
+                    HorizontalAlignment.Left,
                     r =>
                     {
                         var path = GetBestPath(r);
-                        return path == null ? string.Empty : Path.GetFileNameWithoutExtension(path);
+                        return path == null ? null : Path.GetDirectoryName(path);
                     },
-                    value => value,
-                    (a, b) =>
+                    value => value ?? string.Empty,
+                    (a, b) => PathComparer.Instance.Compare(a, b)),
+                ColumnDefinition.Create(
+                    Column.Name,
+                    HorizontalAlignment.Left,
+                    r =>
                     {
-                        var aPath = GetBestPath(a);
-                        var bPath = GetBestPath(b);
-                        return StringComparer.CurrentCultureIgnoreCase.Compare(
-                            aPath == null ? null : Path.GetFileNameWithoutExtension(aPath),
-                            bPath == null ? null : Path.GetFileNameWithoutExtension(bPath));
+                        var path = GetBestPath(r);
+                        return path == null ? null : Path.GetFileNameWithoutExtension(path);
                     },
-                    r => GetImageKey(r)
-                },
-                {
+                    value => value ?? string.Empty,
+                    (a, b) => StringComparer.CurrentCultureIgnoreCase.Compare(GetBestPath(a), GetBestPath(b)),
+                    getImage: r => GetImageKey(r)),
+                ColumnDefinition.Create(
                     Column.People,
+                    HorizontalAlignment.Left,
                     r => r.People,
                     value => string.Join("; ", value.Select(p => p.Name)),
                     (a, b) =>
                     {
                         int comp;
-                        if ((comp = a.People.Count.CompareTo(b.People.Count)) != 0)
+                        if ((comp = a.Count.CompareTo(b.Count)) != 0)
                         {
                             return comp;
                         }
 
-                        var aPeople = a.People.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-                        var bPeople = b.People.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-                        for (var i = 0; i < aPeople.Count; i++)
+                        var aOrdered = a.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+                        var bOrdered = b.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+                        for (var i = 0; i < aOrdered.Count; i++)
                         {
-                            if (aPeople[i].PersonId != bPeople[i].PersonId)
+                            if (aOrdered[i].PersonId != bOrdered[i].PersonId)
                             {
-                                if ((comp = StringComparer.CurrentCultureIgnoreCase.Compare(aPeople[i].Name, bPeople[i].Name)) != 0)
+                                if ((comp = StringComparer.CurrentCultureIgnoreCase.Compare(aOrdered[i].Name, bOrdered[i].Name)) != 0)
                                 {
                                     return comp;
                                 }
 
-                                return aPeople[i].PersonId.CompareTo(bPeople[i].PersonId);
+                                return aOrdered[i].PersonId.CompareTo(bOrdered[i].PersonId);
                             }
                         }
 
                         return 0;
-                    }
-                },
-                {
+                    }),
+                ColumnDefinition.Create(
                     Column.Tags,
+                    HorizontalAlignment.Left,
                     r => r.Tags,
                     value => string.Join("; ", value),
-                    (a, b) => this.TagComparer.Compare(a.Tags, b.Tags),
-                    (g, bounds, r) =>
+                    (ISet<string> a, ISet<string> b) => this.TagComparer.Compare(a, b),
+                    drawSubItem: (g, bounds, r) =>
                     {
                         var tagComparer = this.TagComparer;
                         var baseSize = g.MeasureString("#", this.Font);
@@ -127,47 +125,43 @@ namespace MediaLibrary
                             // TODO: Break on out-of-bounds.
                             xOffset += size.Width + padding;
                         }
-                    }
-                },
-                {
+                    }),
+                ColumnDefinition.Create(
                     Column.FileSize,
                     HorizontalAlignment.Right,
                     r => r.FileSize,
                     value => ByteSize.FromBytes(value).ToString(),
-                    (a, b) => a.FileSize.CompareTo(b.FileSize)
-                },
-                {
+                    (a, b) => a.CompareTo(b)),
+                ColumnDefinition.Create(
                     Column.Duration,
                     HorizontalAlignment.Right,
                     r => GetDetails<TimeSpan?>(r, nameof(Column.Duration), value => TimeSpan.FromSeconds(Convert.ToDouble(value, CultureInfo.InvariantCulture))),
                     value => value.ToString(),
-                    (a, b) =>
-                    {
-                        var aValue = GetDetails<double?>(a, nameof(Column.Duration), value => Convert.ToDouble(value, CultureInfo.InvariantCulture));
-                        var bValue = GetDetails<double?>(b, nameof(Column.Duration), value => Convert.ToDouble(value, CultureInfo.InvariantCulture));
-                        return Nullable.Compare(aValue, bValue);
-                    }
-                },
-                {
+                    Nullable.Compare),
+                ColumnDefinition.Create(
                     Column.Rating,
                     HorizontalAlignment.Right,
                     r => r.Rating,
                     value => value != null ? $"{Math.Round(value.Value)}{(value.Count < 15 ? "?" : string.Empty)}" : string.Empty,
-                    (a, b) => Rating.Compare(a.Rating, b.Rating)
-                },
-                {
+                    (a, b) => Rating.Compare(a.Rating, b.Rating)),
+                ColumnDefinition.Create(
                     Column.VisualHash,
                     HorizontalAlignment.Left,
                     r => GetDetails<long?>(r, ImageDetailRecognizer.Properties.AverageIntensityHash, value => Convert.ToInt64(value, CultureInfo.InvariantCulture)),
                     value => value != null ? $"0x{value:x16}" : string.Empty,
-                    (a, b) =>
+                    Nullable.Compare,
+                    true),
+                ColumnDefinition.Create(
+                    Column.Resolution,
+                    HorizontalAlignment.Right,
+                    r =>
                     {
-                        var aValue = GetDetails<long?>(a, ImageDetailRecognizer.Properties.AverageIntensityHash, value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
-                        var bValue = GetDetails<long?>(b, ImageDetailRecognizer.Properties.AverageIntensityHash, value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
-                        return Nullable.Compare(aValue, bValue);
+                        var width = GetDetails<long?>(r, ImageDetailRecognizer.Properties.Width, value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
+                        var height = GetDetails<long?>(r, ImageDetailRecognizer.Properties.Height, value => Convert.ToInt64(value, CultureInfo.InvariantCulture));
+                        return width != null && height != null ? (width.Value, height.Value) : default((long width, long height)?);
                     },
-                    true
-                },
+                    value => value != null ? $" ({value?.width}x{value?.height})" : string.Empty,
+                    (a, b) => Nullable.Compare(a?.width * a?.height, b?.width * b?.height)),
             }.ToImmutableDictionary(c => c.Column);
 
             this.VirtualListDataSource = new DataSource(this, this.columnDefinitions);
@@ -217,9 +211,10 @@ namespace MediaLibrary
             People,
             Tags,
             Rating,
+            FileSize,
+            Resolution,
             Duration,
             VisualHash,
-            FileSize,
         }
 
         public string ColumnsSettings
@@ -429,16 +424,29 @@ namespace MediaLibrary
 
         private class ColumnDefinition<T> : ColumnDefinition
         {
+            public static readonly Comparison<T> DefaultComparison =
+                typeof(T) == typeof(string)
+                    ? new Comparison<T>((a, b) => StringComparer.CurrentCultureIgnoreCase.Compare(a, b))
+                    : Comparer<T>.Default.Compare;
+
             public ColumnDefinition(
                 Column column,
                 HorizontalAlignment horizontalAlignment,
                 Func<SearchResult, T> getValue,
                 Func<T, string> formatValue,
-                Comparison<SearchResult> comparison = null,
-                bool groupable = false,
-                Func<SearchResult, object> getImage = null,
-                Action<Graphics, Rectangle, SearchResult> drawSubItem = null)
-                : base(column, horizontalAlignment, r => getValue(r), value => formatValue((T)value), comparison, groupable, getImage, drawSubItem)
+                Comparison<SearchResult> comparison,
+                bool groupable,
+                Func<SearchResult, object> getImage,
+                Action<Graphics, Rectangle, SearchResult> drawSubItem)
+                : base(
+                    column,
+                    horizontalAlignment,
+                    r => getValue(r),
+                    value => formatValue((T)value),
+                    comparison,
+                    groupable,
+                    getImage,
+                    drawSubItem)
             {
                 this.GetValue = getValue;
                 this.FormatValue = formatValue;
@@ -456,10 +464,10 @@ namespace MediaLibrary
                 HorizontalAlignment horizontalAlignment,
                 Func<SearchResult, object> getValue,
                 Func<object, string> formatValue,
-                Comparison<SearchResult> comparison = null,
-                bool groupable = false,
-                Func<SearchResult, object> getImage = null,
-                Action<Graphics, Rectangle, SearchResult> drawSubItem = null)
+                Comparison<SearchResult> comparison,
+                bool groupable,
+                Func<SearchResult, object> getImage,
+                Action<Graphics, Rectangle, SearchResult> drawSubItem)
             {
                 this.Column = column;
                 this.HorizontalAlignment = horizontalAlignment;
@@ -467,7 +475,7 @@ namespace MediaLibrary
                 this.Index = (int)column;
                 this.GetValue = getValue ?? throw new ArgumentNullException(nameof(getValue));
                 this.FormatValue = formatValue ?? throw new ArgumentNullException(nameof(formatValue));
-                this.Comparison = comparison ?? ((a, b) => StringComparer.CurrentCultureIgnoreCase.Compare(this.GetValue(a), this.GetValue(b)));
+                this.Comparison = comparison ?? throw new ArgumentNullException(nameof(comparison));
                 this.Groupable = groupable;
                 this.GetImage = getImage;
                 this.DrawSubItem = drawSubItem;
@@ -492,51 +500,46 @@ namespace MediaLibrary
             public int Index { get; }
 
             public string Name { get; }
-        }
 
-        private class ColumnDefinitionList : List<ColumnDefinition>
-        {
-            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue) =>
-                this.Add(column, HorizontalAlignment.Left, getValue, formatValue);
+            public static ColumnDefinition<T> Create<T>(
+                Column column,
+                HorizontalAlignment horizontalAlignment,
+                Func<SearchResult, T> getValue,
+                Func<T, string> formatValue,
+                Comparison<T> comparison = null,
+                bool groupable = false,
+                Func<SearchResult, object> getImage = null,
+                Action<Graphics, Rectangle, SearchResult> drawSubItem = null) =>
+                Create(
+                    column,
+                    horizontalAlignment,
+                    getValue,
+                    formatValue,
+                    comparison == null
+                        ? new Comparison<SearchResult>((a, b) => ColumnDefinition<T>.DefaultComparison(getValue(a), getValue(b)))
+                        : new Comparison<SearchResult>((a, b) => comparison(getValue(a), getValue(b))),
+                    groupable,
+                    getImage,
+                    drawSubItem);
 
-            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison) =>
-                this.Add(column, HorizontalAlignment.Left, getValue, formatValue, comparison);
-
-            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Action<Graphics, Rectangle, SearchResult> drawSubItem) =>
-                this.Add(column, HorizontalAlignment.Left, getValue, formatValue, drawSubItem);
-
-            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Action<Graphics, Rectangle, SearchResult> drawSubItem) =>
-                this.Add(column, HorizontalAlignment.Left, getValue, formatValue, comparison, drawSubItem);
-
-            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Func<SearchResult, object> getImage) =>
-                this.Add(column, HorizontalAlignment.Left, getValue, formatValue, getImage);
-
-            public void Add<T>(Column column, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Func<SearchResult, object> getImage) =>
-                this.Add(column, HorizontalAlignment.Left, getValue, formatValue, comparison, getImage);
-
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue) =>
-                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue));
-
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison) =>
-                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison));
-
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, bool groupable) =>
-                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, groupable));
-
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Action<Graphics, Rectangle, SearchResult> drawSubItem) =>
-                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, drawSubItem: drawSubItem));
-
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Action<Graphics, Rectangle, SearchResult> drawSubItem) =>
-                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, drawSubItem: drawSubItem));
-
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Func<SearchResult, object> getImage) =>
-                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, getImage: getImage));
-
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, Func<SearchResult, object> getImage) =>
-                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, getImage: getImage));
-
-            public void Add<T>(Column column, HorizontalAlignment horizontalAlignment, Func<SearchResult, T> getValue, Func<T, string> formatValue, Comparison<SearchResult> comparison, bool groupable, Func<SearchResult, object> getImage) =>
-                this.Add(new ColumnDefinition<T>(column, horizontalAlignment, getValue, formatValue, comparison, groupable, getImage));
+            public static ColumnDefinition<T> Create<T>(
+                Column column,
+                HorizontalAlignment horizontalAlignment,
+                Func<SearchResult, T> getValue,
+                Func<T, string> formatValue,
+                Comparison<SearchResult> comparison = null,
+                bool groupable = false,
+                Func<SearchResult, object> getImage = null,
+                Action<Graphics, Rectangle, SearchResult> drawSubItem = null) =>
+                new ColumnDefinition<T>(
+                    column,
+                    horizontalAlignment,
+                    getValue,
+                    formatValue,
+                    comparison,
+                    groupable,
+                    getImage,
+                    drawSubItem);
         }
 
         private class ColumnRenderer : BaseRenderer
