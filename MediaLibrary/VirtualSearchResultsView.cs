@@ -149,7 +149,7 @@ namespace MediaLibrary
                 ColumnDefinition.Create(
                     Column.VisualHash,
                     HorizontalAlignment.Left,
-                    r => GetDetails<long?>(r, ImageDetailRecognizer.Properties.AverageIntensityHash, value => Convert.ToInt64(value, CultureInfo.InvariantCulture)),
+                    r => (ulong?)GetDetails<long?>(r, ImageDetailRecognizer.Properties.AverageIntensityHash, value => Convert.ToInt64(value, CultureInfo.InvariantCulture)),
                     value => value != null ? $"0x{value:X16}" : string.Empty,
                     Nullable.Compare,
                     true,
@@ -174,7 +174,7 @@ namespace MediaLibrary
                             var scan = bmpData.Scan0;
                             for (var y = 1; y <= HashEdgeSize; y++, scan += bmpData.Stride)
                             {
-                                colorData[0] = (byte)(~value >> ((HashEdgeSize - y) * HashEdgeSize));
+                                colorData[0] = (byte)(value >> ((HashEdgeSize - y) * HashEdgeSize));
                                 Marshal.Copy(colorData, 0, scan, 1);
                             }
 

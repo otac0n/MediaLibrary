@@ -100,10 +100,10 @@ namespace MediaLibrary.Storage.FileTypes
                 var target = total / (HashWidth * HashHeight);
 
                 var hash = 0UL;
-                for (var y = HashHeight - 1; y >= 0; y--)
+                for (var y = 0; y < HashHeight; y++)
                 {
                     Marshal.Copy(data.Scan0 + y * data.Stride, row, 0, HashWidth);
-                    for (var x = HashWidth - 1; x >= 0; x--)
+                    for (var x = 0; x < HashWidth; x++)
                     {
                         hash = (hash << 1) | (Value(row[x]) >= target ? 1UL : 0UL);
                     }
