@@ -62,7 +62,7 @@ namespace MediaLibrary.Storage.Search
             var fetchAliases = true && fetchPeople;
             var fetchRatings = true;
             var fetchDetails = true;
-            var fetchAny = fetchTags || fetchPaths || fetchPeople || fetchRatings;
+            var fetchAny = fetchTags || fetchPaths || fetchPeople || fetchRatings || fetchDetails;
 
             var sb = new StringBuilder();
 
