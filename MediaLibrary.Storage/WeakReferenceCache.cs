@@ -62,22 +62,56 @@ namespace MediaLibrary.Storage
             }
         }
 
+        public void Remove(TKey key)
+        {
+            lock (this.storage)
+            {
+                this.storage.Remove(key);
+            }
+        }
+
+        public void RemoveAll(Func<TKey, TValue, bool> remove)
+        {
+            lock (this.storage)
+            {
+                var removeKeys = new HashSet<TKey>();
+                foreach (var kvp in this.storage)
+                {
+                    if (!kvp.Value.TryGetTarget(out var value) ||
+                        remove(kvp.Key, value))
+                    {
+                        removeKeys.Add(kvp.Key);
+                    }
+                }
+
+                foreach (var key in removeKeys)
+                {
+                    this.storage.Remove(key);
+                }
+            }
+        }
+
         public bool TryGetValue(TKey key, out TValue value)
         {
             lock (this.storage)
             {
-                if (!this.storage.TryGetValue(key, out var weakReference))
+                if (this.storage.TryGetValue(key, out var weakReference))
+                {
+                    if (weakReference.TryGetTarget(out value))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        this.storage.Remove(key);
+                    }
+                }
+                else
                 {
                     value = default;
-                    return false;
                 }
 
-                if (!weakReference.TryGetTarget(out value))
-                {
-                    return false;
-                }
-
-                return true;
+                return false;
             }
         }
 
@@ -90,15 +124,45 @@ namespace MediaLibrary.Storage
 
             lock (this.storage)
             {
-                if (this.storage.TryGetValue(key, out var weakReference) &&
-                    weakReference.TryGetTarget(out var value))
+                if (this.storage.TryGetValue(key, out var weakReference))
                 {
-                    updateValue(key, value);
-                    return true;
+                    if (weakReference.TryGetTarget(out var value))
+                    {
+                        updateValue(key, value);
+                        return true;
+                    }
+                    else
+                    {
+                        this.storage.Remove(key);
+                    }
                 }
             }
 
             return false;
+        }
+
+        public void UpdateAll(Action<TKey, TValue> update)
+        {
+            lock (this.storage)
+            {
+                var removeKeys = new HashSet<TKey>();
+                foreach (var kvp in this.storage)
+                {
+                    if (kvp.Value.TryGetTarget(out var value))
+                    {
+                        update(kvp.Key, value);
+                    }
+                    else
+                    {
+                        removeKeys.Add(kvp.Key);
+                    }
+                }
+
+                foreach (var key in removeKeys)
+                {
+                    this.storage.Remove(key);
+                }
+            }
         }
     }
 }

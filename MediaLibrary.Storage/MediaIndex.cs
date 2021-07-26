@@ -268,7 +268,7 @@ namespace MediaLibrary.Storage
         public Task<ImmutableDictionary<string, object>> GetHashDetails(string hash) =>
             this.IndexReadAsync(async conn =>
             {
-                var row = (await conn.QueryAsync(Queries.GetHashDetails).ConfigureAwait(false)).SingleOrDefault();
+                var row = (await conn.QueryAsync(Queries.GetHashDetails, new { Hash = hash }).ConfigureAwait(false)).SingleOrDefault();
                 return ((IDictionary<string, object>)row)?.ToImmutableDictionary() ?? ImmutableDictionary<string, object>.Empty;
             });
 
@@ -276,12 +276,15 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<HashTag>(HashTag.Queries.GetHashTags, new { Hash = hash }).ConfigureAwait(false)).ToList());
 
-        public Task<Person> GetPersonById(int personId) =>
-            this.IndexReadAsync(async conn =>
-            {
-                var reader = await conn.QueryMultipleAsync(Person.Queries.GetPersonById, new { PersonId = personId }).ConfigureAwait(false);
-                return (await this.ReadPeopleAsync(reader).ConfigureAwait(false)).SingleOrDefault();
-            });
+        public Task<Person> GetPersonById(long personId) =>
+            this.personCache.TryGetValue(personId, out var person)
+                ? Task.FromResult(person)
+                : this.IndexReadAsync(async conn =>
+                {
+                    var reader = await conn.QueryMultipleAsync(Person.Queries.GetPersonById, new { PersonId = personId }).ConfigureAwait(false);
+                    person = (await this.ReadPeopleAsync(reader).ConfigureAwait(false)).SingleOrDefault();
+                    return this.personCache.GetOrAdd(personId, _ => person);
+                });
 
         public Task<Rating> GetRating(string hash, string category) =>
             this.IndexReadAsync(conn =>
@@ -335,6 +338,25 @@ namespace MediaLibrary.Storage
             }
 
             await this.IndexWriteAsync(conn => conn.ExecuteAsync(Person.Queries.MergePeople, new { TargetId = targetId, DuplicateId = duplicateId })).ConfigureAwait(false);
+            this.personCache.Remove(duplicateId);
+            this.personCache.Remove(targetId);
+            var target = await this.GetPersonById(targetId).ConfigureAwait(false);
+            var updatedResults = new HashSet<string>();
+            this.searchResultsCache.UpdateAll((key, value) =>
+            {
+                var toReplace = value.People.Where(p => p.PersonId == targetId || p.PersonId == duplicateId).ToList();
+                if (toReplace.Count > 0)
+                {
+                    var newPeople = value.People.Except(toReplace).Add(target);
+                    value.People = newPeople;
+                    updatedResults.Add(key);
+                }
+            });
+
+            foreach (var hash in updatedResults)
+            {
+                this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
+            }
         }
 
         public Task RemoveAlias(Alias alias) => this.IndexWriteAsync(conn => conn.ExecuteAsync(Alias.Queries.RemoveAlias, alias));

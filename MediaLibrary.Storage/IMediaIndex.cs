@@ -61,7 +61,7 @@ namespace MediaLibrary.Storage
 
         Task<List<HashTag>> GetHashTags(string hash);
 
-        Task<Person> GetPersonById(int personId);
+        Task<Person> GetPersonById(long personId);
 
         Task<Rating> GetRating(string hash, string category);
 
