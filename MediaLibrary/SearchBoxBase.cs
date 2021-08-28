@@ -34,6 +34,13 @@ namespace MediaLibrary
 
         public new event EventHandler<EventArgs> SelectedItemChanged;
 
+        public enum Highlighting
+        {
+            None,
+            Highlighted,
+            Subdued,
+        }
+
         private enum ComboBoxMessages
         {
             CB_GETEDITSEL = 0x0140,
@@ -157,7 +164,7 @@ namespace MediaLibrary
             }
         }
 
-        protected static IEnumerable<(string part, bool highlight)> HighlightString(Regex pattern, string value)
+        protected static IEnumerable<(string part, Highlighting highlight)> HighlightString(Regex pattern, string value)
         {
             var index = 0;
             var nextMatch = pattern.Match(value);
@@ -184,7 +191,7 @@ namespace MediaLibrary
                     index = nextMatch.Index;
                 }
 
-                yield return (chunk, highlight);
+                yield return (chunk, highlight ? Highlighting.Highlighted : Highlighting.None);
             }
         }
 
@@ -193,7 +200,8 @@ namespace MediaLibrary
             e.DrawBackground();
             var item = (TItem)base.Items[e.Index];
             var rendered = this.RenderItem(this.terms, item);
-            var color = (e.State & DrawItemState.Selected) == DrawItemState.Selected
+            var selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+            var baseColor = selected
                 ? SystemColors.HighlightText
                 : SystemColors.ControlText;
 
@@ -201,7 +209,8 @@ namespace MediaLibrary
             var bounds = e.Bounds;
             foreach (var (text, highlight) in rendered)
             {
-                var font = highlight ? this.highlightFont : e.Font;
+                var font = highlight == Highlighting.Highlighted ? this.highlightFont : e.Font;
+                var color = !selected && highlight == Highlighting.Subdued ? SystemColors.GrayText : baseColor;
                 TextRenderer.DrawText(e.Graphics, text, font, bounds, color, format);
                 var size = TextRenderer.MeasureText(e.Graphics, text, font, bounds.Size, format);
                 bounds = new Rectangle(bounds.X + size.Width, bounds.Y, bounds.Width - size.Width, bounds.Height);
@@ -260,7 +269,7 @@ namespace MediaLibrary
             var bounds = new Rectangle(Point.Empty, new Size(e.ItemWidth, e.ItemHeight));
             foreach (var (text, highlight) in rendered)
             {
-                var font = highlight ? this.highlightFont : baseFont;
+                var font = highlight == Highlighting.Highlighted ? this.highlightFont : baseFont;
                 var size = TextRenderer.MeasureText(e.Graphics, text, font, bounds.Size, format);
                 bounds = new Rectangle(bounds.X + size.Width, bounds.Y, bounds.Width - size.Width, bounds.Height);
                 if (bounds.Width <= 0)
@@ -291,7 +300,7 @@ namespace MediaLibrary
             this.UpdateSearchRestoreSelection(this.Search(this.terms = this.ToTerms(value), this.items));
         }
 
-        protected virtual IList<(string part, bool highlight)> RenderItem(HashSet<string> terms, TItem item)
+        protected virtual IList<(string part, Highlighting highlight)> RenderItem(HashSet<string> terms, TItem item)
         {
             var pattern = terms.Count == 0 ? NoMatch : new Regex(string.Join("|", terms.Select(Regex.Escape)));
             return HighlightString(pattern, item.ToString()).ToList();

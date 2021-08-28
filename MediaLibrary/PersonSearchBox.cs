@@ -14,29 +14,29 @@ namespace MediaLibrary
         private static readonly StringComparer Comparer = StringComparer.CurrentCultureIgnoreCase;
         private static readonly StringComparison Comparison = StringComparison.CurrentCultureIgnoreCase;
 
-        protected override IList<(string part, bool highlight)> RenderItem(HashSet<string> terms, Person item)
+        protected override IList<(string part, Highlighting highlight)> RenderItem(HashSet<string> terms, Person item)
         {
             var pattern = terms.Count == 0 ? NoMatch : new Regex(string.Join("|", terms.Union(this.ToTerms(item.Name).Where(n => terms.Any(t => t.IndexOf(n, Comparison) >= 0))).Select(Regex.Escape)), RegexOptions.IgnoreCase);
-            var list = new List<(string part, bool highlight)>();
+            var list = new List<(string part, Highlighting highlight)>();
 
             list.AddRange(HighlightString(pattern, item.Name));
             if (item.Aliases.Count > 0)
             {
-                list.Add((" (aka ", false));
+                list.Add((" (aka ", Highlighting.None));
 
                 var first = true;
                 foreach (var alias in item.Aliases.OrderByDescending(a => pattern.Matches(a.Name).Cast<Match>().Sum(m => m.Length)))
                 {
                     if (!first)
                     {
-                        list.Add((", ", false));
+                        list.Add((", ", Highlighting.None));
                     }
 
                     list.AddRange(HighlightString(pattern, alias.Name));
                     first = false;
                 }
 
-                list.Add((")", false));
+                list.Add((")", Highlighting.None));
             }
 
             return list;

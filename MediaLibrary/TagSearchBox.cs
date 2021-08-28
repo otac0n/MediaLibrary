@@ -14,29 +14,35 @@ namespace MediaLibrary
         private static readonly StringComparer Comparer = StringComparer.CurrentCultureIgnoreCase;
         private static readonly StringComparison Comparison = StringComparison.CurrentCultureIgnoreCase;
 
-        protected override IList<(string part, bool highlight)> RenderItem(HashSet<string> terms, TagInfo item)
+        protected override IList<(string part, Highlighting highlight)> RenderItem(HashSet<string> terms, TagInfo item)
         {
             var pattern = terms.Count == 0 ? NoMatch : new Regex(string.Join("|", terms.Select(Regex.Escape)), RegexOptions.IgnoreCase);
-            var list = new List<(string part, bool highlight)>();
+            var list = new List<(string part, Highlighting highlight)>();
 
             list.AddRange(HighlightString(pattern, item.Tag));
             if (item.Aliases.Count > 0)
             {
-                list.Add((" (", false));
+                list.Add((" (", Highlighting.None));
 
                 var first = true;
                 foreach (var alias in item.Aliases.OrderByDescending(a => pattern.Matches(a).Cast<Match>().Sum(m => m.Length)))
                 {
                     if (!first)
                     {
-                        list.Add((", ", false));
+                        list.Add((", ", Highlighting.None));
                     }
 
                     list.AddRange(HighlightString(pattern, alias));
                     first = false;
                 }
 
-                list.Add((")", false));
+                list.Add((")", Highlighting.None));
+            }
+
+            var properties = item.Properties.Where(p => p != "abstract" && !p.StartsWith("color=", StringComparison.Ordinal) && !p.StartsWith("order=", StringComparison.Ordinal)).ToList();
+            if (properties.Count > 0)
+            {
+                list.Add(($" [{string.Join(", ", properties)}]", Highlighting.Subdued));
             }
 
             return list;
