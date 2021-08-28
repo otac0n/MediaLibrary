@@ -52,6 +52,12 @@ namespace MediaLibrary.Storage.Search
             return this.dialect.CompileField(field);
         }
 
+        /// <inheritdoc/>
+        public override Predicate<SearchResult> CompilePropertyConjunction(PropertyConjunctionTerm propertyConjunction)
+        {
+            return this.dialect.CompilePropertyConjunction(propertyConjunction);
+        }
+
         private Predicate<SearchResult> FinalizeQuery(Predicate<SearchResult> filter)
         {
             if (this.dialect.ExcludeHidden)

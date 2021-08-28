@@ -235,6 +235,54 @@ namespace MediaLibrary.Storage.Search
             }
         }
 
+        public T CompilePropertyConjunction(PropertyConjunctionTerm propertyConjunction)
+        {
+            var engine = this.TagEngine;
+
+            var predicates = propertyConjunction.Predicates.Select(p => this.CompilePropertyPredicate(p));
+
+            var tags = (from tag in engine.GetKnownTags(canonicalOnly: true)
+                        let tagInfo = engine[tag]
+                        where predicates.All(predicate => tagInfo.Properties.Any(p => predicate(p)))
+                        from related in tagInfo.RelatedTags(HierarchyRelation.SelfOrDescendant)
+                        select related).ToImmutableHashSet<string>();
+            tags = tags.Union(tags.SelectMany(this.TagEngine.GetTagAliases));
+            return this.Tag(tags);
+        }
+
+        public Predicate<string> CompilePropertyPredicate(PropertyPredicate property)
+        {
+            var f = property.Field;
+            if (f.Contains("="))
+            {
+                return _ => false;
+            }
+
+            var fs = $"{f}=";
+
+            switch (property.Operator)
+            {
+                case null:
+                case FieldTerm.EqualsOperator when string.IsNullOrEmpty(property.Value):
+                    return prop => prop == f || prop.StartsWith(fs, StringComparison.Ordinal);
+
+                case FieldTerm.EqualsOperator:
+                    return prop =>
+                    {
+                        if (prop.StartsWith(fs, StringComparison.Ordinal))
+                        {
+                            var value = prop.Substring(fs.Length);
+                            return value.IndexOf(property.Value, StringComparison.CurrentCultureIgnoreCase) > -1;
+                        }
+
+                        return false;
+                    };
+
+                default:
+                    throw new NotImplementedException($"Cannot use operator '{property.Operator}' for tag properties.");
+            }
+        }
+
         public abstract T Copies(string @operator, int value);
 
         public abstract T Details(string detailsField, string @operator, object value);

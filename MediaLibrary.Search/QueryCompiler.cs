@@ -31,6 +31,9 @@ namespace MediaLibrary.Search
                 case FieldTerm field:
                     return this.CompileField(field);
 
+                case PropertyConjunctionTerm propertyConjunction:
+                    return this.CompilePropertyConjunction(propertyConjunction);
+
                 case SavedSearchTerm savedSearch:
                     return this.CompileSavedSearch(savedSearch);
 
@@ -59,6 +62,8 @@ namespace MediaLibrary.Search
         public abstract TQuery CompileField(FieldTerm field);
 
         public abstract TQuery CompileNegation(TQuery query);
+
+        public abstract TQuery CompilePropertyConjunction(PropertyConjunctionTerm propertyConjunction);
 
         public virtual TQuery CompileSavedSearch(SavedSearchTerm savedSearch)
         {

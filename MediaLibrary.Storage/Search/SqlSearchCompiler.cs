@@ -54,6 +54,12 @@ namespace MediaLibrary.Storage.Search
             return this.dialect.CompileField(field);
         }
 
+        /// <inheritdoc/>
+        public override string CompilePropertyConjunction(PropertyConjunctionTerm propertyConjunction)
+        {
+            return this.dialect.CompilePropertyConjunction(propertyConjunction);
+        }
+
         private string FinalizeQuery(string filter)
         {
             var fetchTags = true;

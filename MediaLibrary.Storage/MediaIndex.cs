@@ -1298,6 +1298,8 @@ namespace MediaLibrary.Storage
 
             public override bool CompileNegation(bool query) => query;
 
+            public override bool CompilePropertyConjunction(PropertyConjunctionTerm propertyConjunction) => false;
+
             public override bool CompileSavedSearch(SavedSearchTerm savedSearch) => true;
         }
     }
