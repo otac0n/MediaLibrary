@@ -8,7 +8,7 @@ namespace MediaLibrary
     using System.Runtime.InteropServices;
 
     /// <remarks>
-    /// Large portions from https://www.pinvoke.net/
+    /// Large portions from <see href="https://www.pinvoke.net/"/>.
     /// </remarks>
     internal static class NativeMethods
     {

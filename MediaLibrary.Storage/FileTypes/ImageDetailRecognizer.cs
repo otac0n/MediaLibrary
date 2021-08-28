@@ -38,9 +38,9 @@ namespace MediaLibrary.Storage.FileTypes
         };
 
         /// <remarks>
-        /// See:
-        /// https://exiv2.org/tags.html
-        /// https://docs.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-constant-property-tags-in-numerical-order
+        /// From
+        /// <see href="https://exiv2.org/tags.html"/> and
+        /// <see href="https://docs.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-constant-property-tags-in-numerical-order"/>.
         /// </remarks>
         private enum PropertyTag
         {
@@ -71,8 +71,8 @@ namespace MediaLibrary.Storage.FileTypes
         }
 
         /// <summary>
-        /// See:
-        /// https://docs.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-constant-image-property-tag-type-constants
+        /// From
+        /// <see href="https://docs.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-constant-image-property-tag-type-constants"/>.
         /// </summary>
         private enum PropertyTagType : short
         {

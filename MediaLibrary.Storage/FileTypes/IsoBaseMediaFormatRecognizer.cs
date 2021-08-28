@@ -9,7 +9,7 @@ namespace MediaLibrary.Storage.FileTypes
     using System.Text;
 
     /// <remarks>
-    /// https://www.iso.org/standard/74428.html
+    /// <see href="https://www.iso.org/standard/74428.html"/>
     /// </remarks>
     public static class IsoBaseMediaFormatRecognizer
     {
