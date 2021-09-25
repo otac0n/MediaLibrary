@@ -41,8 +41,11 @@ namespace MediaLibrary
 
             set
             {
-                this.indeterminate = value;
-                this.RefreshColor();
+                if (this.indeterminate != value)
+                {
+                    this.indeterminate = value;
+                    this.RefreshColor();
+                }
             }
         }
 
@@ -52,8 +55,12 @@ namespace MediaLibrary
 
             set
             {
-                this.tagColor = value;
-                this.RefreshColor();
+                if (this.tagColor != value)
+                {
+                    this.tagColor = value;
+                    this.RefreshColor();
+                    this.Invalidate();
+                }
             }
         }
 
@@ -68,6 +75,29 @@ namespace MediaLibrary
             set => this.tagName.Text = base.Text = value;
         }
 
+        /// <inheritdoc/>
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            if (this.indeterminate && this.tagColor is Color borderColor)
+            {
+                var rect = this.ClientRectangle;
+                rect.Width -= 1;
+                rect.Height -= 1;
+                using (var pen = new Pen(borderColor))
+                {
+                    e.Graphics.DrawRectangle(pen, rect);
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            this.Invalidate();
+        }
+
         private void DeleteButton_Click(object sender, EventArgs e)
         {
             this.DeleteClick?.Invoke(this, e);
@@ -75,15 +105,32 @@ namespace MediaLibrary
 
         private void RefreshColor()
         {
-            if (this.indeterminate)
+            if (this.tagColor is Color tagColor)
             {
-                this.BackColor = SystemColors.ControlLightLight;
-                this.ForeColor = SystemColors.GrayText;
+                if (this.indeterminate)
+                {
+                    var blended = ColorService.Blend(0.25, tagColor, SystemColors.ControlLightLight);
+                    this.BackColor = blended;
+                    this.ForeColor = ColorService.ContrastColor(blended);
+                }
+                else
+                {
+                    this.BackColor = tagColor;
+                    this.ForeColor = ColorService.ContrastColor(tagColor);
+                }
             }
             else
             {
-                this.BackColor = this.tagColor ?? SystemColors.Info;
-                this.ForeColor = ColorService.ContrastColor(this.BackColor);
+                if (this.indeterminate)
+                {
+                    this.BackColor = SystemColors.ControlLightLight;
+                    this.ForeColor = SystemColors.GrayText;
+                }
+                else
+                {
+                    this.BackColor = SystemColors.Info;
+                    this.ForeColor = ColorService.ContrastColor(SystemColors.Info);
+                }
             }
         }
 
