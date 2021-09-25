@@ -17,14 +17,14 @@ namespace MediaLibrary
     public partial class PreviewControl : UserControl
     {
         private SearchResult displayedItem;
-        private SearchResultsTags existingTags;
+        private SearchResultsVectors existingTags;
         private ImmutableList<SearchResult> previewItems;
 
         public PreviewControl(IMediaIndex index)
         {
             this.InitializeComponent();
 
-            this.existingTags = new SearchResultsTags(index);
+            this.existingTags = new SearchResultsVectors(index);
             this.existingTags.Dock = DockStyle.Bottom;
             this.existingTags.Name = "existingTags";
             this.existingTags.TabIndex = 2;

@@ -295,7 +295,6 @@ namespace MediaLibrary
             try
             {
                 this.nameTextBox.Text = this.SelectedPerson.Name;
-                this.usernamesFlowPanel.Controls.OfType<PersonControl>();
 
                 var akaAliases = aliasTypeLookup[TypeGeneric].ToList();
                 this.aliasesTablePanel.RowCount = Math.Max(this.aliasesTablePanel.RowCount, akaAliases.Count + 1);

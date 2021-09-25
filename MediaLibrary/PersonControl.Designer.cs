@@ -39,7 +39,6 @@
             // 
             this.personName.AutoSize = true;
             this.personName.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.personName.ForeColor = System.Drawing.SystemColors.InfoText;
             this.personName.Location = new System.Drawing.Point(20, 0);
             this.personName.Margin = new System.Windows.Forms.Padding(3, 0, 23, 0);
             this.personName.Name = "personName";
@@ -90,7 +89,9 @@
             this.Controls.Add(this.personName);
             this.Controls.Add(this.deleteButton);
             this.Controls.Add(this.personPicture);
+            this.ForeColor = System.Drawing.SystemColors.InfoText;
             this.Name = "PersonControl";
+            this.Padding = new System.Windows.Forms.Padding(3);
             this.Size = new System.Drawing.Size(53, 13);
             ((System.ComponentModel.ISupportInitialize)(this.deleteButton)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.personPicture)).EndInit();
