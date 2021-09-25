@@ -30,6 +30,7 @@ namespace MediaLibrary
         private bool columnsSized = false;
         private bool selectionChangedInvoked;
         private TagComparer tagComparer;
+        private PersonComparer personComparer;
 
         public VirtualSearchResultsView(IMediaIndex index)
         {
@@ -66,31 +67,7 @@ namespace MediaLibrary
                     HorizontalAlignment.Left,
                     r => r.People,
                     value => string.Join("; ", value.Select(p => p.Name)),
-                    (a, b) =>
-                    {
-                        int comp;
-                        if ((comp = a.Count.CompareTo(b.Count)) != 0)
-                        {
-                            return comp;
-                        }
-
-                        var aOrdered = a.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-                        var bOrdered = b.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-                        for (var i = 0; i < aOrdered.Count; i++)
-                        {
-                            if (aOrdered[i].PersonId != bOrdered[i].PersonId)
-                            {
-                                if ((comp = StringComparer.CurrentCultureIgnoreCase.Compare(aOrdered[i].Name, bOrdered[i].Name)) != 0)
-                                {
-                                    return comp;
-                                }
-
-                                return aOrdered[i].PersonId.CompareTo(bOrdered[i].PersonId);
-                            }
-                        }
-
-                        return 0;
-                    }),
+                    (a, b) => this.PersonComparer.Compare(a.ToList(), b.ToList())),
                 ColumnDefinition.Create(
                     Column.Tags,
                     HorizontalAlignment.Left,
@@ -331,6 +308,8 @@ namespace MediaLibrary
         }
 
         private TagComparer TagComparer => this.tagComparer ?? (this.tagComparer = this.index.TagEngine.GetTagComparer());
+
+        private PersonComparer PersonComparer => this.personComparer ?? (this.personComparer = new PersonComparer());
 
         /// <inheritdoc/>
         public override void SetObjects(IEnumerable collection, bool preserveState)

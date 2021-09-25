@@ -23,8 +23,16 @@ namespace MediaLibrary
 
         public int Compare(string a, string b)
         {
-            var comp = 0;
+            if (a == null)
+            {
+                return b == null ? 0 : -1;
+            }
+            else if (b == null)
+            {
+                return 1;
+            }
 
+            int comp;
             var aOrder = this.GetTagOrder(a);
             var bOrder = this.GetTagOrder(b);
             if ((comp = aOrder.CompareTo(bOrder)) != 0)
