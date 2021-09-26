@@ -12,6 +12,7 @@ namespace MediaLibrary
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
+    using System.Text;
     using System.Windows.Forms;
     using BrightIdeasSoftware;
     using ByteSizeLib;
@@ -28,9 +29,9 @@ namespace MediaLibrary
         private readonly IMediaIndex index;
         private readonly List<SearchResult> orderdResults = new List<SearchResult>();
         private bool columnsSized = false;
+        private PersonComparer personComparer;
         private bool selectionChangedInvoked;
         private TagComparer tagComparer;
-        private PersonComparer personComparer;
 
         public VirtualSearchResultsView(IMediaIndex index)
         {
@@ -115,7 +116,7 @@ namespace MediaLibrary
                     Column.Duration,
                     HorizontalAlignment.Right,
                     r => GetDetails<TimeSpan?>(r, nameof(Column.Duration), value => TimeSpan.FromSeconds(Convert.ToDouble(value, CultureInfo.InvariantCulture))),
-                    value => value.ToString(),
+                    value => FormatTimeSpan(value),
                     Nullable.Compare),
                 ColumnDefinition.Create(
                     Column.Rating,
@@ -307,9 +308,9 @@ namespace MediaLibrary
             set => this.PrimarySortOrder = value ? SortOrder.Descending : SortOrder.Ascending;
         }
 
-        private TagComparer TagComparer => this.tagComparer ?? (this.tagComparer = this.index.TagEngine.GetTagComparer());
-
         private PersonComparer PersonComparer => this.personComparer ?? (this.personComparer = new PersonComparer());
+
+        private TagComparer TagComparer => this.tagComparer ?? (this.tagComparer = this.index.TagEngine.GetTagComparer());
 
         /// <inheritdoc/>
         public override void SetObjects(IEnumerable collection, bool preserveState)
@@ -329,6 +330,34 @@ namespace MediaLibrary
         {
             this.selectionChangedInvoked = true;
             base.OnSelectionChanged(e);
+        }
+
+        private static string FormatTimeSpan(TimeSpan? value)
+        {
+            if (value is TimeSpan duration)
+            {
+                var formatted = new StringBuilder();
+                if (duration.TotalDays >= 1)
+                {
+                    formatted.Append(duration.Days).Append("d");
+                }
+
+                if (duration.TotalHours >= 1)
+                {
+                    formatted.AppendFormat("{0:d2}", duration.Hours).Append("h");
+                }
+
+                if (duration.TotalMinutes >= 1)
+                {
+                    formatted.AppendFormat("{0:d2}", duration.Minutes).Append("m");
+                }
+
+                formatted.AppendFormat("{0:d2}", duration.Seconds).Append("s");
+
+                return formatted.ToString();
+            }
+
+            return string.Empty;
         }
 
         private static string GetBestPath(SearchResult searchResult) =>
