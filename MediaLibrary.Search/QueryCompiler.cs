@@ -55,6 +55,10 @@ namespace MediaLibrary.Search
         public virtual TQuery Compile(NegationTerm negation) =>
             this.CompileNegation(this.Compile((negation ?? throw new ArgumentNullException(nameof(negation))).Negated));
 
+        public TQuery CompileConjunction(params TQuery[] query) => this.CompileConjunction(query.AsEnumerable());
+
+        public TQuery CompileDisjunction(params TQuery[] query) => this.CompileDisjunction(query.AsEnumerable());
+
         public abstract TQuery CompileConjunction(IEnumerable<TQuery> query);
 
         public abstract TQuery CompileDisjunction(IEnumerable<TQuery> query);

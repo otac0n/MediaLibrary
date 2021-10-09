@@ -104,18 +104,14 @@ namespace MediaLibrary.Storage.Search
                     }
 
                 case "~":
+                    if (field.Operator != FieldTerm.EqualsOperator)
                     {
-                        if (field.Operator != FieldTerm.EqualsOperator)
-                        {
-                            throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
-                        }
-
-                        return this.ParentCompiler.CompileConjunction(new[]
-                        {
-                            this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value))),
-                            this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("rejected", FieldTerm.GreaterThanOrEqualOperator, field.Value))),
-                        });
+                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
                     }
+
+                    return this.ParentCompiler.CompileConjunction(
+                        this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value))),
+                        this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("rejected", FieldTerm.GreaterThanOrEqualOperator, field.Value))));
 
                 case "?":
                 case "suggested":
@@ -325,8 +321,7 @@ namespace MediaLibrary.Storage.Search
             var exclusionTags = tagInfo.RelatedTags(HierarchyRelation.SelfOrAncestor);
             var rules = tagEngine[@operator].Where(rule => rule.Right.Any(r => searchTags.Contains(r)));
             var exclusions = tagEngine[TagOperator.Exclusion].Where(rule => rule.Right.Any(r => exclusionTags.Contains(r)));
-            return this.ParentCompiler.CompileConjunction(new[]
-            {
+            return this.ParentCompiler.CompileConjunction(
                 this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, tag))),
                 this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("rejected", FieldTerm.GreaterThanOrEqualOperator, tag))),
                 this.ParentCompiler.CompileDisjunction(rules.Select(rule =>
@@ -342,8 +337,7 @@ namespace MediaLibrary.Storage.Search
                         rule.Left.Select(required => this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, required)))),
                         rule.Right.Where(r => !exclusionTags.Contains(r)).Select(excluded => this.ParentCompiler.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, excluded)))));
                     return this.ParentCompiler.CompileDisjunction(requirements);
-                })),
-            });
+                })));
         }
     }
 }
