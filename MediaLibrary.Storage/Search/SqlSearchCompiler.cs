@@ -3,64 +3,21 @@
 namespace MediaLibrary.Storage.Search
 {
     using System;
-    using System.Collections.Immutable;
     using System.Linq;
     using System.Text;
     using MediaLibrary.Search;
-    using MediaLibrary.Search.Sql;
+    using MediaLibrary.Storage.Search.Expressions;
     using TaggingLibrary;
-    using static MediaLibrary.Search.Sql.QueryBuilder;
+    using static MediaLibrary.Storage.Search.QueryBuilder;
 
-    public class SqlSearchCompiler : AnsiSqlCompiler
+    public class SqlSearchCompiler : SearchCompiler<string>
     {
-        private readonly bool excludeHidden;
-        private readonly TagRuleEngine tagEngine;
-        private int depth = 0;
-        private SqlDialect dialect;
-
         public SqlSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden, Func<string, Term> getSavedSearch)
-            : base(getSavedSearch)
+            : base(tagEngine, excludeHidden, getSavedSearch)
         {
-            this.tagEngine = tagEngine;
-            this.excludeHidden = excludeHidden;
         }
 
-        /// <inheritdoc/>
-        public override string Compile(Term term)
-        {
-            var originalDepth = this.depth;
-            this.depth++;
-            try
-            {
-                if (originalDepth == 0)
-                {
-                    this.dialect = new SqlDialect(this.tagEngine, this.excludeHidden, this);
-                    return this.FinalizeQuery(base.Compile(term));
-                }
-                else
-                {
-                    return base.Compile(term);
-                }
-            }
-            finally
-            {
-                this.depth = originalDepth;
-            }
-        }
-
-        /// <inheritdoc/>
-        public override string CompileField(FieldTerm field)
-        {
-            return this.dialect.CompileField(field);
-        }
-
-        /// <inheritdoc/>
-        public override string CompilePropertyConjunction(PropertyConjunctionTerm propertyConjunction)
-        {
-            return this.dialect.CompilePropertyConjunction(propertyConjunction);
-        }
-
-        private string FinalizeQuery(string filter)
+        protected override string Compile(Expression expression)
         {
             var fetchTags = true;
             var fetchPaths = true;
@@ -69,6 +26,9 @@ namespace MediaLibrary.Storage.Search
             var fetchRatings = true;
             var fetchDetails = true;
             var fetchAny = fetchTags || fetchPaths || fetchPeople || fetchRatings || fetchDetails;
+
+            var replacer = new SqlReplacer();
+            var filter = replacer.Replace(expression);
 
             var sb = new StringBuilder();
 
@@ -84,7 +44,7 @@ namespace MediaLibrary.Storage.Search
                 .AppendLine("SELECT h.Hash, h.FileSize, h.FileType, h.Version")
                 .AppendLine("FROM HashInfo h");
 
-            if (this.dialect.JoinCopies)
+            if (replacer.JoinCopies)
             {
                 sb
                     .AppendLine("LEFT JOIN (")
@@ -95,13 +55,13 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine(") c ON h.Hash = c.Hash");
             }
 
-            if (this.dialect.JoinDetails)
+            if (replacer.JoinDetails)
             {
                 sb
                     .AppendLine("LEFT JOIN HashDetails d ON h.Hash = d.Hash");
             }
 
-            if (this.dialect.JoinTagCount)
+            if (replacer.JoinTagCount)
             {
                 sb
                     .AppendLine("LEFT JOIN (")
@@ -111,7 +71,7 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine(") tc ON h.Hash = tc.Hash");
             }
 
-            if (this.dialect.JoinPersonCount)
+            if (replacer.JoinPersonCount)
             {
                 sb
                     .AppendLine("LEFT JOIN (")
@@ -121,7 +81,7 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine(") pc ON h.Hash = pc.Hash");
             }
 
-            if (this.dialect.JoinRatings)
+            if (replacer.JoinRatings)
             {
                 sb
                     .AppendLine("LEFT JOIN (")
@@ -135,18 +95,8 @@ namespace MediaLibrary.Storage.Search
 
             sb
                 .AppendLine("WHERE (")
-                .AppendLine(filter);
-            if (this.dialect.ExcludeHidden)
-            {
-                var tags = this.tagEngine.GetTagDescendants("hidden").Add("hidden");
-                sb
-                    .AppendLine(")")
-                    .Append("AND NOT EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN (")
-                    .Append(string.Join(", ", tags.Select(Literal)))
-                    .Append(")");
-            }
-
-            sb.AppendLine(");");
+                .AppendLine(filter)
+                .AppendLine(");");
 
             if (fetchTags)
             {
@@ -212,13 +162,8 @@ namespace MediaLibrary.Storage.Search
             return sb.ToString();
         }
 
-        private class SqlDialect : SearchDialect<string>
+        private class SqlReplacer : ExpressionReplacer<string>
         {
-            public SqlDialect(TagRuleEngine tagEngine, bool excludeHidden, AnsiSqlCompiler parentCompiler)
-                : base(tagEngine, excludeHidden, parentCompiler)
-            {
-            }
-
             public bool JoinCopies { get; private set; }
 
             public bool JoinDetails { get; private set; }
@@ -229,65 +174,214 @@ namespace MediaLibrary.Storage.Search
 
             public bool JoinTagCount { get; private set; }
 
-            public override string Copies(string @operator, int value)
+            public static string Contains(string expr, string patternValue)
+            {
+                string literal;
+                char? escape;
+                if (patternValue.IndexOfAny(new[] { '%', '_' }) > -1)
+                {
+                    literal = Literal('%' + EscapeLike(patternValue) + '%');
+                    escape = '\\';
+                }
+                else
+                {
+                    literal = Literal('%' + patternValue + '%');
+                    escape = null;
+                }
+
+                return Like(expr, literal, escape);
+            }
+
+            public static string ConvertOperator(string fieldOperator)
+            {
+                switch (fieldOperator)
+                {
+                    case FieldTerm.EqualsOperator:
+                        return "=";
+
+                    case FieldTerm.GreaterThanOperator:
+                    case FieldTerm.GreaterThanOrEqualOperator:
+                    case FieldTerm.LessThanOperator:
+                    case FieldTerm.LessThanOrEqualOperator:
+                        return fieldOperator;
+
+                    default:
+                        throw new NotSupportedException($"Unrecognized operator '{fieldOperator}'.");
+                }
+            }
+
+            public static string Like(string expr, string patternExpr, char? escape)
+            {
+                var sb = new StringBuilder()
+                    .Append(expr)
+                    .Append(" LIKE ")
+                    .Append(patternExpr);
+
+                if (escape != null)
+                {
+                    sb
+                        .Append(" ESCAPE ")
+                        .Append(Literal(escape.Value));
+                }
+
+                return sb.ToString();
+            }
+
+            public static string StartsWith(string expr, string patternExpr, char? escape) => Like(expr, patternExpr, escape);
+
+            public static string StartsWith(string expr, string patternValue)
+            {
+                string literal;
+                char? escape;
+                if (patternValue.IndexOfAny(new[] { '%', '_' }) > -1)
+                {
+                    literal = Literal(EscapeLike(patternValue) + '%');
+                    escape = '\\';
+                }
+                else
+                {
+                    literal = Literal(patternValue + '%');
+                    escape = null;
+                }
+
+                return Like(expr, literal, escape);
+            }
+
+            /// <inheritdoc/>
+            public override string Replace(ConjunctionExpression expression)
+            {
+                var sb = new StringBuilder()
+                    .Append("(");
+
+                var first = true;
+                foreach (var term in expression.Expressions)
+                {
+                    if (!first)
+                    {
+                        sb.Append(") AND (");
+                    }
+
+                    sb.Append(this.Replace(term));
+                    first = false;
+                }
+
+                if (first)
+                {
+                    sb.Append("1 = 1");
+                }
+
+                return sb.Append(")").ToString();
+            }
+
+            /// <inheritdoc/>
+            public override string Replace(DisjunctionExpression expression)
+            {
+                var sb = new StringBuilder()
+                    .Append("(");
+
+                var first = true;
+                foreach (var term in expression.Expressions)
+                {
+                    if (!first)
+                    {
+                        sb.Append(") OR (");
+                    }
+
+                    sb.Append(this.Replace(term));
+                    first = false;
+                }
+
+                if (first)
+                {
+                    sb.Append("1 = 0");
+                }
+
+                return sb.Append(")").ToString();
+            }
+
+            /// <inheritdoc/>
+            public override string Replace(NegationExpression expression)
+            {
+                return $"NOT ({this.Replace(expression.Expression)})";
+            }
+
+            public override string Replace(CopiesExpression expression)
             {
                 this.JoinCopies = true;
-                return $"COALESCE(c.Copies, 0) {ConvertOperator(@operator)} {value}";
+                return $"COALESCE(c.Copies, 0) {ConvertOperator(expression.Operator)} {expression.Copies}";
             }
 
-            public override string Details(string detailsField, string @operator, object value)
+            /// <inheritdoc/>
+            public override string Replace(DetailsExpression expression)
             {
                 this.JoinDetails = true;
-                return $"d.{EscapeName(detailsField)} {ConvertOperator(@operator)} {Literal(value)}";
+                return $"d.{EscapeName(expression.DetailsField)} {ConvertOperator(expression.Operator)} {Literal(expression.Value)}";
             }
 
-            public override string FileSize(string @operator, long value) => $"FileSize {ConvertOperator(@operator)} {value}";
+            /// <inheritdoc/>
+            public override string Replace(FileSizeExpression expression) => $"FileSize {ConvertOperator(expression.Operator)} {expression.FileSize}";
 
-            public override string Hash(string @operator, string value) => $"Hash {ConvertOperator(@operator)} {Literal(value)}";
+            /// <inheritdoc/>
+            public override string Replace(HashExpression expression) => $"Hash {ConvertOperator(expression.Operator)} {Literal(expression.Value)}";
 
-            public override string PersonCount(string @operator, int value)
+            /// <inheritdoc/>
+            public override string Replace(PeopleCountExpression expression)
             {
                 this.JoinPersonCount = true;
-                return $"COALESCE(pc.PersonCount, 0) {ConvertOperator(@operator)} {value}";
+                return $"COALESCE(pc.PersonCount, 0) {ConvertOperator(expression.Operator)} {expression.PeopleCount}";
             }
 
-            public override string PersonId(int value) => $"EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash AND p.PersonId = {value})";
+            /// <inheritdoc/>
+            public override string Replace(NoPeopleExpression expression) => this.Replace(new PeopleCountExpression(FieldTerm.EqualsOperator, 0));
 
-            public override string PersonName(string value) => $"EXISTS (SELECT 1 FROM HashPerson hp INNER JOIN Names p ON hp.PersonId = p.PersonId WHERE h.Hash = hp.Hash AND {Contains("p.Name", value)})";
+            /// <inheritdoc/>
+            public override string Replace(PersonIdExpression expression) => $"EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash AND p.PersonId = {expression.PersonId})";
 
-            public override string Rating(string @operator, double value)
+            /// <inheritdoc/>
+            public override string Replace(PersonNameExpression expression) => $"EXISTS (SELECT 1 FROM HashPerson hp INNER JOIN Names p ON hp.PersonId = p.PersonId WHERE h.Hash = hp.Hash AND {Contains("p.Name", expression.Value)})";
+
+            /// <inheritdoc/>
+            public override string Replace(RatingExpression expression)
             {
                 this.JoinRatings = true;
-                return $"COALESCE(s.Value, {Storage.Rating.DefaultRating}) {ConvertOperator(@operator)} {value}";
+                return $"COALESCE(s.Value, {Storage.Rating.DefaultRating}) {ConvertOperator(expression.Operator)} {expression.Rating}";
             }
 
-            public override string RatingsCount(string @operator, int value)
+            /// <inheritdoc/>
+            public override string Replace(RatingsCountExpression expression)
             {
                 this.JoinRatings = true;
-                return $"COALESCE(s.Count, 0) {ConvertOperator(@operator)} {value}";
+                return $"COALESCE(s.Count, 0) {ConvertOperator(expression.Operator)} {expression.RatingsCount}";
             }
 
-            public override string RejectedTag(ImmutableHashSet<string> value) => $"EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", value.Select(Literal))}))";
+            /// <inheritdoc/>
+            public override string Replace(RejectedTagExpression expression) => $"EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))}))";
 
-            public override string Stars(string @operator, int value)
+            /// <inheritdoc/>
+            public override string Replace(StarsExpression expression)
             {
                 this.JoinRatings = true;
-                return $"COALESCE(s.Stars, 3) {ConvertOperator(@operator)} {value}";
+                return $"COALESCE(s.Stars, 3) {ConvertOperator(expression.Operator)} {expression.Stars}";
             }
 
-            public override string Tag(ImmutableHashSet<string> value) => $"EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", value.Select(Literal))}))";
+            /// <inheritdoc/>
+            public override string Replace(TagExpression expression) => $"EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))}))";
 
-            public override string TagCount(string @operator, int value)
+            /// <inheritdoc/>
+            public override string Replace(TagCountExpression expression)
             {
                 this.JoinTagCount = true;
-                return $"COALESCE(tc.TagCount, 0) {ConvertOperator(@operator)} {value}";
+                return $"COALESCE(tc.TagCount, 0) {ConvertOperator(expression.Operator)} {expression.TagCount}";
             }
 
-            public override string TextSearch(string value) => $"EXISTS (SELECT 1 FROM Paths WHERE LastHash = h.Hash AND MissingSince IS NULL AND {Contains("Path", value)})";
+            /// <inheritdoc/>
+            public override string Replace(TextExpression expression) => $"EXISTS (SELECT 1 FROM Paths WHERE LastHash = h.Hash AND MissingSince IS NULL AND {Contains("Path", expression.Value)})";
 
-            public override string TypeEquals(string value) => $"FileType = {Literal(value)}";
+            /// <inheritdoc/>
+            public override string Replace(TypeEqualsExpression expression) => $"FileType = {Literal(expression.Value)}";
 
-            public override string TypePrefixed(string value) => StartsWith("FileType", value);
+            /// <inheritdoc/>
+            public override string Replace(TypePrefixExpression expression) => StartsWith("FileType", expression.Value);
         }
     }
 }

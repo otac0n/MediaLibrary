@@ -17,7 +17,6 @@ namespace MediaLibrary.Storage
     using System.Threading.Tasks;
     using Dapper;
     using MediaLibrary.Search;
-    using MediaLibrary.Search.Sql;
     using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;
     using Nito.AsyncEx;

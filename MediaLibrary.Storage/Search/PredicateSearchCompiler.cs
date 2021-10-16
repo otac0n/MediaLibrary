@@ -6,144 +6,153 @@ namespace MediaLibrary.Storage.Search
     using System.Collections.Immutable;
     using System.Linq;
     using MediaLibrary.Search;
-    using MediaLibrary.Search.Sql;
+    using MediaLibrary.Storage.Search.Expressions;
     using TaggingLibrary;
 
-    public class PredicateSearchCompiler : PredicateCompiler<SearchResult>
+    public class PredicateSearchCompiler : SearchCompiler<Predicate<SearchResult>>
     {
-        private readonly bool excludeHidden;
-        private readonly TagRuleEngine tagEngine;
-        private int depth = 0;
-        private PredicateDialect dialect;
+        private static readonly PredicateReplacer ReplacerInstance = new PredicateReplacer();
 
         public PredicateSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden, Func<string, Term> getSavedSearch)
-            : base(getSavedSearch)
+            : base(tagEngine, excludeHidden, getSavedSearch)
         {
-            this.tagEngine = tagEngine;
-            this.excludeHidden = excludeHidden;
         }
 
-        /// <inheritdoc/>
-        public override Predicate<SearchResult> Compile(Term term)
+        protected override Predicate<SearchResult> Compile(Expression expression) => ReplacerInstance.Replace(expression);
+
+        private class PredicateReplacer : ExpressionReplacer<Predicate<SearchResult>>
         {
-            var originalDepth = this.depth;
-            this.depth++;
-            try
+            public static Func<int, bool> ConvertOperator(string fieldOperator)
             {
-                if (originalDepth == 0)
+                switch (fieldOperator)
                 {
-                    this.dialect = new PredicateDialect(this.tagEngine, this.excludeHidden, this);
-                    return this.FinalizeQuery(base.Compile(term));
+                    case FieldTerm.EqualsOperator:
+                        return x => x == 0;
+
+                    case FieldTerm.GreaterThanOperator:
+                        return x => x > 0;
+
+                    case FieldTerm.GreaterThanOrEqualOperator:
+                        return x => x >= 0;
+
+                    case FieldTerm.LessThanOperator:
+                        return x => x < 0;
+
+                    case FieldTerm.LessThanOrEqualOperator:
+                        return x => x <= 0;
+
+                    default:
+                        throw new NotSupportedException($"Unrecognized operator '{fieldOperator}'.");
                 }
-                else
-                {
-                    return base.Compile(term);
-                }
-            }
-            finally
-            {
-                this.depth = originalDepth;
-            }
-        }
-
-        /// <inheritdoc/>
-        public override Predicate<SearchResult> CompileField(FieldTerm field)
-        {
-            return this.dialect.CompileField(field);
-        }
-
-        /// <inheritdoc/>
-        public override Predicate<SearchResult> CompilePropertyConjunction(PropertyConjunctionTerm propertyConjunction)
-        {
-            return this.dialect.CompilePropertyConjunction(propertyConjunction);
-        }
-
-        private Predicate<SearchResult> FinalizeQuery(Predicate<SearchResult> filter)
-        {
-            if (this.dialect.ExcludeHidden)
-            {
-                var oldFilter = filter;
-                var hidden = this.dialect.Tag(this.tagEngine.GetTagDescendants("hidden").Add("hidden"));
-                filter = x => oldFilter(x) && !hidden(x);
             }
 
-            return filter;
-        }
-
-        private class PredicateDialect : SearchDialect<Predicate<SearchResult>>
-        {
-            public PredicateDialect(TagRuleEngine tagEngine, bool excludeHidden, PredicateSearchCompiler parentCompiler)
-                : base(tagEngine, excludeHidden, parentCompiler)
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(DetailsExpression expression)
             {
-            }
-
-            public override Predicate<SearchResult> Copies(string @operator, int value)
-            {
-                var op = ConvertOperator(@operator);
-                return x => op(x.Paths.Count.CompareTo(value));
-            }
-
-            public override Predicate<SearchResult> Details(string detailsField, string @operator, object value)
-            {
-                var op = ConvertOperator(@operator);
+                var op = ConvertOperator(expression.Operator);
                 throw new NotImplementedException("Query hash details table and compare to this result.");
             }
 
-            public override Predicate<SearchResult> FileSize(string @operator, long value)
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(PersonIdExpression expression) => x => x.People.Any(p => p.PersonId == expression.PersonId);
+
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(PersonNameExpression expression) => x => x.People.Any(p => p.Name.IndexOf(expression.Value, StringComparison.CurrentCultureIgnoreCase) > -1);
+
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(RejectedTagExpression expression) => x => x.RejectedTags.Overlaps(expression.Tags);
+
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(FileSizeExpression expression)
             {
-                var op = ConvertOperator(@operator);
-                return x => op(x.FileSize.CompareTo(value));
+                var op = ConvertOperator(expression.Operator);
+                return x => op(x.FileSize.CompareTo(expression.FileSize));
             }
 
-            public override Predicate<SearchResult> Hash(string @operator, string value)
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(HashExpression expression)
             {
-                var op = ConvertOperator(@operator);
-                return x => op(StringComparer.InvariantCultureIgnoreCase.Compare(x.Hash, value));
+                var op = ConvertOperator(expression.Operator);
+                return x => op(StringComparer.InvariantCultureIgnoreCase.Compare(x.Hash, expression.Value));
             }
 
-            public override Predicate<SearchResult> PersonCount(string @operator, int value)
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(PeopleCountExpression expression)
             {
-                var op = ConvertOperator(@operator);
-                return x => op(x.People.Count.CompareTo(value));
+                var op = ConvertOperator(expression.Operator);
+                return x => op(x.People.Count.CompareTo(expression.PeopleCount));
             }
 
-            public override Predicate<SearchResult> PersonId(int value) => x => x.People.Any(p => p.PersonId == value);
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(NoPeopleExpression expression) => this.Replace(new PeopleCountExpression(FieldTerm.EqualsOperator, 0));
 
-            public override Predicate<SearchResult> PersonName(string value) => x => x.People.Any(p => p.Name.IndexOf(value, StringComparison.CurrentCultureIgnoreCase) > -1);
-
-            public override Predicate<SearchResult> Rating(string @operator, double value)
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(RatingExpression expression)
             {
-                var op = ConvertOperator(@operator);
-                return x => op((x.Rating?.Value ?? Storage.Rating.DefaultRating).CompareTo(value));
+                var op = ConvertOperator(expression.Operator);
+                return x => op((x.Rating?.Value ?? Storage.Rating.DefaultRating).CompareTo(expression.Rating));
             }
 
-            public override Predicate<SearchResult> RatingsCount(string @operator, int value)
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(RatingsCountExpression expression)
             {
-                var op = ConvertOperator(@operator);
-                return x => op((x.Rating?.Count ?? 0).CompareTo(value));
+                var op = ConvertOperator(expression.Operator);
+                return x => op((x.Rating?.Count ?? 0).CompareTo(expression.RatingsCount));
             }
 
-            public override Predicate<SearchResult> RejectedTag(ImmutableHashSet<string> value) => x => x.RejectedTags.Any(value.Contains);
-
-            public override Predicate<SearchResult> Stars(string @operator, int value)
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(CopiesExpression expression)
             {
-                var op = ConvertOperator(@operator);
+                var op = ConvertOperator(expression.Operator);
+                return x => op(x.Paths.Count.CompareTo(expression.Copies));
+            }
+
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(ConjunctionExpression expression)
+            {
+                var predicates = expression.Expressions.Select(this.Replace).ToList();
+                return t => predicates.All(p => p(t));
+            }
+
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(DisjunctionExpression expression)
+            {
+                var predicates = expression.Expressions.Select(this.Replace).ToList();
+                return t => predicates.Any(p => p(t));
+            }
+
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(NegationExpression expression)
+            {
+                var query = this.Replace(expression.Expression);
+                return x => !query(x);
+            }
+
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(TextExpression expression) => x => x.Paths.Any(p => p.IndexOf(expression.Value, StringComparison.CurrentCultureIgnoreCase) > 0);
+
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(StarsExpression expression)
+            {
+                var op = ConvertOperator(expression.Operator);
                 throw new NotImplementedException("Get stars statistics from the database and compare to the percentiles.");
             }
 
-            public override Predicate<SearchResult> Tag(ImmutableHashSet<string> value) => x => x.Tags.Any(value.Contains);
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(TagExpression expression) => x => x.Tags.Overlaps(expression.Tags);
 
-            public override Predicate<SearchResult> TagCount(string @operator, int value)
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(TagCountExpression expression)
             {
-                var op = ConvertOperator(@operator);
-                return x => op(x.Tags.Count.CompareTo(value));
+                var op = ConvertOperator(expression.Operator);
+                return x => op(x.Tags.Count.CompareTo(expression.TagCount));
             }
 
-            public override Predicate<SearchResult> TextSearch(string value) => x => x.Paths.Any(p => p.IndexOf(value, StringComparison.CurrentCultureIgnoreCase) > 0);
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(TypeEqualsExpression expression) => x => x.FileType.Equals(expression.Value, StringComparison.OrdinalIgnoreCase);
 
-            public override Predicate<SearchResult> TypeEquals(string value) => x => x.FileType.Equals(value, StringComparison.OrdinalIgnoreCase);
-
-            public override Predicate<SearchResult> TypePrefixed(string value) => x => x.FileType.StartsWith(value, StringComparison.OrdinalIgnoreCase);
+            /// <inheritdoc/>
+            public override Predicate<SearchResult> Replace(TypePrefixExpression expression) => x => x.FileType.StartsWith(expression.Value, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
