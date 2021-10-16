@@ -7,12 +7,23 @@ namespace MediaLibrary.Storage.Search
     using System.Linq;
     using MediaLibrary.Search;
     using MediaLibrary.Storage.Search.Expressions;
+    using MediaLibrary.Storage.Search.Optimizations;
     using TaggingLibrary;
 
     public abstract class SearchCompiler<T>
     {
-        private const string HiddenTag = "hidden";
+        public static readonly string HiddenTag = "hidden";
         private static readonly Term ExcludeHiddenTerm = new NegationTerm(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, HiddenTag));
+
+        private static readonly ImmutableList<Optimization> Optimizations = ImmutableList.Create<Optimization>(
+            new UnitaryLogicalOperatorOptimization(),
+            new NestedLogicalOperatorOptimization(),
+            new TagSetReductionOptimization(),
+            new TagCombinationOptimization(),
+            new RejectedTagSetReductionOptimization(),
+            new RejectedTagCombinationOptimization(),
+            new DeMorgansOptimization());
+
         private readonly ContainsHiddenReplacer containsHiddenReplacer;
         private readonly SearchDialect dialect;
         private readonly bool excludeHidden;
@@ -34,6 +45,25 @@ namespace MediaLibrary.Storage.Search
                 expression = new ConjunctionExpression(ImmutableList.Create(
                     expression,
                     this.dialect.Compile(ExcludeHiddenTerm)));
+            }
+
+            while (true)
+            {
+                var original = expression;
+
+                foreach (var optimization in Optimizations)
+                {
+                    expression = optimization.Replace(expression);
+                    if (!object.ReferenceEquals(expression, original))
+                    {
+                        break;
+                    }
+                }
+
+                if (object.ReferenceEquals(expression, original))
+                {
+                    break;
+                }
             }
 
             return this.Compile(expression);
