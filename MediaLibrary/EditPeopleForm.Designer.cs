@@ -84,7 +84,7 @@ namespace MediaLibrary
             this.editorTablePanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.editorTablePanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.editorTablePanel.Size = new System.Drawing.Size(546, 296);
-            this.editorTablePanel.TabIndex = 1;
+            this.editorTablePanel.TabIndex = 2;
             // 
             // nameLabel
             // 
@@ -200,10 +200,9 @@ namespace MediaLibrary
             this.advancedButton.Location = new System.Drawing.Point(529, 13);
             this.advancedButton.Name = "advancedButton";
             this.advancedButton.Size = new System.Drawing.Size(29, 21);
-            this.advancedButton.TabIndex = 2;
+            this.advancedButton.TabIndex = 1;
             this.advancedButton.Text = "...";
             this.advancedButton.UseVisualStyleBackColor = true;
-            this.advancedButton.Click += new System.EventHandler(this.AdvancedButton_Click);
             // 
             // advancedMenuStrip
             // 

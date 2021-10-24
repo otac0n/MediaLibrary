@@ -24,6 +24,7 @@ namespace MediaLibrary
         public EditTagsForm(IMediaIndex index, IList<SearchResult> searchResults)
         {
             this.InitializeComponent();
+            this.advancedButton.AttachDropDownMenu(this.advancedMenuStrip, this.components);
             this.index = index;
             this.searchResults = searchResults;
         }
@@ -86,28 +87,6 @@ namespace MediaLibrary
             }
         }
 
-        private void AdvancedButton_Click(object sender, EventArgs e)
-        {
-            this.advancedMenuStrip.PopUnder((Control)sender);
-        }
-
-        private void AdvancedButton_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Down && e.Modifiers == Keys.None)
-            {
-                e.Handled = true;
-                this.advancedMenuStrip.PopUnder((Control)sender, focusFirstItem: true);
-            }
-        }
-
-        private void AdvancedButton_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
-        {
-            if (e.KeyCode == Keys.Down && e.Modifiers == Keys.None)
-            {
-                e.IsInputKey = true;
-            }
-        }
-
         private Dictionary<string, int> CountTags()
         {
             var tagCounts = new Dictionary<string, int>();
@@ -122,6 +101,7 @@ namespace MediaLibrary
         private async void EditTagsForm_Load(object sender, EventArgs e)
         {
             this.Enabled = false;
+            await Task.Delay(1).ConfigureAwait(true);
             await this.PopulateExistingTags().ConfigureAwait(true);
             this.PopulateTagsCombo();
             this.Enabled = true;

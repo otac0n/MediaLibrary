@@ -11,6 +11,74 @@ namespace MediaLibrary
     internal static class ControlHelpers
     {
         /// <summary>
+        /// Attach a <see cref="ContextMenuStrip"/> to a button.
+        /// </summary>
+        /// <param name="button">The button that will activate the context menu.</param>
+        /// <param name="menu">The context menu that the button will activate.</param>
+        /// <param name="container">The container in which to put into the component.</param>
+        public static void AttachDropDownMenu(this Button button, ContextMenuStrip menu, IContainer container)
+        {
+            IComponent component = null;
+            try
+            {
+                component = button.AttachDropDownMenu(menu);
+                container.Add(component);
+                component = null;
+            }
+            finally
+            {
+                if (component != null)
+                {
+                    component.Dispose();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Attach a <see cref="ContextMenuStrip"/> to a button.
+        /// </summary>
+        /// <param name="button">The button that will activate the context menu.</param>
+        /// <param name="menu">The context menu that the button will activate.</param>
+        /// <returns>A disposable that can be used to remove the context menu.</returns>
+        public static IComponent AttachDropDownMenu(this Button button, ContextMenuStrip menu)
+        {
+            void Click(object sender, EventArgs e) => menu.PopUnder((Control)sender);
+
+            void PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+            {
+                if (e.KeyCode == Keys.Down && e.Modifiers == Keys.None)
+                {
+                    e.IsInputKey = true;
+                }
+            }
+
+            void KeyDown(object sender, KeyEventArgs e)
+            {
+                if (e.KeyCode == Keys.Down && e.Modifiers == Keys.None)
+                {
+                    e.Handled = true;
+                    menu.PopUnder((Control)sender, focusFirstItem: true);
+                }
+            }
+
+            button.Click += Click;
+            button.PreviewKeyDown += PreviewKeyDown;
+            button.KeyDown += KeyDown;
+
+            void Dispose()
+            {
+                button.Click -= Click;
+                button.PreviewKeyDown -= PreviewKeyDown;
+                button.KeyDown -= KeyDown;
+            }
+
+            return new ActionDisposableComponent(Dispose)
+            {
+                Site = button.Site,
+            };
+        }
+
+        /// <summary>
         /// A utility to construct a control, disposing of the control if an exception is thrown before completion.
         /// </summary>
         /// <typeparam name="TControl">The type of control being constructed.</typeparam>
@@ -194,6 +262,34 @@ namespace MediaLibrary
             {
                 control.ResumeLayout();
             }
+        }
+
+        private class ActionDisposable : IDisposable
+        {
+            private readonly Action dispose;
+
+            public ActionDisposable(Action dispose)
+            {
+                this.dispose = dispose;
+            }
+
+            public event EventHandler Disposed;
+
+            public void Dispose()
+            {
+                this.dispose();
+                this.Disposed?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        private class ActionDisposableComponent : ActionDisposable, IComponent
+        {
+            public ActionDisposableComponent(Action action)
+                : base(action)
+            {
+            }
+
+            public ISite Site { get; set; }
         }
     }
 }

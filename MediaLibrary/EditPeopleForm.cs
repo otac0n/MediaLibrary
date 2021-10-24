@@ -19,6 +19,7 @@ namespace MediaLibrary
         public EditPeopleForm(IMediaIndex index)
         {
             this.InitializeComponent();
+            this.advancedButton.AttachDropDownMenu(this.advancedMenuStrip, this.components);
             this.index = index;
             this.PopulatePeopleSearchBox();
         }
@@ -80,11 +81,6 @@ namespace MediaLibrary
                     this.ExitUpdate();
                 }
             }
-        }
-
-        private void AdvancedButton_Click(object sender, EventArgs e)
-        {
-            this.advancedMenuStrip.PopUnder((Control)sender);
         }
 
         private async void AliasControl_DeleteClick(object sender, EventArgs e)

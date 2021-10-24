@@ -146,9 +146,6 @@ namespace MediaLibrary
             this.advancedButton.TabIndex = 1;
             this.advancedButton.Text = "...";
             this.advancedButton.UseVisualStyleBackColor = true;
-            this.advancedButton.Click += new System.EventHandler(this.AdvancedButton_Click);
-            this.advancedButton.KeyDown += new System.Windows.Forms.KeyEventHandler(this.AdvancedButton_KeyDown);
-            this.advancedButton.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.AdvancedButton_PreviewKeyDown);
             // 
             // advancedMenuStrip
             // 
