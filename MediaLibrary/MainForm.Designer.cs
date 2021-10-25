@@ -208,7 +208,7 @@ namespace MediaLibrary
             // 
             this.mergePeopleToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("mergePeopleToolStripMenuItem.Image")));
             this.mergePeopleToolStripMenuItem.Name = "mergePeopleToolStripMenuItem";
-            this.mergePeopleToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.mergePeopleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.mergePeopleToolStripMenuItem.Text = "Mer&ge People...";
             this.mergePeopleToolStripMenuItem.Click += new System.EventHandler(this.MergePeopleMenuItem_Click);
             // 
@@ -389,7 +389,7 @@ namespace MediaLibrary
             this.defaultMuteButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.defaultMuteButton.Name = "defaultMuteButton";
             this.defaultMuteButton.Size = new System.Drawing.Size(23, 22);
-            this.defaultMuteButton.Text = "toolStripButton1";
+            this.defaultMuteButton.Text = "Mute";
             this.defaultMuteButton.CheckedChanged += new System.EventHandler(this.DefaultMuteButton_CheckedChanged);
             // 
             // toolStripSeparator13
@@ -433,7 +433,7 @@ namespace MediaLibrary
             // 
             this.favoriteFilesMenuItem.Image = global::MediaLibrary.Properties.Resources.common_file_heart;
             this.favoriteFilesMenuItem.Name = "favoriteFilesMenuItem";
-            this.favoriteFilesMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.favoriteFilesMenuItem.Size = new System.Drawing.Size(180, 22);
             this.favoriteFilesMenuItem.Tag = "#favorite";
             this.favoriteFilesMenuItem.Text = "Files";
             this.favoriteFilesMenuItem.Click += new System.EventHandler(this.SearchBookmark_Click);
@@ -696,7 +696,7 @@ namespace MediaLibrary
             this.viewButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.viewButton.Name = "viewButton";
             this.viewButton.Size = new System.Drawing.Size(29, 22);
-            this.viewButton.Text = "toolStripDropDownButton1";
+            this.viewButton.Text = "View";
             // 
             // refreshMenuItem
             // 
@@ -899,7 +899,7 @@ namespace MediaLibrary
             this.Controls.Add(this.mainMenu);
             this.MainMenuStrip = this.mainMenu;
             this.Name = "MainForm";
-            this.Text = "MainForm";
+            this.Text = "Media Library";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
