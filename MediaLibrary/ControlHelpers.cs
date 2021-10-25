@@ -18,20 +18,9 @@ namespace MediaLibrary
         /// <param name="container">The container in which to put into the component.</param>
         public static void AttachDropDownMenu(this Button button, ContextMenuStrip menu, IContainer container)
         {
-            IComponent component = null;
-            try
-            {
-                component = button.AttachDropDownMenu(menu);
-                container.Add(component);
-                component = null;
-            }
-            finally
-            {
-                if (component != null)
-                {
-                    component.Dispose();
-                }
-            }
+            Construct(
+                () => button.AttachDropDownMenu(menu),
+                container.Add);
         }
 
         /// <summary>
@@ -79,24 +68,24 @@ namespace MediaLibrary
         }
 
         /// <summary>
-        /// A utility to construct a control, disposing of the control if an exception is thrown before completion.
+        /// A utility to construct a control or other disposable, disposing of the control if an exception is thrown before completion.
         /// </summary>
         /// <typeparam name="TControl">The type of control being constructed.</typeparam>
         /// <param name="update">The actions atomically performed after the construction of the control.</param>
         /// <returns>The constructed control.</returns>
         public static TControl Construct<TControl>(Action<TControl> update)
-            where TControl : Control, new() =>
+            where TControl : class, IDisposable, new() =>
                 Construct(() => new TControl(), update);
 
         /// <summary>
-        /// A utility to construct a control, disposing of the control if an exception is thrown before completion.
+        /// A utility to construct a control or other disposable, disposing of the control if an exception is thrown before completion.
         /// </summary>
         /// <typeparam name="TControl">The type of control being constructed.</typeparam>
-        /// <param name="update">The parameterless function to construct the control.</param>
+        /// <param name="constructor">The parameterless function to construct the control.</param>
         /// <param name="update">The actions atomically performed after the construction of the control.</param>
         /// <returns>The constructed control.</returns>
         public static TControl Construct<TControl>(Func<TControl> constructor, Action<TControl> update)
-            where TControl : Control
+            where TControl : class, IDisposable
         {
             TControl control = default;
             try
