@@ -3,6 +3,7 @@
 namespace MediaLibrary
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Drawing;
@@ -181,6 +182,64 @@ namespace MediaLibrary
             }
         }
 
+        public static void UpdateComponentsCollection<TItem>(this ToolStripItemCollection components, int start, int length, IList<TItem> items, Func<TItem, ToolStripItem> create, Action<ToolStripItem, TItem> update, Action<ToolStripItem> destroy) =>
+            components.UpdateComponentsCollection(start, length, items, create, (c, i) => true, update, destroy);
+
+        public static void UpdateComponentsCollection<TItem>(this ToolStripItemCollection components, int start, int length, IList<TItem> items, Func<TItem, ToolStripItem> create, Func<ToolStripItem, TItem, bool> canUpdate, Action<ToolStripItem, TItem> update, Action<ToolStripItem> destroy) =>
+            new ListWrapper<IComponent>(components).UpdateComponentsCollection(start, length, items, create, canUpdate, update, destroy);
+
+        public static void UpdateComponentsCollection<TItem, TComponent>(this IList<IComponent> components, int start, int length, IList<TItem> items, Func<TItem, TComponent> create, Action<TComponent, TItem> update, Action<TComponent> destroy)
+            where TComponent : IComponent =>
+                components.UpdateComponentsCollection(start, length, items, create, (c, i) => true, update, destroy);
+
+        public static void UpdateComponentsCollection<TItem, TComponent>(this IList<IComponent> components, int start, int length, IList<TItem> items, Func<TItem, TComponent> create, Func<TComponent, TItem, bool> canUpdate, Action<TComponent, TItem> update, Action<TComponent> destroy)
+            where TComponent : IComponent
+        {
+            void RemoveAndDestroy(int index, TComponent toDestroy)
+            {
+                components.RemoveAt(index);
+                destroy(toDestroy);
+                toDestroy.Dispose();
+            }
+
+            var tail = components.Count - (start + length);
+            int End() => components.Count - tail;
+
+            var write = start;
+            foreach (var item in items)
+            {
+                var updated = false;
+                if (write < End())
+                {
+                    var child = (TComponent)components[write];
+                    if (canUpdate(child, item))
+                    {
+                        update(child, item);
+                        updated = true;
+                    }
+                    else
+                    {
+                        RemoveAndDestroy(write, child);
+                    }
+                }
+
+                if (!updated)
+                {
+                    var child = create(item);
+                    update(child, item);
+                    components.Insert(write, child);
+                }
+
+                write++;
+            }
+
+            while (write < End())
+            {
+                var child = (TComponent)components[write];
+                RemoveAndDestroy(write, child);
+            }
+        }
+
         public static void UpdateControlsCollection<TItem, TControl>(this Control control, IList<TItem> items, Func<TItem, TControl> create, Action<TControl, TItem> update, Action<TControl> destroy)
             where TControl : Control
         {
@@ -279,6 +338,57 @@ namespace MediaLibrary
             }
 
             public ISite Site { get; set; }
+        }
+
+        private class ListWrapper<T> : IList<T>
+        {
+            public ListWrapper(IList source)
+            {
+                this.Source = source;
+            }
+
+            public int Count => this.Source.Count;
+
+            public bool IsReadOnly => this.Source.IsReadOnly;
+
+            public IList Source { get; }
+
+            public T this[int index]
+            {
+                get => (T)this.Source[index];
+                set => this.Source[index] = value;
+            }
+
+            public void Add(T item) => this.Source.Add(item);
+
+            public void Clear() => this.Source.Clear();
+
+            public bool Contains(T item) => this.Source.Contains(item);
+
+            public void CopyTo(T[] array, int arrayIndex) => this.Source.CopyTo(array, arrayIndex);
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                foreach (var item in this.Source)
+                {
+                    yield return (T)item;
+                }
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+            public int IndexOf(T item) => this.Source.IndexOf(item);
+
+            public void Insert(int index, T item) => this.Source.Insert(index, item);
+
+            public bool Remove(T item)
+            {
+                var before = this.Count;
+                this.Source.Remove(item);
+                return this.Count == before;
+            }
+
+            public void RemoveAt(int index) => this.Source.RemoveAt(index);
         }
     }
 }

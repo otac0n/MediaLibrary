@@ -24,6 +24,7 @@ namespace MediaLibrary
         private VirtualSearchResultsView listView;
         private PreviewControl preview;
         private int progressVersion;
+        private List<SavedSearch> savedSearches;
         private int searchVersion;
         private List<Form> selectionDialogs = new List<Form>();
 
@@ -121,56 +122,6 @@ namespace MediaLibrary
 
             this.rateAllButton.DropDownItems.Insert(this.rateAllButton.DropDownItems.Count - 2, categoryItem);
             return categoryItem;
-        }
-
-        private void AddSavedSearchMenuItem(SavedSearch savedSearch)
-        {
-            var searchItem = new ToolStripMenuItem
-            {
-                Text = savedSearch.Name,
-                Tag = savedSearch,
-            };
-
-            var editItem = new ToolStripMenuItem
-            {
-                Text = "Edit...",
-            };
-
-            var deleteItem = new ToolStripMenuItem
-            {
-                Text = "Delete...",
-            };
-
-            searchItem.Click += this.SavedSearchMenuItem_Click;
-
-            editItem.Click += async (sender, args) =>
-            {
-                using (var editSavedSearchForm = new EditSavedSearchForm(savedSearch))
-                {
-                    if (editSavedSearchForm.ShowDialog(this) == DialogResult.OK)
-                    {
-                        savedSearch = editSavedSearchForm.SavedSearch;
-                        await this.index.UpdateSavedSearch(savedSearch).ConfigureAwait(true);
-                        searchItem.Text = savedSearch.Name;
-                        searchItem.Tag = savedSearch;
-                    }
-                }
-            };
-
-            deleteItem.Click += async (sender, args) =>
-            {
-                var result = MessageBox.Show($"This will delete the saved search {savedSearch.Name} (ID: {savedSearch.SearchId}). This is a destructive operation and cannot be undone. Are you sure you want to delete this search?", "Are you sure?", MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes)
-                {
-                    await this.index.RemoveSavedSearch(savedSearch).ConfigureAwait(true);
-                    this.savedSearchesMenuItem.DropDownItems.Remove(searchItem);
-                }
-            };
-
-            searchItem.DropDownItems.AddRange(new[] { editItem, deleteItem });
-
-            this.savedSearchesSeparator.Visible = true;
-            this.savedSearchesMenuItem.DropDownItems.Add(searchItem);
         }
 
         private void AddTagsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -455,12 +406,8 @@ namespace MediaLibrary
             this.rateAllButton.Enabled = false;
             await this.index.Initialize().ConfigureAwait(true);
 
-            var savedSearches = await this.index.GetAllSavedSearches().ConfigureAwait(true);
-            foreach (var savedSearch in savedSearches.OrderBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase))
-            {
-                this.AddSavedSearchMenuItem(savedSearch);
-            }
-
+            this.savedSearches = await this.index.GetAllSavedSearches().ConfigureAwait(true);
+            this.UpdateSavedSearches();
             this.savedSearchesMenuItem.Enabled = true;
 
             foreach (var ratingCategory in await this.index.GetAllRatingCategories().ConfigureAwait(true))
@@ -618,7 +565,8 @@ namespace MediaLibrary
                 if (nameInputForm.ShowDialog(this) == DialogResult.OK)
                 {
                     var savedSearch = await this.index.AddSavedSearch(nameInputForm.SelectedName, searchText).ConfigureAwait(true);
-                    this.AddSavedSearchMenuItem(savedSearch);
+                    this.savedSearches.Add(savedSearch);
+                    this.UpdateSavedSearches();
                 }
             }
         }
@@ -689,6 +637,73 @@ namespace MediaLibrary
         private void UpdatePreview()
         {
             this.preview.PreviewItems = this.listView.SelectedResults;
+        }
+
+        private void UpdateSavedSearches()
+        {
+            this.savedSearchesSeparator.Visible = this.savedSearches.Count > 0;
+
+            var savedSearchesInOrder = this.savedSearches.OrderBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+            this.savedSearchesMenuItem.DropDownItems.UpdateComponentsCollection(
+                2,
+                this.savedSearchesMenuItem.DropDownItems.Count - 2,
+                savedSearchesInOrder,
+                savedSearch => ControlHelpers.Construct<ToolStripMenuItem>(searchItem =>
+                {
+                    searchItem.Text = savedSearch.Name;
+                    searchItem.Tag = savedSearch;
+                    searchItem.Click += this.SavedSearchMenuItem_Click;
+
+                    var editItem = new ToolStripMenuItem
+                    {
+                        Text = "Edit...",
+                    };
+
+                    var deleteItem = new ToolStripMenuItem
+                    {
+                        Text = "Delete...",
+                    };
+
+                    editItem.Click += async (sender, args) =>
+                    {
+                        var previous = (SavedSearch)searchItem.Tag;
+                        using (var editSavedSearchForm = new EditSavedSearchForm(previous))
+                        {
+                            if (editSavedSearchForm.ShowDialog(this) == DialogResult.OK)
+                            {
+                                var updated = editSavedSearchForm.SavedSearch;
+                                await this.index.UpdateSavedSearch(updated).ConfigureAwait(true);
+                                this.savedSearches.Remove(previous);
+                                this.savedSearches.Add(updated);
+                                this.UpdateSavedSearches();
+                            }
+                        }
+                    };
+
+                    deleteItem.Click += async (sender, args) =>
+                    {
+                        var previous = (SavedSearch)searchItem.Tag;
+                        var result = MessageBox.Show($"This will delete the saved search {previous.Name} (ID: {previous.SearchId}). This is a destructive operation and cannot be undone. Are you sure you want to delete this search?", "Are you sure?", MessageBoxButtons.YesNo);
+                        if (result == DialogResult.Yes)
+                        {
+                            await this.index.RemoveSavedSearch(previous).ConfigureAwait(true);
+                            this.savedSearches.Remove(previous);
+                            this.UpdateSavedSearches();
+                        }
+                    };
+
+                    searchItem.DropDownItems.AddRange(new[] { editItem, deleteItem });
+                }),
+                (searchItem, savedSearch) =>
+                {
+                    searchItem.Text = savedSearch.Name;
+                    searchItem.Tag = savedSearch;
+                },
+                searchItem =>
+                {
+                    searchItem.Click -= this.SavedSearchMenuItem_Click;
+                });
         }
     }
 }
