@@ -1197,6 +1197,7 @@ namespace MediaLibrary.Storage
                     Name text NOT NULL,
                     PRIMARY KEY (PersonId)
                 );
+                CREATE INDEX IF NOT EXISTS IX_Person_Name ON Person (Name);
 
                 CREATE TABLE IF NOT EXISTS Alias
                 (
@@ -1205,6 +1206,7 @@ namespace MediaLibrary.Storage
                     Site text NULL,
                     FOREIGN KEY (PersonId) REFERENCES Person (PersonId) ON DELETE CASCADE
                 );
+                CREATE INDEX IF NOT EXISTS IX_Alias_Name ON Alias (Name);
 
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_Alias_Site_Name ON Alias (Site, Name) WHERE Site NOT NULL;
 
