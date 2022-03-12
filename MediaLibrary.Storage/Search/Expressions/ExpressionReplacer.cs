@@ -3,6 +3,7 @@
 namespace MediaLibrary.Storage.Search.Expressions
 {
     using System;
+    using MediaLibrary.Search;
 
     public abstract class ExpressionReplacer<TResult>
     {
@@ -20,7 +21,7 @@ namespace MediaLibrary.Storage.Search.Expressions
 
         public abstract TResult Replace(HashExpression expression);
 
-        public abstract TResult Replace(NoPeopleExpression expression);
+        public virtual TResult Replace(NoPeopleExpression expression) => this.Replace(new PeopleCountExpression(FieldTerm.EqualsOperator, 0));
 
         public abstract TResult Replace(PeopleCountExpression expression);
 
