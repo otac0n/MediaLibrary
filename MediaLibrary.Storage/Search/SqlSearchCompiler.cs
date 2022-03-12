@@ -167,6 +167,8 @@ namespace MediaLibrary.Storage.Search
 
         private class SqlReplacer : ExpressionReplacer<string>
         {
+            private string indent = string.Empty;
+
             public bool JoinCopies { get; private set; }
 
             public bool JoinDetails { get; private set; }
@@ -250,18 +252,35 @@ namespace MediaLibrary.Storage.Search
                 return Like(expr, literal, escape);
             }
 
+            public override string Replace(Expression expression)
+            {
+                var previousIndent = this.indent;
+                try
+                {
+                    return base.Replace(expression);
+                }
+                finally
+                {
+                    this.indent = previousIndent;
+                }
+            }
+
             /// <inheritdoc/>
             public override string Replace(ConjunctionExpression expression)
             {
+                var previousIndent = this.indent;
+                this.indent = this.indent + "  ";
+
                 var sb = new StringBuilder()
-                    .Append("(");
+                    .Append(previousIndent)
+                    .AppendLine("(");
 
                 var first = true;
                 foreach (var term in expression.Expressions)
                 {
                     if (!first)
                     {
-                        sb.Append(") AND (");
+                        sb.Append(previousIndent).AppendLine(") AND (");
                     }
 
                     sb.Append(this.Replace(term));
@@ -270,24 +289,28 @@ namespace MediaLibrary.Storage.Search
 
                 if (first)
                 {
-                    sb.Append("1 = 1");
+                    sb.Append(this.indent).AppendLine("1 = 1");
                 }
 
-                return sb.Append(")").ToString();
+                return sb.Append(previousIndent).AppendLine(")").ToString();
             }
 
             /// <inheritdoc/>
             public override string Replace(DisjunctionExpression expression)
             {
+                var previousIndent = this.indent;
+                this.indent = this.indent + "  ";
+
                 var sb = new StringBuilder()
-                    .Append("(");
+                    .Append(previousIndent)
+                    .AppendLine("(");
 
                 var first = true;
                 foreach (var term in expression.Expressions)
                 {
                     if (!first)
                     {
-                        sb.Append(") OR (");
+                        sb.Append(previousIndent).AppendLine(") OR (");
                     }
 
                     sb.Append(this.Replace(term));
@@ -296,95 +319,101 @@ namespace MediaLibrary.Storage.Search
 
                 if (first)
                 {
-                    sb.Append("1 = 0");
+                    sb.Append(this.indent).AppendLine("1 = 0");
                 }
 
-                return sb.Append(")").ToString();
+                return sb.Append(previousIndent).AppendLine(")").ToString();
             }
 
             /// <inheritdoc/>
             public override string Replace(NegationExpression expression)
             {
-                return $"NOT ({this.Replace(expression.Expression)})";
+                var previousIndent = this.indent;
+                this.indent = this.indent + "  ";
+
+                var sb = new StringBuilder()
+                    .Append(previousIndent)
+                    .AppendLine("NOT (");
+
+                sb.Append(this.Replace(expression.Expression));
+
+                return sb.Append(previousIndent).AppendLine(")").ToString();
             }
 
             public override string Replace(CopiesExpression expression)
             {
                 this.JoinCopies = true;
-                return $"COALESCE(c.Copies, 0) {ConvertOperator(expression.Operator)} {expression.Copies}";
+                return $"{this.indent}COALESCE(c.Copies, 0) {ConvertOperator(expression.Operator)} {expression.Copies}{Environment.NewLine}";
             }
 
             /// <inheritdoc/>
             public override string Replace(DetailsExpression expression)
             {
                 this.JoinDetails = true;
-                return $"d.{EscapeName(expression.DetailsField)} {ConvertOperator(expression.Operator)} {Literal(expression.Value)}";
+                return $"{this.indent}d.{EscapeName(expression.DetailsField)} IS NOT NULL AND d.{EscapeName(expression.DetailsField)} {ConvertOperator(expression.Operator)} {Literal(expression.Value)}{Environment.NewLine}";
             }
 
             /// <inheritdoc/>
-            public override string Replace(FileSizeExpression expression) => $"FileSize {ConvertOperator(expression.Operator)} {expression.FileSize}";
+            public override string Replace(FileSizeExpression expression) => $"{this.indent}FileSize {ConvertOperator(expression.Operator)} {expression.FileSize}{Environment.NewLine}";
 
             /// <inheritdoc/>
-            public override string Replace(HashExpression expression) => $"Hash {ConvertOperator(expression.Operator)} {Literal(expression.Value)}";
+            public override string Replace(HashExpression expression) => $"{this.indent}Hash {ConvertOperator(expression.Operator)} {Literal(expression.Value)}{Environment.NewLine}";
 
             /// <inheritdoc/>
             public override string Replace(PeopleCountExpression expression)
             {
                 this.JoinPersonCount = true;
-                return $"COALESCE(pc.PersonCount, 0) {ConvertOperator(expression.Operator)} {expression.PeopleCount}";
+                return $"{this.indent}COALESCE(pc.PersonCount, 0) {ConvertOperator(expression.Operator)} {expression.PeopleCount}{Environment.NewLine}";
             }
 
             /// <inheritdoc/>
-            public override string Replace(NoPeopleExpression expression) => this.Replace(new PeopleCountExpression(FieldTerm.EqualsOperator, 0));
+            public override string Replace(PersonIdExpression expression) => $"{this.indent}EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash AND p.PersonId = {expression.PersonId}){Environment.NewLine}";
 
             /// <inheritdoc/>
-            public override string Replace(PersonIdExpression expression) => $"EXISTS (SELECT 1 FROM HashPerson p WHERE h.Hash = p.Hash AND p.PersonId = {expression.PersonId})";
-
-            /// <inheritdoc/>
-            public override string Replace(PersonNameExpression expression) => $"EXISTS (SELECT 1 FROM HashPerson hp INNER JOIN Names p ON hp.PersonId = p.PersonId WHERE h.Hash = hp.Hash AND {Contains("p.Name", expression.Value)})";
+            public override string Replace(PersonNameExpression expression) => $"{this.indent}EXISTS (SELECT 1 FROM HashPerson hp INNER JOIN Names p ON hp.PersonId = p.PersonId WHERE h.Hash = hp.Hash AND {Contains("p.Name", expression.Value)}){Environment.NewLine}";
 
             /// <inheritdoc/>
             public override string Replace(RatingExpression expression)
             {
                 this.JoinRatings = true;
-                return $"COALESCE(s.Value, {Storage.Rating.DefaultRating}) {ConvertOperator(expression.Operator)} {expression.Rating}";
+                return $"{this.indent}COALESCE(s.Value, {Storage.Rating.DefaultRating}) {ConvertOperator(expression.Operator)} {expression.Rating}{Environment.NewLine}";
             }
 
             /// <inheritdoc/>
             public override string Replace(RatingsCountExpression expression)
             {
                 this.JoinRatings = true;
-                return $"COALESCE(s.Count, 0) {ConvertOperator(expression.Operator)} {expression.RatingsCount}";
+                return $"{this.indent}COALESCE(s.Count, 0) {ConvertOperator(expression.Operator)} {expression.RatingsCount}{Environment.NewLine}";
             }
 
             /// <inheritdoc/>
-            public override string Replace(RejectedTagExpression expression) => $"EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))}))";
+            public override string Replace(RejectedTagExpression expression) => $"{this.indent}EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
 
             /// <inheritdoc/>
             public override string Replace(StarsExpression expression)
             {
                 this.JoinRatings = true;
-                return $"COALESCE(s.Stars, 3) {ConvertOperator(expression.Operator)} {expression.Stars}";
+                return $"{this.indent}COALESCE(s.Stars, 3) {ConvertOperator(expression.Operator)} {expression.Stars}{Environment.NewLine}";
             }
 
             /// <inheritdoc/>
-            public override string Replace(TagExpression expression) => $"EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))}))";
+            public override string Replace(TagExpression expression) => $"{this.indent}EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
 
             /// <inheritdoc/>
             public override string Replace(TagCountExpression expression)
             {
                 this.JoinTagCount = true;
-                return $"COALESCE(tc.TagCount, 0) {ConvertOperator(expression.Operator)} {expression.TagCount}";
+                return $"{this.indent}COALESCE(tc.TagCount, 0) {ConvertOperator(expression.Operator)} {expression.TagCount}{Environment.NewLine}";
             }
 
             /// <inheritdoc/>
-            public override string Replace(TextExpression expression) => $"EXISTS (SELECT 1 FROM Paths WHERE LastHash = h.Hash AND MissingSince IS NULL AND {Contains("Path", expression.Value)})";
+            public override string Replace(TextExpression expression) => $"{this.indent}EXISTS (SELECT 1 FROM Paths WHERE LastHash = h.Hash AND MissingSince IS NULL AND {Contains("Path", expression.Value)}){Environment.NewLine}";
 
             /// <inheritdoc/>
-            public override string Replace(TypeEqualsExpression expression) => $"FileType = {Literal(expression.Value)}";
+            public override string Replace(TypeEqualsExpression expression) => $"{this.indent}FileType = {Literal(expression.Value)}{Environment.NewLine}";
 
             /// <inheritdoc/>
-            public override string Replace(TypePrefixExpression expression) => StartsWith("FileType", expression.Value);
+            public override string Replace(TypePrefixExpression expression) => $"{this.indent}{StartsWith("FileType", expression.Value)}{Environment.NewLine}";
         }
     }
 }
