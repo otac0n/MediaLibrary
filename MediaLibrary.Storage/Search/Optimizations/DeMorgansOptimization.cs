@@ -10,9 +10,9 @@ namespace MediaLibrary.Storage.Search.Optimizations
     {
         public override Expression Replace(DisjunctionExpression expression)
         {
-            if (expression.Expressions.Count > 0 && expression.Expressions.All(e => e is NegationExpression))
+            if (expression.Expressions.Count > 0 && expression.Expressions.Count(e => e is NegationExpression) >= (expression.Expressions.Count))
             {
-                var inners = expression.Expressions.Cast<NegationExpression>().Select(n => this.Replace(n.Expression)).ToImmutableList();
+                var inners = expression.Expressions.Select(e => e is NegationExpression negation ? this.Replace(negation.Expression) : new NegationExpression(this.Replace(e))).ToImmutableList();
 
                 return new NegationExpression(new ConjunctionExpression(inners));
             }
@@ -22,9 +22,9 @@ namespace MediaLibrary.Storage.Search.Optimizations
 
         public override Expression Replace(ConjunctionExpression expression)
         {
-            if (expression.Expressions.Count > 0 && expression.Expressions.All(e => e is NegationExpression))
+            if (expression.Expressions.Count > 0 && expression.Expressions.Count(e => e is NegationExpression) >= (expression.Expressions.Count))
             {
-                var inners = expression.Expressions.Cast<NegationExpression>().Select(n => this.Replace(n.Expression)).ToImmutableList();
+                var inners = expression.Expressions.Select(e => e is NegationExpression negation ? this.Replace(negation.Expression) : new NegationExpression(this.Replace(e))).ToImmutableList();
 
                 return new NegationExpression(new DisjunctionExpression(inners));
             }
