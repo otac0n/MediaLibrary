@@ -870,14 +870,24 @@ namespace MediaLibrary.Storage
 
         private Task RescanIndexedPath(string path, bool forceRehash = false)
         {
-            this.StartFileScanTask();
             return Task.Run(async () =>
             {
+                var started = false;
                 var seen = new HashSet<string>();
+                void Scan(int attempt, string file, FilePath filePath, HashInfo hashInfo, bool? hasDetails)
+                {
+                    this.fileChangeQueue.Enqueue((0, file, filePath, hashInfo, hasDetails, forceRehash));
+                    if (!started)
+                    {
+                        this.StartFileScanTask();
+                        started = true;
+                    }
+                }
+
                 foreach (var (filePath, hashInfo, hasDetails) in await this.GetIndexInfoUnder(path).ConfigureAwait(false))
                 {
                     seen.Add(filePath.Path);
-                    this.fileChangeQueue.Enqueue((0, filePath.Path, filePath, hashInfo, hasDetails, forceRehash));
+                    Scan(0, filePath.Path, filePath, hashInfo, hasDetails);
                 }
 
                 try
@@ -886,7 +896,7 @@ namespace MediaLibrary.Storage
                     {
                         if (seen.Add(file))
                         {
-                            this.fileChangeQueue.Enqueue((0, file, null, null, null, forceRehash));
+                            Scan(0, file, null, null, null);
                         }
                     }
                 }
