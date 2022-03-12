@@ -5,6 +5,7 @@ namespace MediaLibrary.Storage
     public class Rating : IComparable<Rating>
     {
         public static readonly double DefaultRating = 1500;
+        public static readonly double RatingScale = 400.0;
 
         public Rating(string hash, string category, double value, long count)
         {
@@ -53,7 +54,7 @@ namespace MediaLibrary.Storage
         }
 
         public static double GetExpectedScore(double leftValue, double rightValue) =>
-            1.0 / (1.0 + Math.Pow(10.0, (leftValue - rightValue) / 400.0));
+            1.0 / (1.0 + Math.Pow(10.0, (leftValue - rightValue) / Rating.RatingScale));
 
         public static double GetExpectedScore(Rating left, Rating right) =>
             Rating.GetExpectedScore(
