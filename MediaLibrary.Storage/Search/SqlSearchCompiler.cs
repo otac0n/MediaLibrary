@@ -7,6 +7,7 @@ namespace MediaLibrary.Storage.Search
     using System.Text;
     using MediaLibrary.Search;
     using MediaLibrary.Storage.Search.Expressions;
+    using MediaLibrary.Storage.Search.Optimizations;
     using TaggingLibrary;
     using static MediaLibrary.Storage.Search.QueryBuilder;
 
@@ -27,7 +28,9 @@ namespace MediaLibrary.Storage.Search
             var fetchDetails = true;
             var fetchAny = fetchTags || fetchPaths || fetchPeople || fetchRatings || fetchDetails;
 
+            var selectivityOptimization = new SelectivityOrderOptimization();
             var replacer = new SqlReplacer();
+            expression = selectivityOptimization.Replace(expression);
             var filter = replacer.Replace(expression);
 
             var sb = new StringBuilder();
