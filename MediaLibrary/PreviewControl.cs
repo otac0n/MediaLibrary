@@ -13,12 +13,88 @@ namespace MediaLibrary
     using MediaLibrary.Properties;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
+    using MediaPlayer = AxWMPLib.AxWindowsMediaPlayer;
 
     public partial class PreviewControl : UserControl
     {
-        private SearchResult displayedItem;
+        private static readonly Display[] MediaDisplays =
+        {
+            new Display(
+                canShow: items => items.Count == 1 && IsImage(items[0]),
+                create: (items, parent) => new ImagePreviewControl { Dock = DockStyle.Fill, Visible = false },
+                update: (items, control) =>
+                {
+                    var thumbnail = (ImagePreviewControl)control;
+                    var url = items.Count == 1 ? FirstExistingPath(items[0]) : null;
+                    var previous = thumbnail.Image;
+                    thumbnail.Image = url == null ? null : Image.FromFile(url);
+                    thumbnail.Visible = url != null;
+                    previous?.Dispose();
+                }),
+            new Display(
+                canShow: items => items.Count == 1 && !IsImage(items[0]),
+                create: (items, parent) =>
+                {
+                    var player = new MediaPlayer();
+                    player.BeginInit();
+                    player.Dock = DockStyle.Fill;
+                    player.Visible = false;
+                    player.PlayStateChange += (object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e) =>
+                    {
+                        switch (player.playState)
+                        {
+                            case WMPLib.WMPPlayState.wmppsStopped:
+                                parent.Stopped?.Invoke(parent, new EventArgs());
+                                break;
+
+                            case WMPLib.WMPPlayState.wmppsPaused:
+                                parent.Paused?.Invoke(parent, new EventArgs());
+                                break;
+
+                            case WMPLib.WMPPlayState.wmppsPlaying:
+                                parent.Playing?.Invoke(parent, new EventArgs());
+                                break;
+
+                            case WMPLib.WMPPlayState.wmppsScanForward:
+                                parent.ScannedForward?.Invoke(parent, new EventArgs());
+                                break;
+
+                            case WMPLib.WMPPlayState.wmppsScanReverse:
+                                parent.ScannedBackward?.Invoke(parent, new EventArgs());
+                                break;
+
+                            case WMPLib.WMPPlayState.wmppsMediaEnded:
+                                parent.Finished?.Invoke(parent, new EventArgs());
+                                break;
+                        }
+                    };
+                    player.EndInit();
+                    return player;
+                },
+                update: (items, control) =>
+                {
+                    var player = (MediaPlayer)control;
+                    var wasVisible = player.Visible;
+                    var url = items.Count == 1 ? FirstExistingPath(items[0]) : null;
+                    player.Visible = url != null;
+                    player.URL = url;
+                    if (player.Visible && !wasVisible)
+                    {
+                        player.Dock = DockStyle.None;
+                        player.Dock = DockStyle.Fill;
+                        player.uiMode = "full";
+                        player.enableContextMenu = false;
+                        player.stretchToFit = true;
+                        player.settings.mute = Settings.Default.DefaultMute;
+                    }
+                }),
+        };
+
+        private readonly Control[] displayInstances = new Control[MediaDisplays.Length];
+
         private SearchResultsVectors existingTags;
-        private ImmutableList<SearchResult> previewItems;
+
+        private ImmutableList<SearchResult> previewItems = ImmutableList<SearchResult>.Empty;
 
         public PreviewControl(IMediaIndex index)
         {
@@ -29,8 +105,6 @@ namespace MediaLibrary
             this.existingTags.Name = "existingTags";
             this.existingTags.TabIndex = 2;
             this.Controls.Add(this.existingTags);
-
-            this.ResetMediaPlayer();
         }
 
         public event EventHandler Finished;
@@ -57,6 +131,12 @@ namespace MediaLibrary
             }
         }
 
+        public static string FirstExistingPath(SearchResult searchResult) =>
+            (from p in searchResult.Paths
+             let path = PathEncoder.ExtendPath(p)
+             where File.Exists(path)
+             select path).FirstOrDefault();
+
         public static bool IsImage(SearchResult searchResult) =>
             searchResult != null && FileTypeHelper.IsImage(searchResult.FileType);
 
@@ -66,90 +146,54 @@ namespace MediaLibrary
             base.OnVisibleChanged(e);
         }
 
-        private void MediaPlayer_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
-        {
-            switch (this.mediaPlayer.playState)
-            {
-                case WMPLib.WMPPlayState.wmppsStopped:
-                    this.Stopped?.Invoke(this, new EventArgs());
-                    break;
-
-                case WMPLib.WMPPlayState.wmppsPaused:
-                    this.Paused?.Invoke(this, new EventArgs());
-                    break;
-
-                case WMPLib.WMPPlayState.wmppsPlaying:
-                    this.Playing?.Invoke(this, new EventArgs());
-                    break;
-
-                case WMPLib.WMPPlayState.wmppsScanForward:
-                    this.ScannedForward?.Invoke(this, new EventArgs());
-                    break;
-
-                case WMPLib.WMPPlayState.wmppsScanReverse:
-                    this.ScannedBackward?.Invoke(this, new EventArgs());
-                    break;
-
-                case WMPLib.WMPPlayState.wmppsMediaEnded:
-                    this.Finished?.Invoke(this, new EventArgs());
-                    break;
-            }
-        }
-
-        private void ResetMediaPlayer()
-        {
-            this.mediaPlayer.uiMode = "full";
-            this.mediaPlayer.enableContextMenu = false;
-            this.mediaPlayer.stretchToFit = true;
-            this.mediaPlayer.settings.mute = Settings.Default.DefaultMute;
-        }
-
-        private void UpdateMediaPlayerUrl(string url)
-        {
-            this.mediaPlayer.URL = url;
-            var wasVisible = this.mediaPlayer.Visible;
-            this.mediaPlayer.Visible = url != null;
-            if (this.mediaPlayer.Visible && !wasVisible)
-            {
-                this.mediaPlayer.Dock = DockStyle.None;
-                this.mediaPlayer.Dock = DockStyle.Fill;
-                this.ResetMediaPlayer();
-            }
-        }
-
         private void UpdatePreview()
         {
-            this.existingTags.SearchResults = this.previewItems;
-            var item = this.previewItems?.Count == 1 ? this.previewItems.Single() : null;
-            var displayedItem = this.Visible ? item : null;
-            if (!object.ReferenceEquals(displayedItem, this.displayedItem))
+            var empty = ImmutableList<SearchResult>.Empty;
+            var items = this.Visible ? this.previewItems : empty;
+            this.existingTags.SearchResults = items;
+
+            var selected = -1;
+            for (var i = 0; i < PreviewControl.MediaDisplays.Length; i++)
             {
-                this.displayedItem = displayedItem;
-                var url = displayedItem == null
-                    ? null
-                    : (from p in displayedItem.Paths
-                       let path = PathEncoder.ExtendPath(p)
-                       where File.Exists(path)
-                       select path).FirstOrDefault();
-                if (url == null || IsImage(item))
+                var display = PreviewControl.MediaDisplays[i];
+                var instance = this.displayInstances[i];
+                if (selected < 0 && display.CanShow(items))
                 {
-                    this.UpdateMediaPlayerUrl(null);
-                    this.UpdateThumbnailUrl(url);
+                    if (instance == null)
+                    {
+                        this.Controls.Add(instance = this.displayInstances[i] = display.Create(items, this));
+                        instance.TabIndex = 0;
+                        instance.BringToFront();
+                    }
+
+                    selected = i;
                 }
-                else
+                else if (instance != null)
                 {
-                    this.UpdateThumbnailUrl(null);
-                    this.UpdateMediaPlayerUrl(url);
+                    display.Update(empty, instance);
                 }
+            }
+
+            if (selected >= 0)
+            {
+                PreviewControl.MediaDisplays[selected].Update(items, this.displayInstances[selected]);
             }
         }
 
-        private void UpdateThumbnailUrl(string url)
+        private class Display
         {
-            var previous = this.thumbnail.Image;
-            this.thumbnail.Image = url == null ? null : Image.FromFile(url);
-            this.thumbnail.Visible = url != null;
-            previous?.Dispose();
+            public Display(Predicate<IList<SearchResult>> canShow, Func<IList<SearchResult>, PreviewControl, Control> create, Action<IList<SearchResult>, Control> update)
+            {
+                this.CanShow = canShow ?? throw new ArgumentNullException(nameof(canShow));
+                this.Create = create ?? throw new ArgumentNullException(nameof(create));
+                this.Update = update ?? throw new ArgumentNullException(nameof(update));
+            }
+
+            public Predicate<IList<SearchResult>> CanShow { get; }
+
+            public Func<IList<SearchResult>, PreviewControl, Control> Create { get; }
+
+            public Action<IList<SearchResult>, Control> Update { get; }
         }
     }
 }

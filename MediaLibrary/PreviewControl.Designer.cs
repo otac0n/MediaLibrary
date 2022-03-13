@@ -28,49 +28,17 @@ namespace MediaLibrary
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PreviewControl));
-            this.thumbnail = new MediaLibrary.ImagePreviewControl();
-            this.mediaPlayer = new AxWMPLib.AxWindowsMediaPlayer();
-            ((System.ComponentModel.ISupportInitialize)(this.mediaPlayer)).BeginInit();
             this.SuspendLayout();
-            // 
-            // thumbnail
-            // 
-            this.thumbnail.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.thumbnail.Location = new System.Drawing.Point(0, 0);
-            this.thumbnail.Name = "thumbnail";
-            this.thumbnail.Size = new System.Drawing.Size(150, 150);
-            this.thumbnail.TabIndex = 0;
-            this.thumbnail.TabStop = false;
-            // 
-            // mediaPlayer
-            // 
-            this.mediaPlayer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.mediaPlayer.Enabled = true;
-            this.mediaPlayer.Location = new System.Drawing.Point(0, 0);
-            this.mediaPlayer.Name = "mediaPlayer";
-            this.mediaPlayer.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("mediaPlayer.OcxState")));
-            this.mediaPlayer.Size = new System.Drawing.Size(150, 150);
-            this.mediaPlayer.TabIndex = 1;
-            this.mediaPlayer.Visible = false;
-            this.mediaPlayer.PlayStateChange += new AxWMPLib._WMPOCXEvents_PlayStateChangeEventHandler(this.MediaPlayer_PlayStateChange);
             // 
             // PreviewControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.mediaPlayer);
-            this.Controls.Add(this.thumbnail);
             this.Name = "PreviewControl";
-            ((System.ComponentModel.ISupportInitialize)(this.mediaPlayer)).EndInit();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
-
-        private MediaLibrary.ImagePreviewControl thumbnail;
-        private AxWMPLib.AxWindowsMediaPlayer mediaPlayer;
     }
 }
