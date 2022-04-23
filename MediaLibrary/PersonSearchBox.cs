@@ -4,7 +4,6 @@ namespace MediaLibrary
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.Linq;
     using System.Text.RegularExpressions;
     using MediaLibrary.Storage;
@@ -48,22 +47,26 @@ namespace MediaLibrary
                 .Select(p =>
                 {
                     var nameTerms = this.ToTerms(p.Name);
-                    var aliasTerms = p.Aliases.ToDictionary(a => a, a => this.ToTerms(a.Name));
-                    var allTerms = Enumerable.Aggregate(p.Aliases, nameTerms.ToImmutableHashSet(Comparer), (terms, alias) => terms.Union(aliasTerms[alias]));
-
-                    return new { Person = p, NameTerms = nameTerms, AliasTerms = aliasTerms, AllTerms = allTerms };
+                    return new
+                    {
+                        Person = p,
+                        NameTerms = nameTerms,
+                        NameScore = Score(searchTerms, nameTerms, Comparison),
+                        Aliases = p.Aliases.ToDictionary(a => a, a =>
+                        {
+                            var aliasTerms = this.ToTerms(a.Name);
+                            return new
+                            {
+                                AliasTerms = aliasTerms,
+                                AliasScore = Score(searchTerms, aliasTerms, Comparison),
+                            };
+                        }),
+                    };
                 })
                 .OrderByDescending(p => p.NameTerms.SetEquals(searchTerms))
-                .ThenByDescending(p => p.AliasTerms.Values.Any(a => a.SetEquals(searchTerms)))
-                .ThenByDescending(p => p.NameTerms.IsSupersetOf(searchTerms))
-                .ThenByDescending(p => p.AliasTerms.Values.Any(a => a.IsSupersetOf(searchTerms)))
-                .ThenByDescending(p => p.AllTerms.IsSupersetOf(searchTerms))
-                .ThenByDescending(p => Math.Max(
-                    p.AllTerms.Count(n => searchTerms.Contains(n)),
-                    searchTerms.Count(n => p.AllTerms.Contains(n))))
-                .ThenByDescending(p => Math.Max(
-                    p.AllTerms.Count(n => searchTerms.Any(t => t.IndexOf(n, Comparison) >= 0)),
-                    searchTerms.Count(n => p.AllTerms.Any(t => t.IndexOf(n, Comparison) >= 0))))
+                .ThenByDescending(p => p.Aliases.Values.Any(a => a.AliasTerms.SetEquals(searchTerms)))
+                .ThenByDescending(p => new[] { p.NameScore }.Concat(p.Aliases.Values.Select(a => a.AliasScore)).Max())
+                .ThenByDescending(p => p.NameScore)
                 .ThenBy(p => p.Person.Name, Comparer)
                 .Select(p => p.Person)
                 .ToList();

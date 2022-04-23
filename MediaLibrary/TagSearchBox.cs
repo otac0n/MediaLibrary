@@ -54,22 +54,26 @@ namespace MediaLibrary
                 .Select(t =>
                 {
                     var tagTerms = this.ToTerms(t.Tag);
-                    var aliasTerms = t.Aliases.ToDictionary(a => a, a => this.ToTerms(a));
-                    var allTerms = Enumerable.Aggregate(t.Aliases, tagTerms.ToImmutableHashSet(Comparer), (terms, alias) => terms.Union(aliasTerms[alias]));
-
-                    return new { TagInfo = t, TagTerms = tagTerms, AliasTerms = aliasTerms, AllTerms = allTerms };
+                    return new
+                    {
+                        TagInfo = t,
+                        TagTerms = tagTerms,
+                        TagScore = Score(searchTerms, tagTerms, Comparison),
+                        Aliases = t.Aliases.ToDictionary(a => a, a =>
+                        {
+                            var aliasTerms = this.ToTerms(a);
+                            return new
+                            {
+                                AliasTerms = aliasTerms,
+                                AliasScore = Score(searchTerms, aliasTerms, Comparison),
+                            };
+                        }),
+                    };
                 })
                 .OrderByDescending(t => t.TagTerms.SetEquals(searchTerms))
-                .ThenByDescending(t => t.AliasTerms.Values.Any(a => a.SetEquals(searchTerms)))
-                .ThenByDescending(t => t.TagTerms.IsSupersetOf(searchTerms))
-                .ThenByDescending(t => t.AliasTerms.Values.Any(a => a.IsSupersetOf(searchTerms)))
-                .ThenByDescending(t => t.AllTerms.IsSupersetOf(searchTerms))
-                .ThenByDescending(t => Math.Max(
-                    t.AllTerms.Count(n => searchTerms.Contains(n)),
-                    searchTerms.Count(n => t.AllTerms.Contains(n))))
-                .ThenByDescending(t => Math.Max(
-                    t.AllTerms.Count(n => searchTerms.Any(s => s.IndexOf(n, Comparison) >= 0)),
-                    searchTerms.Count(n => t.AllTerms.Any(s => s.IndexOf(n, Comparison) >= 0))))
+                .ThenByDescending(t => t.Aliases.Values.Any(a => a.AliasTerms.SetEquals(searchTerms)))
+                .ThenByDescending(t => new[] { t.TagScore }.Concat(t.Aliases.Values.Select(a => a.AliasScore)).Max())
+                .ThenByDescending(t => t.TagScore)
                 .ThenBy(t => t.TagInfo.Tag, Comparer)
                 .Select(t => t.TagInfo)
                 .ToList();

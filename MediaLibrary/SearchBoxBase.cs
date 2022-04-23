@@ -195,7 +195,38 @@ namespace MediaLibrary
             }
         }
 
-        protected sealed override void OnDrawItem(DrawItemEventArgs e)
+        protected static (int match, int starts, int contains) Score(HashSet<string> search, HashSet<string> subject, StringComparison comparison)
+        {
+            var match = 0;
+            var starts = 0;
+            var contains = 0;
+            foreach (var term in search)
+            {
+                if (subject.Contains(term))
+                {
+                    match++;
+                }
+                else
+                {
+                    var index = (from s in subject
+                                 let ix = s.IndexOf(term, comparison)
+                                 where ix >= 0
+                                 select (int?)ix).Min();
+                    if (index == 0)
+                    {
+                        starts++;
+                    }
+                    else
+                    {
+                        contains++;
+                    }
+                }
+            }
+
+            return (match, starts, contains);
+        }
+
+        protected override sealed void OnDrawItem(DrawItemEventArgs e)
         {
             e.DrawBackground();
             var item = (TItem)base.Items[e.Index];
@@ -259,7 +290,7 @@ namespace MediaLibrary
             base.OnKeyPress(e);
         }
 
-        protected sealed override void OnMeasureItem(MeasureItemEventArgs e)
+        protected override sealed void OnMeasureItem(MeasureItemEventArgs e)
         {
             var baseFont = this.Font;
             var item = (TItem)base.Items[e.Index];
