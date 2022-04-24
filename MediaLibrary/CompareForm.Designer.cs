@@ -33,7 +33,6 @@ namespace MediaLibrary
             this.skipButton = new System.Windows.Forms.Button();
             this.controlLayoutTable = new System.Windows.Forms.TableLayoutPanel();
             this.ratingBar = new System.Windows.Forms.TrackBar();
-            this.previewTable.SuspendLayout();
             this.controlLayoutTable.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ratingBar)).BeginInit();
             this.SuspendLayout();
@@ -50,7 +49,7 @@ namespace MediaLibrary
             this.previewTable.RowCount = 1;
             this.previewTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.previewTable.Size = new System.Drawing.Size(800, 370);
-            this.previewTable.TabIndex = 3;
+            this.previewTable.TabIndex = 0;
             // 
             // rateButton
             // 
@@ -95,17 +94,17 @@ namespace MediaLibrary
             this.controlLayoutTable.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.controlLayoutTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.controlLayoutTable.Size = new System.Drawing.Size(800, 80);
-            this.controlLayoutTable.TabIndex = 4;
+            this.controlLayoutTable.TabIndex = 0;
             // 
             // ratingBar
             // 
             this.controlLayoutTable.SetColumnSpan(this.ratingBar, 2);
-            this.ratingBar.LargeChange = 200;
+            this.ratingBar.LargeChange = 50;
             this.ratingBar.Location = new System.Drawing.Point(228, 3);
             this.ratingBar.Maximum = 1000;
             this.ratingBar.Name = "ratingBar";
             this.ratingBar.Size = new System.Drawing.Size(344, 45);
-            this.ratingBar.SmallChange = 100;
+            this.ratingBar.SmallChange = 20;
             this.ratingBar.TabIndex = 0;
             this.ratingBar.TickFrequency = 0;
             this.ratingBar.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -121,7 +120,6 @@ namespace MediaLibrary
             this.Controls.Add(this.controlLayoutTable);
             this.Name = "CompareForm";
             this.Text = "CompareForm";
-            this.previewTable.ResumeLayout(false);
             this.controlLayoutTable.ResumeLayout(false);
             this.controlLayoutTable.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ratingBar)).EndInit();

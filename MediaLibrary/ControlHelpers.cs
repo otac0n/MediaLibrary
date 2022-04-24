@@ -182,6 +182,34 @@ namespace MediaLibrary
             }
         }
 
+        /// <summary>
+        /// Improve the click behavior of the <see cref="TrackBar"/> control to seek to the clicked location.
+        /// </summary>
+        /// <returns>A disposable which will remove the behavior.</returns>
+        public static IComponent SeekOnClick(this TrackBar trackBar)
+        {
+            void MouseDown(object sender, MouseEventArgs e)
+            {
+                if (e.Button == MouseButtons.Left && e.Clicks == 1)
+                {
+                    var loc = e.Location;
+                    trackBar.Value = (int)Math.Round(((float)loc.X / trackBar.Width) * (trackBar.Maximum - trackBar.Minimum) + trackBar.Minimum);
+                }
+            }
+
+            trackBar.MouseDown += MouseDown;
+
+            void Dispose()
+            {
+                trackBar.MouseDown -= MouseDown;
+            }
+
+            return new ActionDisposableComponent(Dispose)
+            {
+                Site = trackBar.Site,
+            };
+        }
+
         public static void UpdateComponentsCollection<TItem>(this ToolStripItemCollection components, int start, int length, IList<TItem> items, Func<TItem, ToolStripItem> create, Action<ToolStripItem, TItem> update, Action<ToolStripItem> destroy) =>
             components.UpdateComponentsCollection(start, length, items, create, (c, i) => true, update, destroy);
 

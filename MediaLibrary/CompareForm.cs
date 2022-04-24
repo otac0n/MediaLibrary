@@ -30,6 +30,7 @@ namespace MediaLibrary
             this.random = new Random();
 
             this.InitializeComponent();
+            this.ratingBar.SeekOnClick();
 
             this.leftPreview = new PreviewControl(index)
             {
