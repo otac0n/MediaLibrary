@@ -229,7 +229,7 @@ namespace MediaLibrary
             this.SetRunning(true);
 
             var anyRemoved = false;
-            var allGroups = this.resultModels.Values.ToList();
+            var allGroups = this.resultModels.Values.OrderByDescending(rm => rm.SearchResult.FileSize).ToList();
             for (var g = 0; g < allGroups.Count; g++)
             {
                 if (this.cancel.IsCancellationRequested)
