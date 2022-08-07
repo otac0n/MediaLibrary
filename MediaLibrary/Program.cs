@@ -3,6 +3,7 @@
 namespace MediaLibrary
 {
     using System;
+    using System.Diagnostics;
     using System.IO;
     using System.Windows.Forms;
     using CommandLine;
@@ -34,6 +35,9 @@ namespace MediaLibrary
             var startup = new Startup(index);
             using (WebApp.Start(options.BaseUri, startup.Configuration))
             {
+                Trace.Listeners.Remove("HostingTraceListener");
+                Debug.Listeners.Remove("HostingTraceListener");
+
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new MainForm(index));
