@@ -242,7 +242,7 @@ namespace MediaLibrary
             {
                 var font = highlight == Highlighting.Highlighted ? this.highlightFont : e.Font;
                 var color = !selected && highlight == Highlighting.Subdued ? SystemColors.GrayText : baseColor;
-                TextRenderer.DrawText(e.Graphics, text, font, bounds, color, format);
+                TextRenderer.DrawText(e.Graphics, text.Replace("&", "&&"), font, bounds, color, format);
                 var size = TextRenderer.MeasureText(e.Graphics, text, font, bounds.Size, format);
                 bounds = new Rectangle(bounds.X + size.Width, bounds.Y, bounds.Width - size.Width, bounds.Height);
                 if (bounds.Width <= 0)
@@ -301,7 +301,7 @@ namespace MediaLibrary
             foreach (var (text, highlight) in rendered)
             {
                 var font = highlight == Highlighting.Highlighted ? this.highlightFont : baseFont;
-                var size = TextRenderer.MeasureText(e.Graphics, text, font, bounds.Size, format);
+                var size = TextRenderer.MeasureText(e.Graphics, text.Replace("&", "&&"), font, bounds.Size, format);
                 bounds = new Rectangle(bounds.X + size.Width, bounds.Y, bounds.Width - size.Width, bounds.Height);
                 if (bounds.Width <= 0)
                 {
