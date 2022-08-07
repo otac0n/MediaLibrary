@@ -437,21 +437,24 @@ namespace MediaLibrary
 
         private void UpdateSearchRestoreSelection(IEnumerable<TItem> people)
         {
-            var selectedItem = this.SelectedItem;
-            var text = this.Text;
-            var selectionStart = this.SelectionStart;
-            var selectionLength = this.SelectionLength;
+            if (!this.IsDisposed)
+            {
+                var selectedItem = this.SelectedItem;
+                var text = this.Text;
+                var selectionStart = this.SelectionStart;
+                var selectionLength = this.SelectionLength;
 
-            var peopleArray = people.ToArray();
-            this.BeginUpdate();
-            base.Items.Clear();
-            base.Items.AddRange(peopleArray);
+                var peopleArray = people.ToArray();
+                this.BeginUpdate();
+                base.Items.Clear();
+                base.Items.AddRange(peopleArray);
 
-            this.SelectedIndex = Array.IndexOf(peopleArray, selectedItem);
-            this.Text = text;
-            this.SelectionStart = selectionStart;
-            this.SelectionLength = selectionLength;
-            this.EndUpdate();
+                this.SelectedIndex = Array.IndexOf(peopleArray, selectedItem);
+                this.Text = text;
+                this.SelectionStart = selectionStart;
+                this.SelectionLength = selectionLength;
+                this.EndUpdate();
+            }
         }
     }
 }
