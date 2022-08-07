@@ -25,23 +25,48 @@ namespace MediaLibrary.Storage
     public class MediaIndex : IMediaIndex
     {
         public static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+        private static readonly TimeSpan BufferOverflowDelay = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan FileChangeDelay = TimeSpan.FromSeconds(0.3);
+        private static readonly TimeSpan FileCreatedDelay = TimeSpan.FromSeconds(0.5);
 
         private readonly AsyncReaderWriterLock dbLock = new AsyncReaderWriterLock();
         private readonly HashSet<string> detailsColumns = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
         private readonly CancellationTokenSource disposeCancel = new CancellationTokenSource();
         private readonly ChangeQueue<string, (int attempt, string path, FilePath filePath, HashInfo hashInfo, bool? hasDetails, bool forceRehash)> fileChangeQueue;
         private readonly Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
+        private readonly List<string> indexedPaths = new List<string>();
         private readonly string indexPath;
         private readonly WeakReferenceCache<long, Person> personCache = new WeakReferenceCache<long, Person>();
+        private readonly ChangeQueue<string, (int attempt, string path, bool forceRehash)> rescanQueue;
         private readonly WeakReferenceCache<string, SearchResult> searchResultsCache = new WeakReferenceCache<string, SearchResult>();
         private readonly TagRulesParser tagRuleParser;
         private Task fileScanTask;
+        private Task indexRescanTask;
 
         public MediaIndex(string indexPath)
         {
             this.indexPath = indexPath;
             this.tagRuleParser = new TagRulesParser();
-            this.fileChangeQueue = new ChangeQueue<string, (int attempt, string path, FilePath, HashInfo, bool?, bool)>(item => item.path);
+            this.fileChangeQueue = new ChangeQueue<string, (int attempt, string path, FilePath filePath, HashInfo hashInfo, bool? hasDetails, bool forceRehash)>(
+                getKey: item => item.path,
+                merge: (a, b) =>
+                {
+                    a.attempt += b.attempt;
+                    a.filePath = b.filePath ?? a.filePath;
+                    a.hashInfo = b.hashInfo ?? a.hashInfo;
+                    a.hasDetails = b.hasDetails ?? a.hasDetails;
+                    a.forceRehash |= b.forceRehash;
+                    return a;
+                });
+
+            this.rescanQueue = new ChangeQueue<string, (int attempt, string path, bool forceRehash)>(
+                getKey: item => item.path,
+                merge: (a, b) =>
+                {
+                    a.attempt += b.attempt;
+                    a.forceRehash |= b.forceRehash;
+                    return a;
+                });
         }
 
         public event EventHandler<HashInvalidatedEventArgs> HashInvalidated;
@@ -191,8 +216,19 @@ namespace MediaLibrary.Storage
             }
 
             await this.IndexWriteAsync(conn => conn.ExecuteAsync(Queries.AddIndexedPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) })).ConfigureAwait(false);
-            await this.RescanIndexedPath(path, forceRehash: true).ConfigureAwait(false);
-            this.AddFileSystemWatcher(path);
+
+            lock (this.indexedPaths)
+            {
+                this.indexedPaths.Add(path);
+            }
+
+            this.rescanQueue.Enqueue((0, path, false));
+            this.StartIndexRescanTask();
+
+            lock (this.fileSystemWatchers)
+            {
+                this.AddFileSystemWatcher(path);
+            }
         }
 
         public Task<Person> AddPerson(string name) =>
@@ -320,13 +356,32 @@ namespace MediaLibrary.Storage
             var ruleCategories = await this.GetAllRuleCategories().ConfigureAwait(false);
             this.TagEngine = new TagRuleEngine(ruleCategories.SelectMany(c => this.tagRuleParser.Parse(c.Rules)));
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
-            lock (this.fileSystemWatchers)
+            lock (this.indexedPaths)
             {
-                foreach (var path in indexedPaths)
+                lock (this.fileSystemWatchers)
                 {
-                    this.AddFileSystemWatcher(path);
+                    foreach (var path in indexedPaths)
+                    {
+                        this.indexedPaths.Add(path);
+                        this.AddFileSystemWatcher(path);
+                    }
                 }
             }
+        }
+
+        public bool IsPathIndexed(string fullPath)
+        {
+            lock (this.indexedPaths)
+            {
+                // TODO: Convert to a Trie.
+                // TODO: Case insensitive on such filesystems.
+                if (this.indexedPaths.Any(p => fullPath.StartsWith(p)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public async Task MergePeople(int targetId, int duplicateId)
@@ -428,14 +483,12 @@ namespace MediaLibrary.Storage
         {
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
 
-            var tasks = new Task[indexedPaths.Count];
-
-            for (var i = 0; i < indexedPaths.Count; i++)
+            foreach (var path in indexedPaths)
             {
-                tasks[i] = this.RescanIndexedPath(indexedPaths[i], forceRehash);
+                this.rescanQueue.Enqueue((0, path, forceRehash));
             }
 
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            await this.StartIndexRescanTask().ConfigureAwait(false);
         }
 
         public async Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
@@ -586,6 +639,94 @@ namespace MediaLibrary.Storage
             this.TagRulesUpdated?.Invoke(this, new ItemUpdatedEventArgs<TagRuleEngine>(updatedEngine));
         }
 
+        private static Task StartQueueScan<TKey, TValue>(ChangeQueue<TKey, TValue> changeQueue, Func<Task> getTask, Action<Task> setTask, Func<TValue, Task> run)
+        {
+            lock (changeQueue)
+            {
+                var existingTask = getTask();
+                if (existingTask != null)
+                {
+                    return existingTask;
+                }
+
+                var maxTasks = Math.Max(1, Environment.ProcessorCount - 1);
+                var maxDelay = TimeSpan.FromSeconds(1);
+                existingTask = Task.Run(async () =>
+                {
+                    var tasks = new Dictionary<Task, TValue>();
+                    while (true)
+                    {
+                        while (tasks.Count < maxTasks && changeQueue.Dequeue(out var next))
+                        {
+                            var task = run(next);
+                            tasks.Add(task, next);
+                        }
+
+                        if (tasks.Count > 0)
+                        {
+                            var timeoutTask = Task.Delay(maxDelay);
+                            var completed = await Task.WhenAny(tasks.Keys.Concat(new[] { timeoutTask }).ToArray()).ConfigureAwait(false);
+
+                            if (completed != timeoutTask)
+                            {
+                                var item = tasks[completed];
+                                tasks.Remove(completed);
+
+                                if (completed.IsFaulted)
+                                {
+                                    // TODO: Retry.
+                                    ////if (item.attempt < 4)
+                                    ////{
+                                    ////    var delay = TimeSpan.FromSeconds(maxDelay.TotalSeconds * Math.Pow(2, item.attempt));
+                                    ////    item.attempt++;
+                                    ////    this.fileChangeQueue.Enqueue(item, delay);
+                                    ////}
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var delay = changeQueue.CurrentDelay;
+                            if (delay != null)
+                            {
+                                if (delay > maxDelay)
+                                {
+                                    delay = maxDelay;
+                                }
+
+                                await Task.Delay(delay.Value).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                // TODO: Trigger cancellation when the changeQueue has a new item.
+                                await Task.Delay(maxDelay).ConfigureAwait(false);
+                                if (changeQueue.Count == 0)
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                existingTask = existingTask.ContinueWith(t =>
+                {
+                    if (t.Status == TaskStatus.Faulted)
+                    {
+                        Debug.WriteLine($"ScanTask Exception:{Environment.NewLine}{t.Exception}");
+                    }
+
+                    lock (changeQueue)
+                    {
+                        setTask(null);
+                    }
+                }, TaskScheduler.Current);
+                setTask(existingTask);
+
+                return existingTask;
+            }
+        }
+
         private async Task AddFilePath(FilePath filePath) =>
             await this.IndexWriteAsync(conn =>
                 conn.ExecuteAsync(FilePath.Queries.AddFilePath, filePath)).ConfigureAwait(false);
@@ -606,10 +747,19 @@ namespace MediaLibrary.Storage
                 }
 
                 watcher.IncludeSubdirectories = true;
+                watcher.NotifyFilter =
+                    NotifyFilters.Attributes |
+                    NotifyFilters.CreationTime |
+                    NotifyFilters.DirectoryName |
+                    NotifyFilters.FileName |
+                    NotifyFilters.LastWrite |
+                    NotifyFilters.Security |
+                    NotifyFilters.Size;
                 watcher.Changed += this.Watcher_Changed;
                 watcher.Deleted += this.Watcher_Deleted;
                 watcher.Created += this.Watcher_Created;
                 watcher.Renamed += this.Watcher_Renamed;
+                watcher.Error += this.Watcher_Error;
                 watcher.EnableRaisingEvents = true;
                 this.fileSystemWatchers.Add(path, watcher);
                 watcher = null;
@@ -734,6 +884,11 @@ namespace MediaLibrary.Storage
                         UpdatePerson(person);
                     });
             });
+        }
+
+        private async Task RemoveFile(string fullPath)
+        {
+            await this.RemoveFilePath(fullPath).ConfigureAwait(false);
         }
 
         private void RemoveFileSystemWatcher(string path)
@@ -906,13 +1061,13 @@ namespace MediaLibrary.Storage
             });
         }
 
-        private void StartFileScanTask()
+        private Task StartFileScanTask()
         {
             lock (this.fileChangeQueue)
             {
                 if (this.fileScanTask != null)
                 {
-                    return;
+                    return this.fileScanTask;
                 }
 
                 var maxTasks = Math.Max(1, Environment.ProcessorCount - 1);
@@ -964,7 +1119,7 @@ namespace MediaLibrary.Storage
                                         p.Update(
                                             pathsProcessed: p.PathsProcessed + 1));
                                 }
-                                catch (IOException)
+                                catch (SystemException ex)
                                 {
                                     if (item.attempt < 4)
                                     {
@@ -1012,20 +1167,29 @@ namespace MediaLibrary.Storage
                     }
                 });
 
-                this.fileScanTask.ContinueWith(_ =>
+                this.fileScanTask.ContinueWith(t =>
                 {
                     lock (this.fileChangeQueue)
                     {
                         this.fileScanTask = null;
                     }
                 }, TaskScheduler.Current);
+
+                return this.fileScanTask;
             }
         }
 
-        private void TouchFile(string fullPath, bool forceRehash = true)
+        private Task StartIndexRescanTask() =>
+            StartQueueScan(
+                this.rescanQueue,
+                () => this.indexRescanTask,
+                task => this.indexRescanTask = task,
+                value => this.RescanIndexedPath(value.path, value.forceRehash));
+
+        private void TouchFile(string fullPath, bool forceRehash = true, TimeSpan delay = default)
         {
             // TODO: This should detect if the path is inside some indexed folder.
-            this.fileChangeQueue.Enqueue((0, fullPath, null, null, null, forceRehash));
+            this.fileChangeQueue.Enqueue((0, fullPath, null, null, null, forceRehash), delay);
             this.StartFileScanTask();
         }
 
@@ -1101,30 +1265,65 @@ namespace MediaLibrary.Storage
 
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            this.TouchFile(e.FullPath);
+            var path = e.FullPath;
+            if (this.IsPathIndexed(path))
+            {
+                // Avoid attempting to hash a newly created directory.
+                if (Directory.Exists(path))
+                {
+                    return;
+                }
+
+                this.TouchFile(path, delay: FileChangeDelay);
+            }
         }
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
         {
-            // Avoid attempting to hash a newly created directory.
-            if (!File.Exists(e.FullPath))
+            var path = e.FullPath;
+            if (this.IsPathIndexed(path))
             {
-                return;
+                if (Directory.Exists(path))
+                {
+                    this.rescanQueue.Enqueue((0, path, false));
+                    this.StartIndexRescanTask();
+                }
+                else
+                {
+                    this.TouchFile(path, delay: FileCreatedDelay);
+                }
             }
-
-            this.TouchFile(e.FullPath);
         }
 
         private async void Watcher_Deleted(object sender, FileSystemEventArgs e)
         {
-            await this.RemoveFilePath(e.FullPath).ConfigureAwait(false);
+            if (this.IsPathIndexed(e.FullPath))
+            {
+                await this.RemoveFile(e.FullPath).ConfigureAwait(false);
+            }
+        }
+
+        private void Watcher_Error(object sender, ErrorEventArgs e)
+        {
+            var exception = e.GetException();
+            if (exception is InternalBufferOverflowException && sender is FileSystemWatcher fsw)
+            {
+                this.rescanQueue.Enqueue((0, fsw.Path, false), BufferOverflowDelay);
+                this.StartIndexRescanTask();
+            }
         }
 
         private async void Watcher_Renamed(object sender, RenamedEventArgs e)
         {
-            // TODO: Race condition. Better is to set missing-since and rescan the file.
-            await this.RemoveFilePath(e.OldFullPath).ConfigureAwait(false);
-            this.TouchFile(e.FullPath);
+            if (this.IsPathIndexed(e.OldFullPath))
+            {
+                await this.RemoveFile(e.OldFullPath).ConfigureAwait(false);
+            }
+
+            if (this.IsPathIndexed(e.FullPath))
+            {
+                this.TouchFile(e.FullPath);
+            }
         }
 
         private static class Queries

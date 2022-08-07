@@ -12,11 +12,13 @@ namespace MediaLibrary.Storage
         private readonly Stopwatch epoch = Stopwatch.StartNew();
         private readonly Func<TValue, TKey> getKey;
         private readonly HashSet<TKey> keys = new HashSet<TKey>();
+        private readonly Func<TValue, TValue, TValue> merge;
         private readonly List<(TimeSpan due, TKey key, TValue item)> queue = new List<(TimeSpan, TKey, TValue)>();
 
-        public ChangeQueue(Func<TValue, TKey> getKey)
+        public ChangeQueue(Func<TValue, TKey> getKey, Func<TValue, TValue, TValue> merge)
         {
             this.getKey = getKey;
+            this.merge = merge;
         }
 
         public int Count
@@ -87,7 +89,21 @@ namespace MediaLibrary.Storage
                 {
                     var value = (due, key, item);
                     var index = this.queue.BinarySearch(value, ItemComparer);
-                    this.queue.Insert(index < 0 ? ~index : index, value);
+                    if (index < 0)
+                    {
+                        index = ~index;
+                    }
+
+                    this.queue.Insert(index, value);
+                }
+                else
+                {
+                    var index = this.queue.FindIndex(v => key.Equals(v.key));
+                    Debug.Assert(index >= 0, "Key found in hashset but not in queue.");
+                    var value = this.queue[index];
+                    value.item = this.merge(value.item, item);
+                    value.due = value.due > due ? value.due : due;
+                    this.queue[index] = value;
                 }
             }
         }
