@@ -24,6 +24,7 @@ namespace MediaLibrary
         private VirtualSearchResultsView listView;
         private PreviewControl preview;
         private int progressVersion;
+        private List<string> ratingCategories;
         private List<SavedSearch> savedSearches;
         private int searchVersion;
         private List<Form> selectionDialogs = new List<Form>();
@@ -410,11 +411,8 @@ namespace MediaLibrary
             this.UpdateSavedSearches();
             this.savedSearchesMenuItem.Enabled = true;
 
-            foreach (var ratingCategory in await this.index.GetAllRatingCategories().ConfigureAwait(true))
-            {
-                this.AddRatingCategoryMenuItem(ratingCategory);
-            }
-
+            this.ratingCategories = await this.index.GetAllRatingCategories().ConfigureAwait(true);
+            this.UpdateRatingCategories();
             this.rateAllButton.Enabled = true;
 
             this.TrackTask(this.index.Rescan());
@@ -637,6 +635,14 @@ namespace MediaLibrary
         private void UpdatePreview()
         {
             this.preview.PreviewItems = this.listView.SelectedResults;
+        }
+
+        private void UpdateRatingCategories()
+        {
+            foreach (var ratingCategory in this.ratingCategories)
+            {
+                this.AddRatingCategoryMenuItem(ratingCategory);
+            }
         }
 
         private void UpdateSavedSearches()
