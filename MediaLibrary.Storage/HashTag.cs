@@ -21,7 +21,7 @@ namespace MediaLibrary.Storage
                 INSERT OR REPLACE INTO HashTag (Hash, Tag) VALUES (@Hash, @Tag)
             ";
 
-            public static readonly string GetAllTags = @"
+            public static readonly string GetAllHashTags = @"
                 SELECT DISTINCT Tag FROM HashTag
             ";
 
@@ -33,7 +33,7 @@ namespace MediaLibrary.Storage
                 WHERE Hash = @Hash
             ";
 
-            public static readonly string GetRejectedTags = @"
+            public static readonly string GetRejectedHashTags = @"
                 SELECT
                     Hash,
                     Tag

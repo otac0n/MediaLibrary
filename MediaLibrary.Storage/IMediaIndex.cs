@@ -55,7 +55,7 @@ namespace MediaLibrary.Storage
 
         Task<List<SavedSearch>> GetAllSavedSearches();
 
-        Task<List<string>> GetAllTags();
+        Task<List<string>> GetAllHashTags();
 
         Task<ImmutableDictionary<string, object>> GetHashDetails(string hash);
 
@@ -65,7 +65,7 @@ namespace MediaLibrary.Storage
 
         Task<Rating> GetRating(string hash, string category);
 
-        Task<List<HashTag>> GetRejectedTags(string hash);
+        Task<List<HashTag>> GetRejectedHashTags(string hash);
 
         Task MergePeople(int targetId, int duplicateId);
 

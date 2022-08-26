@@ -41,7 +41,7 @@ namespace MediaLibrary.Web.Controllers
         public async Task<IHttpActionResult> List()
         {
             var engine = this.index.TagEngine;
-            var rawTags = await this.index.GetAllTags().ConfigureAwait(true);
+            var rawTags = await this.index.GetAllHashTags().ConfigureAwait(true);
             var tags = new HashSet<string>(engine.GetKnownTags().Concat(rawTags).Select(engine.Rename));
 
             return this.Content(HttpStatusCode.OK, tags.OrderBy(t => t).Select(t => engine[t]));

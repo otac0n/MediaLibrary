@@ -280,6 +280,10 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<string>(Alias.Queries.GetAllSites).ConfigureAwait(false)).ToArray());
 
+        public Task<List<string>> GetAllHashTags() =>
+            this.IndexReadAsync(async conn =>
+                (await conn.QueryAsync<string>(HashTag.Queries.GetAllHashTags).ConfigureAwait(false)).ToList());
+
         public Task<List<Person>> GetAllPeople() =>
             this.IndexReadAsync(async conn =>
                 (await this.ReadPeopleAsync(conn.QueryMultiple(Person.Queries.GetAllPeople)).ConfigureAwait(false)).ToList());
@@ -295,10 +299,6 @@ namespace MediaLibrary.Storage
         public Task<List<SavedSearch>> GetAllSavedSearches() =>
              this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<SavedSearch>(SavedSearch.Queries.GetSavedSearches).ConfigureAwait(false)).ToList());
-
-        public Task<List<string>> GetAllTags() =>
-            this.IndexReadAsync(async conn =>
-                (await conn.QueryAsync<string>(HashTag.Queries.GetAllTags).ConfigureAwait(false)).ToList());
 
         public Task<ImmutableDictionary<string, object>> GetHashDetails(string hash) =>
             this.IndexReadAsync(async conn =>
@@ -325,9 +325,9 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(conn =>
                 conn.QuerySingleOrDefaultAsync<Rating>(Rating.Queries.GetRating, new { Hash = hash, Category = category ?? string.Empty }));
 
-        public Task<List<HashTag>> GetRejectedTags(string hash) =>
+        public Task<List<HashTag>> GetRejectedHashTags(string hash) =>
             this.IndexReadAsync(async conn =>
-                (await conn.QueryAsync<HashTag>(HashTag.Queries.GetRejectedTags, new { Hash = hash }).ConfigureAwait(false)).ToList());
+                (await conn.QueryAsync<HashTag>(HashTag.Queries.GetRejectedHashTags, new { Hash = hash }).ConfigureAwait(false)).ToList());
 
         public async Task Initialize()
         {
