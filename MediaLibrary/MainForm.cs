@@ -342,7 +342,7 @@ namespace MediaLibrary
             var version = Interlocked.Increment(ref this.progressVersion);
             this.InvokeIfRequired(() =>
             {
-                if (this.progressVersion == version)
+                if (this.progressVersion == version & !this.IsDisposed)
                 {
                     this.mainProgressBar.Value = (int)Math.Floor(progress.Estimate * this.mainProgressBar.Maximum);
                     this.mainProgressBar.ToolTipText = $"{progress.Estimate:P0} ({progress.PathsProcessed}/{progress.PathsDiscovered}{(progress.DiscoveryComplete ? string.Empty : "?")})";
