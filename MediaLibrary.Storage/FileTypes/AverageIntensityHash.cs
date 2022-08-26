@@ -8,6 +8,7 @@ namespace MediaLibrary.Storage.FileTypes
     using System.Drawing.Drawing2D;
     using System.Drawing.Imaging;
     using System.Linq;
+    using System.Numerics;
     using System.Runtime.InteropServices;
 
     public class AverageIntensityHash
@@ -23,7 +24,7 @@ namespace MediaLibrary.Storage.FileTypes
         {
             var expandedA = Expand(a, mode);
             return (from ea in expandedA
-                    select CountBits(ea ^ b)).Min();
+                    select BitOperations.PopCount(ea ^ b)).Min();
         }
 
         /// <summary>
@@ -111,20 +112,6 @@ namespace MediaLibrary.Storage.FileTypes
 
                 squash.UnlockBits(data);
                 return hash;
-            }
-        }
-
-        /// <remarks>
-        /// Hamming weight algorithm, adapted from https://en.wikipedia.org/wiki/Hamming_weight.
-        /// </remarks>
-        private static int CountBits(ulong difference)
-        {
-            unchecked
-            {
-                var byPairs = difference - ((difference >> 1) & 0x5555555555555555);
-                var byQuads = (byPairs & 0x3333333333333333) + ((byPairs >> 2) & 0x3333333333333333);
-                var byOctets = (byQuads + (byQuads >> 4)) & 0x0f0f0f0f0f0f0f0f;
-                return (int)((byOctets * 0x0101010101010101UL) >> 56);
             }
         }
 
