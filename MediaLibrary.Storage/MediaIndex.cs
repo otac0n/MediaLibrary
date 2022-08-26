@@ -531,108 +531,110 @@ namespace MediaLibrary.Storage
             await this.StartIndexRescanTask().ConfigureAwait(false);
         }
 
-        public async Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
+        public Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
         {
-            await Task.Yield();
-            var grammar = new SearchGrammar();
-            var term = grammar.Parse(query ?? string.Empty);
-            var containsSavedSearches = new ContainsSavedSearchTermCompiler().Compile(term);
-            var savedSearches = containsSavedSearches
-                ? (await this.GetAllSavedSearches().ConfigureAwait(false)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
-                : null;
-            var dialect = new SqlSearchCompiler(this.TagEngine, excludeHidden, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
-            var sqlQuery = dialect.Compile(term);
-
-            using (var conn = await this.GetConnection().ConfigureAwait(false))
+            return Task.Run(async () =>
             {
-                ILookup<string, HashTag> tags;
-                ILookup<string, HashTag> rejectedTags;
-                ILookup<string, FilePath> fileNames;
-                Dictionary<int, Person> peopleLookup;
-                ILookup<string, HashPerson> people;
-                ILookup<string, HashPerson> rejectedPeople;
-                ILookup<string, IDictionary<string, object>> hashDetails;
-                ILookup<string, Rating> hashRatings;
-                IList<HashInfo> hashes;
-                using (await this.dbLock.ReaderLockAsync())
+                var grammar = new SearchGrammar();
+                var term = grammar.Parse(query ?? string.Empty);
+                var containsSavedSearches = new ContainsSavedSearchTermCompiler().Compile(term);
+                var savedSearches = containsSavedSearches
+                    ? (await this.GetAllSavedSearches().ConfigureAwait(false)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
+                    : null;
+                var dialect = new SqlSearchCompiler(this.TagEngine, excludeHidden, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
+                var sqlQuery = dialect.Compile(term);
+
+                using (var conn = await this.GetConnection().ConfigureAwait(false))
                 {
-                    var reader = await conn.QueryMultipleAsync(sqlQuery).ConfigureAwait(false);
-                    tags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
-                    rejectedTags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
-                    fileNames = (await reader.ReadAsync<FilePath>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.LastHash);
-                    peopleLookup = (await this.ReadPeopleAsync(reader).ConfigureAwait(false)).ToDictionary(p => p.PersonId);
-                    people = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
-                    rejectedPeople = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
-                    hashDetails = (await reader.ReadAsync(buffered: false).ConfigureAwait(false)).ToLookup(r => (string)r.Hash, r => (IDictionary<string, object>)r);
-                    hashRatings = (await reader.ReadAsync<Rating>(buffered: false).ConfigureAwait(false)).ToLookup(r => r.Hash);
-                    hashes = (await reader.ReadAsync<HashInfo>(buffered: false).ConfigureAwait(false)).ToList();
+                    ILookup<string, HashTag> tags;
+                    ILookup<string, HashTag> rejectedTags;
+                    ILookup<string, FilePath> fileNames;
+                    Dictionary<int, Person> peopleLookup;
+                    ILookup<string, HashPerson> people;
+                    ILookup<string, HashPerson> rejectedPeople;
+                    ILookup<string, IDictionary<string, object>> hashDetails;
+                    ILookup<string, Rating> hashRatings;
+                    IList<HashInfo> hashes;
+                    using (await this.dbLock.ReaderLockAsync())
+                    {
+                        var reader = await conn.QueryMultipleAsync(sqlQuery).ConfigureAwait(false);
+                        tags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
+                        rejectedTags = (await reader.ReadAsync<HashTag>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
+                        fileNames = (await reader.ReadAsync<FilePath>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.LastHash);
+                        peopleLookup = (await this.ReadPeopleAsync(reader).ConfigureAwait(false)).ToDictionary(p => p.PersonId);
+                        people = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
+                        rejectedPeople = (await reader.ReadAsync<HashPerson>(buffered: false).ConfigureAwait(false)).ToLookup(f => f.Hash);
+                        hashDetails = (await reader.ReadAsync(buffered: false).ConfigureAwait(false)).ToLookup(r => (string)r.Hash, r => (IDictionary<string, object>)r);
+                        hashRatings = (await reader.ReadAsync<Rating>(buffered: false).ConfigureAwait(false)).ToLookup(r => r.Hash);
+                        hashes = (await reader.ReadAsync<HashInfo>(buffered: false).ConfigureAwait(false)).ToList();
+                    }
+
+                    var results = new List<SearchResult>();
+                    foreach (var hash in hashes)
+                    {
+                        var updatedTags = tags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet();
+                        var updatedRejectedTags = rejectedTags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet();
+                        var updatedPaths = fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet();
+                        var updatedPeople = people[hash.Hash].Select(p => peopleLookup[p.PersonId]).ToImmutableHashSet();
+                        var updatedRejectedPeople = rejectedPeople[hash.Hash].Select(p => peopleLookup[p.PersonId]).ToImmutableHashSet();
+                        var updatedDetails = hashDetails[hash.Hash].SingleOrDefault()?.ToImmutableDictionary() ?? ImmutableDictionary<string, object>.Empty;
+                        var updatedRating = hashRatings[hash.Hash].Where(p => string.IsNullOrEmpty(p.Category)).SingleOrDefault();
+                        results.Add(this.searchResultsCache.AddOrUpdate(
+                            hash.Hash,
+                            key => new SearchResult(
+                                key,
+                                hash.FileSize,
+                                hash.FileType,
+                                updatedDetails,
+                                updatedRating,
+                                updatedTags,
+                                updatedRejectedTags,
+                                updatedPaths,
+                                updatedPeople,
+                                updatedRejectedPeople),
+                            (key, searchResult) =>
+                            {
+                                // TODO: Deeper inspection of changes.
+                                if (searchResult.Details != updatedDetails)
+                                {
+                                    searchResult.Details = updatedDetails;
+                                }
+
+                                if (searchResult.Rating != updatedRating)
+                                {
+                                    searchResult.Rating = updatedRating;
+                                }
+
+                                if (!searchResult.Tags.SetEquals(updatedTags))
+                                {
+                                    searchResult.Tags = updatedTags;
+                                }
+
+                                if (!searchResult.RejectedTags.SetEquals(updatedRejectedTags))
+                                {
+                                    searchResult.RejectedTags = updatedRejectedTags;
+                                }
+
+                                if (!searchResult.Paths.SetEquals(updatedPaths))
+                                {
+                                    searchResult.Paths = updatedPaths;
+                                }
+
+                                if (!searchResult.People.SetEquals(updatedPeople))
+                                {
+                                    searchResult.People = updatedPeople;
+                                }
+
+                                if (!searchResult.RejectedPeople.SetEquals(updatedRejectedPeople))
+                                {
+                                    searchResult.RejectedPeople = updatedRejectedPeople;
+                                }
+                            }));
+                    }
+
+                    return results;
                 }
-
-                var results = new List<SearchResult>();
-                foreach (var hash in hashes)
-                {
-                    var updatedTags = tags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet();
-                    var updatedRejectedTags = rejectedTags[hash.Hash].Select(t => t.Tag).ToImmutableHashSet();
-                    var updatedPaths = fileNames[hash.Hash].Select(t => t.Path).ToImmutableHashSet();
-                    var updatedPeople = people[hash.Hash].Select(p => peopleLookup[p.PersonId]).ToImmutableHashSet();
-                    var updatedRejectedPeople = rejectedPeople[hash.Hash].Select(p => peopleLookup[p.PersonId]).ToImmutableHashSet();
-                    var updatedDetails = hashDetails[hash.Hash].SingleOrDefault()?.ToImmutableDictionary() ?? ImmutableDictionary<string, object>.Empty;
-                    var updatedRating = hashRatings[hash.Hash].Where(p => string.IsNullOrEmpty(p.Category)).SingleOrDefault();
-                    results.Add(this.searchResultsCache.AddOrUpdate(
-                        hash.Hash,
-                        key => new SearchResult(
-                            key,
-                            hash.FileSize,
-                            hash.FileType,
-                            updatedDetails,
-                            updatedRating,
-                            updatedTags,
-                            updatedRejectedTags,
-                            updatedPaths,
-                            updatedPeople,
-                            updatedRejectedPeople),
-                        (key, searchResult) =>
-                        {
-                            // TODO: Deeper inspection of changes.
-                            if (searchResult.Details != updatedDetails)
-                            {
-                                searchResult.Details = updatedDetails;
-                            }
-
-                            if (searchResult.Rating != updatedRating)
-                            {
-                                searchResult.Rating = updatedRating;
-                            }
-
-                            if (!searchResult.Tags.SetEquals(updatedTags))
-                            {
-                                searchResult.Tags = updatedTags;
-                            }
-
-                            if (!searchResult.RejectedTags.SetEquals(updatedRejectedTags))
-                            {
-                                searchResult.RejectedTags = updatedRejectedTags;
-                            }
-
-                            if (!searchResult.Paths.SetEquals(updatedPaths))
-                            {
-                                searchResult.Paths = updatedPaths;
-                            }
-
-                            if (!searchResult.People.SetEquals(updatedPeople))
-                            {
-                                searchResult.People = updatedPeople;
-                            }
-
-                            if (!searchResult.RejectedPeople.SetEquals(updatedRejectedPeople))
-                            {
-                                searchResult.RejectedPeople = updatedRejectedPeople;
-                            }
-                        }));
-                }
-
-                return results;
-            }
+            });
         }
 
         public Task UpdatePerson(Person person) =>
