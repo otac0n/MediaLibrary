@@ -130,6 +130,27 @@ namespace MediaLibrary.Storage.Search
 
                     return this.CompileTagRelation(TagOperator.Implication, field.Value);
 
+                case "+":
+                    if (field.Operator != FieldTerm.EqualsOperator)
+                    {
+                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                    }
+
+                    return this.CompileDisjunction(
+                        this.CompileField(new FieldTerm("missing", FieldTerm.EqualsOperator, field.Value)),
+                        this.CompileField(new FieldTerm("suggested", FieldTerm.EqualsOperator, field.Value)));
+
+                case "*":
+                    if (field.Operator != FieldTerm.EqualsOperator)
+                    {
+                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                    }
+
+                    return this.CompileDisjunction(
+                        this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value)),
+                        this.CompileField(new FieldTerm("missing", FieldTerm.EqualsOperator, field.Value)),
+                        this.CompileField(new FieldTerm("suggested", FieldTerm.EqualsOperator, field.Value)));
+
                 case "similar":
                     {
                         if (field.Operator != FieldTerm.EqualsOperator)

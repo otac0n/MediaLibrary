@@ -19,7 +19,7 @@ primary <Term>
 term <Term>
     = field:"#" value:atom { new FieldTerm("tag", "<=", value) }
     / field:"!" value:atom { new FieldTerm("rejected", ">=", value) }
-    / field:[@~?^] value:atom { new FieldTerm(field, value) }
+    / field:[@~?^+*] value:atom { new FieldTerm(field, value) }
     / field:atom op:(":" / ">=" / ">" / "<=" / "<") value:(atom / EOF / &(WS / ")")) { new FieldTerm(field, op, value) }
     / ":"? value:atom { new FieldTerm(null, value) }
     / "[" _ terms:prop<1,,_> _ "]" { new PropertyConjunctionTerm(terms) };
