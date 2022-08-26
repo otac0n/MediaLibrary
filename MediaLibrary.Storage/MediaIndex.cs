@@ -79,6 +79,10 @@ namespace MediaLibrary.Storage
 
         public event EventHandler<ItemRemovedEventArgs<HashTag>> HashTagRemoved;
 
+        public event EventHandler<ItemAddedEventArgs<PersonTag>> PersonTagAdded;
+
+        public event EventHandler<ItemRemovedEventArgs<PersonTag>> PersonTagRemoved;
+
         public event EventHandler<ItemUpdatedEventArgs<Rating>> RatingUpdated;
 
         public event EventHandler<ItemUpdatedEventArgs<RescanProgress>> RescanProgressUpdated;
@@ -246,6 +250,18 @@ namespace MediaLibrary.Storage
                     });
             });
 
+        public async Task AddPersonTag(PersonTag personTag)
+        {
+            if (personTag == null)
+            {
+                throw new ArgumentNullException(nameof(personTag));
+            }
+
+            await this.IndexWriteAsync(conn => conn.ExecuteAsync(PersonTag.Queries.AddPersonTag, personTag)).ConfigureAwait(false);
+
+            this.PersonTagAdded?.Invoke(this, new ItemAddedEventArgs<PersonTag>(personTag));
+        }
+
         public Task<SavedSearch> AddSavedSearch(string name, string query) =>
             this.IndexUpdateAsync(async conn => (await conn.QueryAsync<SavedSearch>(SavedSearch.Queries.AddSavedSearch, new { Name = name, Query = query }).ConfigureAwait(false)).Single());
 
@@ -288,6 +304,10 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(async conn =>
                 (await this.ReadPeopleAsync(conn.QueryMultiple(Person.Queries.GetAllPeople)).ConfigureAwait(false)).ToList());
 
+        public Task<List<string>> GetAllPersonTags() =>
+            this.IndexReadAsync(async conn =>
+                (await conn.QueryAsync<string>(PersonTag.Queries.GetAllPersonTags).ConfigureAwait(false)).ToList());
+
         public Task<List<string>> GetAllRatingCategories() =>
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<string>(Rating.Queries.GetRatingCategories).ConfigureAwait(false)).ToList());
@@ -321,6 +341,10 @@ namespace MediaLibrary.Storage
                     return this.personCache.GetOrAdd(personId, _ => person);
                 });
 
+        public Task<List<PersonTag>> GetPersonTags(int personId) =>
+            this.IndexReadAsync(async conn =>
+                (await conn.QueryAsync<PersonTag>(PersonTag.Queries.GetPersonTags, new { PersonId = personId }).ConfigureAwait(false)).ToList());
+
         public Task<Rating> GetRating(string hash, string category) =>
             this.IndexReadAsync(conn =>
                 conn.QuerySingleOrDefaultAsync<Rating>(Rating.Queries.GetRating, new { Hash = hash, Category = category ?? string.Empty }));
@@ -328,6 +352,10 @@ namespace MediaLibrary.Storage
         public Task<List<HashTag>> GetRejectedHashTags(string hash) =>
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<HashTag>(HashTag.Queries.GetRejectedHashTags, new { Hash = hash }).ConfigureAwait(false)).ToList());
+
+        public Task<List<PersonTag>> GetRejectedPersonTags(int personId) =>
+            this.IndexReadAsync(async conn =>
+                (await conn.QueryAsync<PersonTag>(PersonTag.Queries.GetRejectedPersonTags, new { PersonId = personId }).ConfigureAwait(false)).ToList());
 
         public async Task Initialize()
         {
@@ -474,6 +502,18 @@ namespace MediaLibrary.Storage
         }
 
         public Task RemovePerson(Person person) => this.IndexWriteAsync(conn => conn.ExecuteAsync(Person.Queries.RemovePerson, new { person.PersonId }));
+
+        public async Task RemovePersonTag(PersonTag personTag, bool rejectTag = false)
+        {
+            if (personTag == null)
+            {
+                throw new ArgumentNullException(nameof(personTag));
+            }
+
+            await this.IndexWriteAsync(conn => conn.ExecuteAsync(rejectTag ? PersonTag.Queries.RejectPersonTag : PersonTag.Queries.RemovePersonTag, personTag)).ConfigureAwait(false);
+
+            this.PersonTagRemoved?.Invoke(this, new ItemRemovedEventArgs<PersonTag>(personTag));
+        }
 
         public Task RemoveSavedSearch(SavedSearch savedSearch) =>
             this.IndexWriteAsync(conn =>
@@ -1425,6 +1465,26 @@ namespace MediaLibrary.Storage
                     UNION ALL
                     SELECT Personid, Name FROM Alias
                 );
+
+                CREATE TABLE IF NOT EXISTS PersonTag
+                (
+                    PersonId text NOT NULL,
+                    Tag text NOT NULL,
+                    PRIMARY KEY (PersonId, Tag),
+                    FOREIGN KEY (PersonId) REFERENCES Person (PersonId) ON DELETE CASCADE
+                );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_PersonTag_PersonId_Tag ON PersonTag (PersonId, Tag);
+
+                CREATE TABLE IF NOT EXISTS RejectedPersonTags
+                (
+                    PersonId text NOT NULL,
+                    Tag text NOT NULL,
+                    PRIMARY KEY (PersonId, Tag),
+                    FOREIGN KEY (PersonId) REFERENCES Person (PersonId) ON DELETE CASCADE
+                );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_RejectedPersonTags_PersonId_Tag ON RejectedPersonTags (PersonId, Tag);
 
                 CREATE TABLE IF NOT EXISTS HashPerson
                 (
