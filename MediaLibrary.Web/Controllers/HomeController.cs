@@ -7,6 +7,7 @@ namespace MediaLibrary.Web.Controllers
 
     public class HomeController : ApiController
     {
+        [Route("{view*}")]
         public IHttpActionResult Get(string view)
         {
             return new ViewResult(view);

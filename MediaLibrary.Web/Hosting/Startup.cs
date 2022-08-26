@@ -8,7 +8,7 @@ namespace MediaLibrary.Web.Hosting
     using MediaLibrary.Storage;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
+    using Newtonsoft.Json.Serialization;
     using Owin;
     using SqueezeMe;
     using Unity;
@@ -54,11 +54,6 @@ using Newtonsoft.Json.Serialization;
             config.Formatters.JsonFormatter.SerializerSettings.Converters.Add(new StringEnumConverter());
 
             config.MapHttpAttributeRoutes();
-
-            config.Routes.MapHttpRoute(
-                name: "DefaultStatic",
-                routeTemplate: "{*view}",
-                defaults: new { controller = "Home" });
 
             appBuilder.UseCompression();
             appBuilder.UseWebApi(config);

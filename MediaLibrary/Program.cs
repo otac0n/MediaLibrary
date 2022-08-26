@@ -36,7 +36,7 @@ namespace MediaLibrary
             using (WebApp.Start(options.BaseUri, startup.Configuration))
             {
                 Trace.Listeners.Remove("HostingTraceListener");
-                Debug.Listeners.Remove("HostingTraceListener");
+                ////Debug.Listeners.Remove("HostingTraceListener");
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);

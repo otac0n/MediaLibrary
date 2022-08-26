@@ -7,8 +7,8 @@ namespace MediaLibrary.Web.Hosting
     using System.Net.Http.Headers;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Web;
     using System.Web.Http;
+    using Microsoft.AspNetCore.StaticFiles;
 
     public class ViewResult : IHttpActionResult
     {
@@ -21,7 +21,11 @@ namespace MediaLibrary.Web.Hosting
 
         public Task<HttpResponseMessage> ExecuteAsync(CancellationToken cancellationToken)
         {
-            var mimeMapping = MimeMapping.GetMimeMapping(this.View);
+            if (!new FileExtensionContentTypeProvider().TryGetContentType(this.View, out var mimeMapping))
+            {
+                mimeMapping = "application/octet-stream";
+            }
+
             var response = new HttpResponseMessage(HttpStatusCode.OK);
             response.Content = new StreamContent(StaticContent.GetContent(this.View));
             response.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeMapping);
