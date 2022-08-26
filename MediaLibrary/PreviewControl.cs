@@ -39,12 +39,18 @@ namespace MediaLibrary
                     player.BeginInit();
                     player.Dock = DockStyle.Fill;
                     player.Visible = false;
+
+                    var reentrant = false;
                     player.PlayStateChange += (object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e) =>
                     {
                         switch (player.playState)
                         {
                             case WMPLib.WMPPlayState.wmppsStopped:
-                                parent.Stopped?.Invoke(parent, new EventArgs());
+                                if (!reentrant)
+                                {
+                                    parent.Stopped?.Invoke(parent, new EventArgs());
+                                }
+
                                 break;
 
                             case WMPLib.WMPPlayState.wmppsPaused:
@@ -52,7 +58,20 @@ namespace MediaLibrary
                                 break;
 
                             case WMPLib.WMPPlayState.wmppsPlaying:
-                                parent.Playing?.Invoke(parent, new EventArgs());
+                                if (!reentrant)
+                                {
+                                    var screen = Screen.FromControl(player);
+                                    if (!screen.Primary & player.Ctlcontrols.currentPosition == 0)
+                                    {
+                                        reentrant = true;
+                                        player.Ctlcontrols.stop();
+                                        player.Ctlcontrols.play();
+                                        reentrant = false;
+                                    }
+
+                                    parent.Playing?.Invoke(parent, new EventArgs());
+                                }
+
                                 break;
 
                             case WMPLib.WMPPlayState.wmppsScanForward:
