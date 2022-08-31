@@ -23,6 +23,10 @@
     <conv:ResolutionColumnConverter x:Key="resolutionColumnConverter"/>
   </Window.Resources>
   <Window.Styles>
+    <Style Selector="Menu > MenuItem > Image">
+      <Setter Property="Width" Value="16"/>
+      <Setter Property="Height" Value="16"/>
+    </Style>
     <Style Selector="MenuItem Image.whenChecked">
       <Setter Property="IsVisible" Value="false"/>
     </Style>
@@ -104,22 +108,22 @@
       <Menu>
         <MenuItem d:Description="Play">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-controls-play@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-controls-play@20x20.png"/>
           </MenuItem.Header>
         </MenuItem>
         <MenuItem d:Description="Play All">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-controls-forward@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-controls-forward@20x20.png"/>
           </MenuItem.Header>
         </MenuItem>
         <MenuItem d:Description="Shuffle All">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-controls-forward@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-controls-forward@20x20.png"/>
           </MenuItem.Header>
         </MenuItem>
         <MenuItem d:Description="Rate All">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-antique-swords@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-antique-swords@20x20.png"/>
           </MenuItem.Header>
           <MenuItem Header="Default">
             <MenuItem.Icon>
@@ -137,21 +141,21 @@
         <MenuItem d:Description="Mute" Classes.checked="{Binding DefaultMute}" Command="{Binding ToggleDefaultMute}">
           <MenuItem.Header>
             <StackPanel>
-              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-volume-control-full@20x20.png" Margin="7" Classes="whenUnchecked"/>
-              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-volume-control-mute@20x20.png" Margin="7" Classes="whenChecked"/>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-volume-control-full@20x20.png" Classes="whenUnchecked"/>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-volume-control-mute@20x20.png" Classes="whenChecked"/>
             </StackPanel>
           </MenuItem.Header>
         </MenuItem>
         <Separator/>
         <MenuItem d:Description="Home">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-house-2@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-house-2@20x20.png"/>
           </MenuItem.Header>
         </MenuItem>
         <Separator/>
         <MenuItem d:Description="Favorite Files">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-love-it@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-love-it@20x20.png"/>
           </MenuItem.Header>
           <MenuItem Header="Files" Command="{Binding Search}" CommandParameter="#favorite">
             <MenuItem.Icon>
@@ -177,7 +181,7 @@
         </MenuItem>
         <MenuItem d:Description="Starred Files">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-rating-star@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-rating-star@20x20.png"/>
           </MenuItem.Header>
           <MenuItem Header="Files" Command="{Binding Search}" CommandParameter="stars>=3">
             <MenuItem.Icon>
@@ -203,7 +207,7 @@
         </MenuItem>
         <MenuItem d:Description="Audio">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-music-note-1@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-music-note-1@20x20.png"/>
           </MenuItem.Header>
           <MenuItem Header="All Audio" Command="{Binding Search}" CommandParameter="type:audio">
             <MenuItem.Icon>
@@ -224,7 +228,7 @@
         </MenuItem>
         <MenuItem d:Description="Images">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-picture-landscape@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-picture-landscape@20x20.png"/>
           </MenuItem.Header>
           <MenuItem Header="All Images" Command="{Binding Search}" CommandParameter="type:image">
             <MenuItem.Icon>
@@ -245,7 +249,7 @@
         </MenuItem>
         <MenuItem d:Description="Video">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-video-player-movie@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-video-player-movie@20x20.png"/>
           </MenuItem.Header>
           <MenuItem Header="All Video" Command="{Binding Search}" CommandParameter="type:video">
             <MenuItem.Icon>
@@ -269,7 +273,7 @@
       <Menu>
         <MenuItem d:Description="View">
           <MenuItem.Header>
-            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-view-1@20x20.png" Margin="7"/>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-view-1@20x20.png"/>
           </MenuItem.Header>
           <MenuItem Header="_Refresh">
             <MenuItem.Icon>
