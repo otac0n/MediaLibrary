@@ -1,0 +1,311 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MediaLibrary.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="MediaLibrary.App.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="MediaLibrary.App">
+  <Design.DataContext>
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+  <Window.Styles>
+    <Style Selector="MenuItem Image.whenChecked">
+      <Setter Property="IsVisible" Value="false"/>
+    </Style>
+    <Style Selector="MenuItem Image.whenUnchecked">
+      <Setter Property="IsVisible" Value="true"/>
+    </Style>
+    <Style Selector="MenuItem.checked Image.whenChecked">
+      <Setter Property="IsVisible" Value="true"/>
+    </Style>
+    <Style Selector="MenuItem.checked Image.whenUnchecked">
+      <Setter Property="IsVisible" Value="false"/>
+    </Style>
+    <Style Selector="MenuItem.checked">
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="Background" Value="{DynamicResource MenuFlyoutItemBackgroundPressed}"/>
+    </Style>
+  </Window.Styles>
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_Options">
+        <MenuItem Header="Add _Indexed Folder...">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-folder-add@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Ab_out...">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-information-circle@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+      <MenuItem Header="_Tools">
+        <MenuItem Header="Find _Diplicates...">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-common-file-stack@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Edit _People...">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-multiple-actions-edit-1@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Edit _Tag Rules...">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-tags-settings@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Mer_ge People...">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-multiple-users-3@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="_Favorite">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-love-it@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Edit _Tags...">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-tags-edit@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Add _People...">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-single-neutral@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+        <Separator/>
+        <MenuItem Header="_Copy">
+          <MenuItem.Icon>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-common-file-double@20x20.png"/>
+          </MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+    </Menu>
+    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+      <Menu>
+        <MenuItem d:Description="Play">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-controls-play@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+        </MenuItem>
+        <MenuItem d:Description="Play All">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-controls-forward@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+        </MenuItem>
+        <MenuItem d:Description="Shuffle All">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-controls-forward@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+        </MenuItem>
+        <MenuItem d:Description="Rate All">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-antique-swords@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+          <MenuItem Header="Default">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-antique-axe@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator/>
+          <MenuItem Header="New...">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-antique-axe@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+        </MenuItem>
+        <Separator/>
+        <MenuItem d:Description="Mute" Classes.checked="{Binding DefaultMute}" Command="{Binding ToggleDefaultMute}">
+          <MenuItem.Header>
+            <StackPanel>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-volume-control-full@20x20.png" Margin="7" Classes="whenUnchecked"/>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-volume-control-mute@20x20.png" Margin="7" Classes="whenChecked"/>
+            </StackPanel>
+          </MenuItem.Header>
+        </MenuItem>
+        <Separator/>
+        <MenuItem d:Description="Home">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-house-2@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+        </MenuItem>
+        <Separator/>
+        <MenuItem d:Description="Favorite Files">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-love-it@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+          <MenuItem Header="Files" Command="{Binding Search}" CommandParameter="#favorite">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-common-file-heart@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator/>
+          <MenuItem Header="Audio" Command="{Binding Search}" CommandParameter="#favorite type:audio">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-audio-file-heart@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Images" Command="{Binding Search}" CommandParameter="#favorite type:image">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-image-file-heart@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Video" Command="{Binding Search}" CommandParameter="#favorite type:video">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-video-file-heart@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+        </MenuItem>
+        <MenuItem d:Description="Starred Files">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-rating-star@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+          <MenuItem Header="Files" Command="{Binding Search}" CommandParameter="stars>=3">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-common-file-star@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator/>
+          <MenuItem Header="Audio" Command="{Binding Search}" CommandParameter="stars>=3 type:audio">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-audio-file-star@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Images" Command="{Binding Search}" CommandParameter="stars>=3 type:image">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-image-file-star@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Video" Command="{Binding Search}" CommandParameter="stars>=3 type:video">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-video-file-star@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+        </MenuItem>
+        <MenuItem d:Description="Audio">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-music-note-1@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+          <MenuItem Header="All Audio" Command="{Binding Search}" CommandParameter="type:audio">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-audio-file-home@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator/>
+          <MenuItem Header="Favorite Audio" Command="{Binding Search}" CommandParameter="type:audio #favorite">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-audio-file-heart@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Starred Audio" Command="{Binding Search}" CommandParameter="type:audio stars>=3">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-audio-file-star@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+        </MenuItem>
+        <MenuItem d:Description="Images">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-picture-landscape@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+          <MenuItem Header="All Images" Command="{Binding Search}" CommandParameter="type:image">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-image-file-home@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator/>
+          <MenuItem Header="Favorite Images" Command="{Binding Search}" CommandParameter="type:image #favorite">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-image-file-heart@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Starred Images" Command="{Binding Search}" CommandParameter="type:image stars>=3">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-image-file-star@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+        </MenuItem>
+        <MenuItem d:Description="Video">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-video-player-movie@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+          <MenuItem Header="All Video" Command="{Binding Search}" CommandParameter="type:video">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-video-file-home@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator/>
+          <MenuItem Header="Favorite Video" Command="{Binding Search}" CommandParameter="type:video #favorite">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-video-file-heart@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Starred Video" Command="{Binding Search}" CommandParameter="type:video stars>=3">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-video-file-star@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+        </MenuItem>
+      </Menu>
+      <TextBox Width="250" Text="{Binding SearchText}"></TextBox>
+      <Menu>
+        <MenuItem d:Description="View">
+          <MenuItem.Header>
+            <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-view-1@20x20.png" Margin="7"/>
+          </MenuItem.Header>
+          <MenuItem Header="_Refresh">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-button-refresh-arrow@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator/>
+          <MenuItem Header="Show Preview" Classes.checked="{Binding ShowPreview}" Command="{Binding ToggleShowPreview}">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-view-square@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator/>
+          <MenuItem Header="Details" Classes="checked">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-list-bullets-1@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Thumbnails">
+            <MenuItem.Icon>
+              <Image Source="resm:MediaLibrary.App.Assets.streamline-icon-picture-landscape@20x20.png"/>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator/>
+          <MenuItem Header="Saved Searches">
+            <MenuItem Header="Save this search...">
+            </MenuItem>
+            <Separator/>
+          </MenuItem>
+        </MenuItem>
+      </Menu>
+    </StackPanel>
+    <SplitView DisplayMode="Inline" PanePlacement="Right" IsPaneOpen="{Binding ShowPreview}">
+      <DataGrid AutoGenerateColumns="False">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Path"/>
+          <DataGridTextColumn Header="Name"/>
+          <DataGridTextColumn Header="People"/>
+          <DataGridTextColumn Header="Tags"/>
+          <DataGridTextColumn Header="File Size"/>
+          <DataGridTextColumn Header="Duration"/>
+          <DataGridTextColumn Header="Rating"/>
+          <DataGridTextColumn Header="Visual Hash"/>
+          <DataGridTextColumn Header="Resolution"/>
+        </DataGrid.Columns>
+      </DataGrid>
+      <SplitView.Pane>
+      </SplitView.Pane>
+    </SplitView>
+  </DockPanel>
+</Window>

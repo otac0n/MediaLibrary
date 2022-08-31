@@ -1,0 +1,24 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="MediaLibrary.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="ShowPreview" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="Columns" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Path,Name,People,Tags</Value>
+    </Setting>
+    <Setting Name="SortColumn" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Path</Value>
+    </Setting>
+    <Setting Name="SortDescending" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AutoSearchDelay" Type="System.TimeSpan" Scope="User">
+      <Value Profile="(Default)">00:00:00.7500000</Value>
+    </Setting>
+    <Setting Name="DefaultMute" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
