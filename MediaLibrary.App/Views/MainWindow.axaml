@@ -3,6 +3,7 @@
         xmlns:vm="using:MediaLibrary.App.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:MediaLibrary.App.Converters;assembly=MediaLibrary.App"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MediaLibrary.App.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
@@ -10,6 +11,17 @@
   <Design.DataContext>
     <vm:MainWindowViewModel/>
   </Design.DataContext>
+  <Window.Resources>
+    <conv:PathColumnConverter x:Key="pathColumnConverter"/>
+    <conv:NameColumnConverter x:Key="nameColumnConverter"/>
+    <conv:PeopleColumnConverter x:Key="peopleColumnConverter"/>
+    <conv:TagsColumnConverter x:Key="tagsColumnConverter"/>
+    <conv:FileSizeColumnConverter x:Key="fileSizeColumnConverter"/>
+    <conv:DurationColumnConverter x:Key="durationColumnConverter"/>
+    <conv:RatingColumnConverter x:Key="ratingColumnConverter"/>
+    <conv:VisualHashColumnConverter x:Key="visualHashColumnConverter"/>
+    <conv:ResolutionColumnConverter x:Key="resolutionColumnConverter"/>
+  </Window.Resources>
   <Window.Styles>
     <Style Selector="MenuItem Image.whenChecked">
       <Setter Property="IsVisible" Value="false"/>
@@ -291,17 +303,17 @@
       </Menu>
     </StackPanel>
     <SplitView DisplayMode="Inline" PanePlacement="Right" IsPaneOpen="{Binding ShowPreview}">
-      <DataGrid AutoGenerateColumns="False">
+      <DataGrid AutoGenerateColumns="False" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True" SelectionMode="Extended" Items="{Binding SearchResults}">
         <DataGrid.Columns>
-          <DataGridTextColumn Header="Path"/>
-          <DataGridTextColumn Header="Name"/>
-          <DataGridTextColumn Header="People"/>
-          <DataGridTextColumn Header="Tags"/>
-          <DataGridTextColumn Header="File Size"/>
-          <DataGridTextColumn Header="Duration"/>
-          <DataGridTextColumn Header="Rating"/>
-          <DataGridTextColumn Header="Visual Hash"/>
-          <DataGridTextColumn Header="Resolution"/>
+          <DataGridTextColumn Header="Path" Binding="{Binding, Converter={StaticResource pathColumnConverter}}"/>
+          <DataGridTextColumn Header="Name" Binding="{Binding, Converter={StaticResource nameColumnConverter}}"/>
+          <DataGridTextColumn Header="People" Binding="{Binding, Converter={StaticResource peopleColumnConverter}}"/>
+          <DataGridTextColumn Header="Tags" Binding="{Binding, Converter={StaticResource tagsColumnConverter}}"/>
+          <DataGridTextColumn Header="File Size" Binding="{Binding , Converter={StaticResource fileSizeColumnConverter}}"/>
+          <DataGridTextColumn Header="Duration" Binding="{Binding, Converter={StaticResource durationColumnConverter}}"/>
+          <DataGridTextColumn Header="Rating" Binding="{Binding, Converter={StaticResource ratingColumnConverter}}"/>
+          <DataGridTextColumn Header="Visual Hash" Binding="{Binding, Converter={StaticResource visualHashColumnConverter}}"/>
+          <DataGridTextColumn Header="Resolution" Binding="{Binding, Converter={StaticResource resolutionColumnConverter}}"/>
         </DataGrid.Columns>
       </DataGrid>
       <SplitView.Pane>
