@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:MediaLibrary.App.Converters;assembly=MediaLibrary.App"
+        xmlns:search="clr-namespace:MediaLibrary.Storage.Search;assembly=MediaLibrary.Storage"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MediaLibrary.App.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
@@ -312,8 +313,25 @@
           <DataGridTextColumn Header="Path" Binding="{Binding, Converter={StaticResource pathColumnConverter}}"/>
           <DataGridTextColumn Header="Name" Binding="{Binding, Converter={StaticResource nameColumnConverter}}"/>
           <DataGridTextColumn Header="People" Binding="{Binding, Converter={StaticResource peopleColumnConverter}}"/>
-          <DataGridTextColumn Header="Tags" Binding="{Binding, Converter={StaticResource tagsColumnConverter}}"/>
-          <DataGridTextColumn Header="File Size" Binding="{Binding , Converter={StaticResource fileSizeColumnConverter}}"/>
+          <DataGridTemplateColumn Header="Tags">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate DataType="search:SearchResult">
+                <ItemsControl Items="{Binding Tags}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding}"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+          <DataGridTextColumn Header="File Size" Binding="{Binding, Converter={StaticResource fileSizeColumnConverter}}"/>
           <DataGridTextColumn Header="Duration" Binding="{Binding, Converter={StaticResource durationColumnConverter}}"/>
           <DataGridTextColumn Header="Rating" Binding="{Binding, Converter={StaticResource ratingColumnConverter}}"/>
           <DataGridTextColumn Header="Visual Hash" Binding="{Binding, Converter={StaticResource visualHashColumnConverter}}"/>
