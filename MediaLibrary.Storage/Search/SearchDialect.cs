@@ -244,7 +244,15 @@ namespace MediaLibrary.Storage.Search
                     }
 
                 case "hash":
-                    return new HashExpression(field.Operator, field.Value);
+                    {
+                        var value = field.Value.ToLowerInvariant();
+                        if (value.StartsWith("0x"))
+                        {
+                            value = value.Substring("0x".Length);
+                        }
+
+                        return new HashExpression(field.Operator, value);
+                    }
 
                 default:
                     throw new NotSupportedException();
