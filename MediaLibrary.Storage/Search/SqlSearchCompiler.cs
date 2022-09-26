@@ -96,6 +96,16 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine(") s ON h.Hash = s.Hash");
             }
 
+            if (replacer.MaterializeTags)
+            {
+                sb
+                    .AppendLine("LEFT JOIN (")
+                    .AppendLine("    SELECT Hash, ' ' || GROUP_CONCAT(REPLACE(REPLACE(REPLACE(Tag, ';', ';;'), ',', ',,'), ' ', ';,'), ' ') || ' ' EncodedTags")
+                    .AppendLine("    FROM HashTag")
+                    .AppendLine("    GROUP BY Hash")
+                    .AppendLine(") mt ON h.Hash = mt.Hash");
+            }
+
             sb
                 .AppendLine("WHERE (")
                 .AppendLine(filter)
@@ -168,6 +178,7 @@ namespace MediaLibrary.Storage.Search
         private class SqlReplacer : ExpressionReplacer<string>
         {
             private string indent = string.Empty;
+            private int tagExistenceExpressions;
 
             public bool JoinCopies { get; private set; }
 
@@ -178,6 +189,8 @@ namespace MediaLibrary.Storage.Search
             public bool JoinRatings { get; private set; }
 
             public bool JoinTagCount { get; private set; }
+
+            public bool MaterializeTags { get; private set; }
 
             public static string Contains(string expr, string patternValue)
             {
@@ -397,7 +410,35 @@ namespace MediaLibrary.Storage.Search
             }
 
             /// <inheritdoc/>
-            public override string Replace(TagExpression expression) => $"{this.indent}EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
+            public override string Replace(TagExpression expression)
+            {
+                if (this.MaterializeTags || (this.tagExistenceExpressions += expression.Tags.Count) >= 10)
+                {
+                    this.MaterializeTags = true;
+
+                    string EncodeTag(string tag)
+                    {
+                        return new StringBuilder(tag, tag.Length + 4)
+                            .Replace(";", ";;")
+                            .Replace(",", ",,")
+                            .Replace(" ", ";,")
+                            .Insert(0, ' ')
+                            .Append(' ')
+                            .ToString();
+                    }
+
+                    var expressions = expression.Tags.Select(t => $"INSTR(mt.EncodedTags, {Literal(EncodeTag(t))}) > 0");
+                    return
+                        $"{this.indent}mt.EncodedTags IS NOT NULL AND ((" +
+                        string.Join(
+                            $") OR ({Environment.NewLine}{this.indent}", expressions) +
+                        $")){Environment.NewLine}";
+                }
+                else
+                {
+                    return $"{this.indent}EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
+                }
+            }
 
             /// <inheritdoc/>
             public override string Replace(TagCountExpression expression)
