@@ -40,6 +40,7 @@ namespace MediaLibrary
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
+                NativeMethods.SetProcessDpiAwareness(NativeMethods.DpiAwareness.PerMonitorAware);
                 Application.Run(new MainForm(index));
                 return 0;
             }
