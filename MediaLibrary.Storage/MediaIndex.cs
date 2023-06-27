@@ -1089,7 +1089,7 @@ namespace MediaLibrary.Storage
 
                 try
                 {
-                    foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+                    foreach (var file in FileEnumerable.EnumerateFiles(path, "*", SearchOption.AllDirectories))
                     {
                         if (seen.Add(file))
                         {

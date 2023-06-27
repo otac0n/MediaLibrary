@@ -568,7 +568,10 @@ namespace MediaLibrary
             this.duplicatesList.Groups.Clear();
 
             var predicate = this.visiblePredicate;
-            var added = new HashSet<string>();
+            var added = new Dictionary<string, ListViewGroup>();
+            var items = new ListViewItem[this.pathModels.Count];
+
+            var i = 0;
             foreach (var pathModel in this.pathModels.Values.OrderByDescending(m => m.FilteredResult.FileSize))
             {
                 var item = pathModel.ListViewItem;
@@ -576,17 +579,19 @@ namespace MediaLibrary
                 if (predicate(filteredResult))
                 {
                     var hash = filteredResult.Hash;
-                    var group = this.resultModels[hash].ListViewGroup;
-                    if (added.Add(hash))
+                    if (!added.TryGetValue(hash, out var group))
                     {
-                        this.duplicatesList.Groups.Add(group);
+                        group = this.resultModels[hash].ListViewGroup;
+                        added[hash] = group;
                     }
 
                     item.Group = group;
-                    this.duplicatesList.Items.Add(item);
+                    items[i++] = item;
                 }
             }
 
+            this.duplicatesList.Groups.AddRange(added.Values.ToArray());
+            this.duplicatesList.Items.AddRange(items);
             this.duplicatesList.EndUpdate();
             this.duplicatesList.ItemChecked += this.DuplicatesList_ItemChecked;
         }

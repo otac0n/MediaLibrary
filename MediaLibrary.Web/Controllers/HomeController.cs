@@ -2,15 +2,31 @@
 
 namespace MediaLibrary.Web.Controllers
 {
-    using System.Web.Http;
     using MediaLibrary.Web.Hosting;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.AspNetCore.StaticFiles;
 
-    public class HomeController : ApiController
+    [ApiController]
+    [Route("")]
+    public class HomeController : ControllerBase
     {
-        [Route("{view*}")]
-        public IHttpActionResult Get(string view)
+        [Route("{*view}")]
+        public ActionResult Get(string view = null)
         {
-            return new ViewResult(view);
+            view = view ?? "index.html";
+
+            if (!new FileExtensionContentTypeProvider().TryGetContentType(view, out var mimeMapping))
+            {
+                mimeMapping = "application/octet-stream";
+            }
+
+            var stream = StaticContent.GetContent(view);
+            if (stream == null)
+            {
+                return this.NotFound();
+            }
+
+            return new FileStreamResult(stream, mimeMapping);
         }
     }
 }

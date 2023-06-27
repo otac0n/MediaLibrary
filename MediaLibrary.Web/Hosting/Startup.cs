@@ -2,61 +2,38 @@
 
 namespace MediaLibrary.Web.Hosting
 {
+    using System;
+    using System.Net;
     using System.Net.Http.Formatting;
     using System.Text;
-    using System.Web.Http;
+    using System.Text.RegularExpressions;
     using MediaLibrary.Storage;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
-    using Newtonsoft.Json.Serialization;
-    using Owin;
-    using SqueezeMe;
-    using Unity;
-    using Unity.AspNet.WebApi;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.Extensions.DependencyInjection;
 
-    public class Startup
+    public static class Startup
     {
-        private MediaIndex index;
-
-        public Startup(MediaIndex index)
+        public static void Build(IWebHostBuilder builder, string baseUri, MediaIndex index)
         {
-            this.index = index;
-        }
-
-        public void Configuration(IAppBuilder appBuilder)
-        {
-            var container = new UnityContainer();
-
-            container.RegisterInstance(this.index);
-
-            var config = new HttpConfiguration();
-
-            config.DependencyResolver = new UnityHierarchicalDependencyResolver(container);
-
-            var formatter = new JsonMediaTypeFormatter
-            {
-                SerializerSettings = new JsonSerializerSettings
+            builder.UseUrls(baseUri);
+            builder
+                .ConfigureServices(services =>
                 {
-                    ContractResolver = new DefaultContractResolver
-                    {
-                        NamingStrategy = new CamelCaseNamingStrategy
-                        {
-                            ProcessDictionaryKeys = false,
-                        },
-                    },
-                },
-            };
-            formatter.SupportedEncodings.Clear();
-            formatter.SupportedEncodings.Add(new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-
-            config.Formatters.Clear();
-            config.Formatters.Add(formatter);
-            config.Formatters.JsonFormatter.SerializerSettings.Converters.Add(new StringEnumConverter());
-
-            config.MapHttpAttributeRoutes();
-
-            appBuilder.UseCompression();
-            appBuilder.UseWebApi(config);
+                    services.AddControllers();
+                    services
+                        .AddSingleton(index)
+                        .AddResponseCompression();
+                })
+                .Configure(app =>
+                {
+                    app
+                        .UseResponseCompression()
+                        .UseRouting()
+                        .UseEndpoints(endpoints =>
+                            endpoints
+                                .MapControllers());
+                });
         }
     }
 }

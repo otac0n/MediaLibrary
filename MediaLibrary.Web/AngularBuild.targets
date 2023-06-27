@@ -11,7 +11,7 @@
     <Exec Command="$(NpmCommand) --version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
   </Target>
   <Target Name="EnsureAngular" DependsOnTargets="NpmRestore">
-    <Exec Command="$(AngularCommand) --version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
+    <Exec Command="$(AngularCommand) version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
   </Target>
   <Target Name="NpmRestore" DependsOnTargets="EnsureNpm" Inputs="package.json;$(MSBuildThisFile)" Outputs="node_modules\.msbuild">
     <Exec Command="$(NpmCommand) install" IgnoreStandardErrorWarningFormat="true" CustomWarningRegularExpression="^npm WARN" CustomErrorRegularExpression="^npm ERR!" />
@@ -21,7 +21,7 @@
     <AngularBuildTask AngularCommand="$(AngularCommand)" />
   </Target>
   <Target Name="IncludeDistributables" DependsOnTargets="AngularBuild" AfterTargets="BeforeBuild">
-    <Exec Command="$(AngularCommand) lint --format=msbuild" IgnoreExitCode="true" />
+    <Exec Command="$(AngularCommand) lint" IgnoreExitCode="true" />
     <ItemGroup>
       <AngularDistributable Include="obj\dist\**\*.*" />
     </ItemGroup>
