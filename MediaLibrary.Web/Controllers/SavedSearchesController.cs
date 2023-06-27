@@ -4,11 +4,12 @@ namespace MediaLibrary.Web.Controllers
 {
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using System.Web.Http;
     using MediaLibrary.Storage;
+    using Microsoft.AspNetCore.Mvc;
 
-    [RoutePrefix("searches")]
-    public class SavedSearchesController : ApiController
+    [ApiController]
+    [Route("searches")]
+    public class SavedSearchesController : ControllerBase
     {
         private readonly MediaIndex index;
 

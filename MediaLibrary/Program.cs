@@ -3,13 +3,13 @@
 namespace MediaLibrary
 {
     using System;
-    using System.Diagnostics;
     using System.IO;
     using System.Windows.Forms;
     using CommandLine;
     using MediaLibrary.Storage;
     using MediaLibrary.Web.Hosting;
-    using Microsoft.Owin.Hosting;
+    using Microsoft.AspNetCore;
+    using Microsoft.AspNetCore.Hosting;
     using static System.Environment;
 
     internal class Program
@@ -32,15 +32,20 @@ namespace MediaLibrary
             Directory.CreateDirectory(Path.GetDirectoryName(options.IndexPath));
 
             var index = new MediaIndex(options.IndexPath);
-            var startup = new Startup(index);
-            using (WebApp.Start(options.BaseUri, startup.Configuration))
+
+            var builder = WebHost.CreateDefaultBuilder();
+            Startup.Build(builder, options.BaseUri, index);
+
+            using (var app = builder.Build())
             {
-                Trace.Listeners.Remove("HostingTraceListener");
-                ////Debug.Listeners.Remove("HostingTraceListener");
+                var task = app.RunAsync();
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new MainForm(index));
+
+                app.StopAsync();
+                task.Wait();
                 return 0;
             }
         }

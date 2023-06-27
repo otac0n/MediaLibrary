@@ -5,11 +5,12 @@ namespace MediaLibrary.Web.Controllers
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.Threading.Tasks;
-    using System.Web.Http;
     using MediaLibrary.Storage;
+    using Microsoft.AspNetCore.Mvc;
 
-    [RoutePrefix("ratings")]
-    public class RatingsController : ApiController
+    [ApiController]
+    [Route("ratings")]
+    public class RatingsController : ControllerBase
     {
         private readonly MediaIndex index;
 
