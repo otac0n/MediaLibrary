@@ -19,8 +19,8 @@ namespace MediaLibrary.Storage.Search.Optimizations
         protected const double ExpectedTagCount = 5;
         protected const double IndividualPersonSelectivity = 0.01;
         protected const double NameSelectivity = 0.1;
-        protected const double PerRejectedTagSelectivity = 0.001;
-        protected const double PerTagSelectivity = 0.01;
+        protected const double PerRejectedTagSelectivity = 0.0001;
+        protected const double PerTagSelectivity = 0.001;
         protected const double TextSelectivity = 0.1;
         protected const double TypeEqualsSelectivity = 0.3;
         protected const double TypePrefixSelectivity = 0.5;
@@ -41,10 +41,10 @@ namespace MediaLibrary.Storage.Search.Optimizations
             expression.Expressions.Aggregate(1.0, (s, e) => s * this.Replace(e));
 
         public override double Replace(DisjunctionExpression expression) =>
-            1.0 - expression.Expressions.Aggregate(1.0, (s, e) => s * (1.0 - this.Replace(e)));
+            1 - expression.Expressions.Aggregate(1.0, (s, e) => s * (1.0 - this.Replace(e)));
 
         public override double Replace(NegationExpression expression) =>
-            1.0 - this.Replace(expression.Expression);
+            1 - this.Replace(expression.Expression);
 
         public override double Replace(CopiesExpression expression) =>
             AccumulateDiscreet(expression.Operator, expression.Copies, ExpectedCopies);
