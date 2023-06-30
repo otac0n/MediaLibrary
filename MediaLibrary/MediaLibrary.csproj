@@ -13,6 +13,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <StartupObject>MediaLibrary.Program</StartupObject>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />

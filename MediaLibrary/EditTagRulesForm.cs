@@ -49,7 +49,6 @@ namespace MediaLibrary
             this.rulePages.Controls.Add(newPage);
 
             var newRules = new TextBox();
-            newPage.Controls.Add(newRules);
             newRules.AcceptsReturn = this.rules.AcceptsReturn;
             newRules.AcceptsTab = this.rules.AcceptsTab;
             newRules.Multiline = this.rules.Multiline;
@@ -57,10 +56,12 @@ namespace MediaLibrary
             newRules.WordWrap = this.rules.WordWrap;
             newRules.Font = this.rules.Font;
             newRules.ScrollBars = this.rules.ScrollBars;
-            newRules.Anchor = this.rules.Anchor;
-            newRules.Location = this.rules.Location;
             newRules.Size = this.rules.Size;
+            newRules.Anchor = this.rules.Anchor;
+            newRules.Dock = this.rules.Dock;
+            newRules.Location = this.rules.Location;
             newRules.Text = rules;
+            newPage.Controls.Add(newRules);
         }
 
         private async void ApplyButton_Click(object sender, System.EventArgs e)

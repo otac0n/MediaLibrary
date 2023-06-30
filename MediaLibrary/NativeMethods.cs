@@ -12,16 +12,6 @@ namespace MediaLibrary
     /// </summary>
     internal static class NativeMethods
     {
-        /// <summary>
-        /// From <see href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn280512(v=vs.85).aspx"/>.
-        /// </summary>
-        public enum DpiAwareness : int
-        {
-            None = 0,
-            SystemAware = 1,
-            PerMonitorAware = 2,
-        }
-
         [Flags]
         private enum FILEOP_Flags : ushort
         {
@@ -96,9 +86,6 @@ namespace MediaLibrary
                     break;
             }
         }
-
-        [DllImport("Shcore.dll")]
-        public static extern int SetProcessDpiAwareness(DpiAwareness PROCESS_DPI_AWARENESS);
 
         [DllImport("shell32.dll", EntryPoint = "SHFileOperation", CharSet = CharSet.Unicode)]
         private static extern int SHFileOperation32([In, Out] ref SHFILEOPSTRUCT32 lpFileOp);

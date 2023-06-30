@@ -40,9 +40,7 @@ namespace MediaLibrary
             {
                 var task = app.RunAsync();
 
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                NativeMethods.SetProcessDpiAwareness(NativeMethods.DpiAwareness.PerMonitorAware);
+                ApplicationConfiguration.Initialize();
                 Application.Run(new MainForm(index));
 
                 app.StopAsync();

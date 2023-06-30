@@ -109,9 +109,7 @@ namespace MediaLibrary
             // 
             this.rules.AcceptsReturn = true;
             this.rules.AcceptsTab = true;
-            this.rules.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.rules.Dock = System.Windows.Forms.DockStyle.Fill;
             this.rules.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.rules.Location = new System.Drawing.Point(0, 0);
             this.rules.MaxLength = 0;
