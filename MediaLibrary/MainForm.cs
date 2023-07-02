@@ -504,8 +504,9 @@ namespace MediaLibrary
             {
                 data = await this.index.SearchIndex(searchText).ConfigureAwait(true);
             }
-            catch
+            catch (Exception ex)
             {
+                // TODO: ex.Message
                 data = Array.Empty<SearchResult>();
             }
 

@@ -197,7 +197,8 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine("DROP TABLE temp.SearchHashInfo;");
             }
 
-            return sb.ToString();
+            var query = sb.ToString();
+            return query;
         }
 
         private class SqlReplacer : ExpressionReplacer<string>
