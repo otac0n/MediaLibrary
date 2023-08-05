@@ -49,10 +49,17 @@ namespace MediaLibrary.Search
                     case "rejected" when this.Operator == GreaterThanOrEqualOperator:
                         return $"!{valueEscaped}";
 
+                    case "suggested" when this.Operator == LessThanOrEqualOperator:
+                        return $"?{valueEscaped}";
+
+                    case "missing" when this.Operator == LessThanOrEqualOperator:
+                        return $"^{valueEscaped}";
+
+                    case "add" when this.Operator == LessThanOrEqualOperator:
+                        return $"+{valueEscaped}";
+
                     case "@" when this.Operator == EqualsOperator:
                     case "~" when this.Operator == EqualsOperator:
-                    case "?" when this.Operator == EqualsOperator:
-                    case "^" when this.Operator == EqualsOperator:
                         return $"{this.Field}{valueEscaped}";
                 }
             }

@@ -112,33 +112,26 @@ namespace MediaLibrary.Storage.Search
                         this.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value))),
                         this.CompileNegation(this.CompileField(new FieldTerm("rejected", FieldTerm.GreaterThanOrEqualOperator, field.Value))));
 
-                case "?":
                 case "suggested":
-                    if (field.Operator != FieldTerm.EqualsOperator)
                     {
-                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                        var tagInfo = this.TagEngine[field.Value];
+                        var tags = tagInfo.RelatedTags(TagDialect.TagRelationships[field.Operator]);
+                        return this.CompileDisjunction(
+                            tags.Select(tag => this.CompileTagRelation(TagOperator.Suggestion, tag)));
                     }
 
-                    return this.CompileTagRelation(TagOperator.Suggestion, field.Value);
-
-                case "^":
                 case "missing":
-                    if (field.Operator != FieldTerm.EqualsOperator)
                     {
-                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                        var tagInfo = this.TagEngine[field.Value];
+                        var tags = tagInfo.RelatedTags(TagDialect.TagRelationships[field.Operator]);
+                        return this.CompileDisjunction(
+                            tags.Select(tag => this.CompileTagRelation(TagOperator.Implication, tag)));
                     }
 
-                    return this.CompileTagRelation(TagOperator.Implication, field.Value);
-
-                case "+":
-                    if (field.Operator != FieldTerm.EqualsOperator)
-                    {
-                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
-                    }
-
+                case "add":
                     return this.CompileDisjunction(
-                        this.CompileField(new FieldTerm("missing", FieldTerm.EqualsOperator, field.Value)),
-                        this.CompileField(new FieldTerm("suggested", FieldTerm.EqualsOperator, field.Value)));
+                        this.CompileField(new FieldTerm("missing", field.Operator, field.Value)),
+                        this.CompileField(new FieldTerm("suggested", field.Operator, field.Value)));
 
                 case "*":
                     if (field.Operator != FieldTerm.EqualsOperator)
@@ -148,8 +141,8 @@ namespace MediaLibrary.Storage.Search
 
                     return this.CompileDisjunction(
                         this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value)),
-                        this.CompileField(new FieldTerm("missing", FieldTerm.EqualsOperator, field.Value)),
-                        this.CompileField(new FieldTerm("suggested", FieldTerm.EqualsOperator, field.Value)));
+                        this.CompileField(new FieldTerm("missing", FieldTerm.LessThanOrEqualOperator, field.Value)),
+                        this.CompileField(new FieldTerm("suggested", FieldTerm.LessThanOrEqualOperator, field.Value)));
 
                 case "similar":
                     {
