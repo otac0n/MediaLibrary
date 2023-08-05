@@ -22,7 +22,8 @@ namespace MediaLibrary.Storage.Search
             new TagCombinationOptimization(),
             new RejectedTagSetReductionOptimization(),
             new RejectedTagCombinationOptimization(),
-            new DeMorgansOptimization());
+            new DeMorgansOptimization(),
+            new DegenerateOptimization());
 
         private readonly ContainsHiddenReplacer containsHiddenReplacer;
         private readonly SearchDialect dialect;
