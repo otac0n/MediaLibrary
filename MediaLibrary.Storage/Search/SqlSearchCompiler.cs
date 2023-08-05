@@ -424,8 +424,40 @@ namespace MediaLibrary.Storage.Search
                 return $"{this.indent}COALESCE(s.Count, 0) {ConvertOperator(expression.Operator)} {expression.RatingsCount}{Environment.NewLine}";
             }
 
+            private int GetOrAddMaterializedTags(ImmutableHashSet<string> tags)
+            {
+                var setIndex = -1;
+                for (var i = 0; i < this.MaterializedTags.Count; i++)
+                {
+                    if (tags.SetEquals(this.MaterializedTags[i]))
+                    {
+                        setIndex = i;
+                        break;
+                    }
+                }
+
+                if (setIndex < 0)
+                {
+                    setIndex = this.MaterializedTags.Count;
+                    this.MaterializedTags = this.MaterializedTags.Add(tags);
+                }
+
+                return setIndex;
+            }
+
             /// <inheritdoc/>
-            public override string Replace(RejectedTagExpression expression) => $"{this.indent}EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
+            public override string Replace(RejectedTagExpression expression)
+            {
+                if (expression.Tags.Count > 3)
+                {
+                    var setIndex = GetOrAddMaterializedTags(expression.Tags);
+                    return $"{this.indent}EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN (SELECT Tag FROM temp.MaterializedTags WHERE SetIndex = {setIndex})){Environment.NewLine}";
+                }
+                else
+                {
+                    return $"{this.indent}EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
+                }
+            }
 
             /// <inheritdoc/>
             public override string Replace(StarsExpression expression)
@@ -439,22 +471,7 @@ namespace MediaLibrary.Storage.Search
             {
                 if (expression.Tags.Count > 3)
                 {
-                    var setIndex = -1;
-                    for (var i = 0; i < this.MaterializedTags.Count; i++)
-                    {
-                        if (expression.Tags.SetEquals(this.MaterializedTags[i]))
-                        {
-                            setIndex = i;
-                            break;
-                        }
-                    }
-
-                    if (setIndex < 0)
-                    {
-                        setIndex = this.MaterializedTags.Count;
-                        this.MaterializedTags = this.MaterializedTags.Add(expression.Tags);
-                    }
-
+                    var setIndex = GetOrAddMaterializedTags(expression.Tags);
                     return $"{this.indent}EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN (SELECT Tag FROM temp.MaterializedTags WHERE SetIndex = {setIndex})){Environment.NewLine}";
                 }
                 else
