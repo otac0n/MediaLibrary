@@ -6,7 +6,6 @@ namespace MediaLibrary
     using System.Diagnostics.CodeAnalysis;
     using System.Drawing;
     using System.Linq;
-    using System.Reflection.Metadata;
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using MediaLibrary.Storage;
@@ -15,12 +14,50 @@ namespace MediaLibrary
     public partial class EditTagRulesForm : Form
     {
         private readonly IMediaIndex index;
-        private TextSearchForm textSearch;
+        private readonly TextSearchManager searchManager;
 
         public EditTagRulesForm(IMediaIndex index)
         {
             this.index = index;
             this.InitializeComponent();
+            this.searchManager = new TextSearchManager(
+                this,
+                () => this.rulePages.TabCount,
+                ix => this.GetRulesEditor(ix).Text,
+                () =>
+                {
+                    var documentIndex = this.rulePages.SelectedIndex;
+                    var editor = this.GetRulesEditor(documentIndex);
+                    return (documentIndex, editor.SelectionStart, editor.SelectionLength);
+                },
+                (documentIndex, selectionStart, selectionLength) =>
+                {
+                    this.rulePages.SelectedIndex = documentIndex;
+                    var editor = this.GetRulesEditor(documentIndex);
+                    editor.SelectionStart = selectionStart;
+                    editor.SelectionLength = selectionLength;
+                    editor.ScrollToCaret();
+                },
+                form =>
+                {
+                    var formBounds = this.rulePages.GetFormRectangle();
+
+                    var formPosition = new Point(
+                        formBounds.X + (formBounds.Width - form.Width),
+                        formBounds.Y);
+
+                    var screenPosition = new Point(
+                        Math.Max(this.Location.X + formPosition.X, 0),
+                        Math.Max(this.Location.Y + formPosition.Y, 0));
+
+                    form.Location = screenPosition;
+                });
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            this.searchManager.Dispose();
         }
 
         private TextBox GetRulesEditor(int documentIndex)
@@ -76,170 +113,20 @@ namespace MediaLibrary
 
         private void Rules_KeyDown(object sender, KeyEventArgs e)
         {
-            void InitializeSearchForm()
-            {
-                if (this.textSearch == null)
-                {
-                    this.textSearch = new TextSearchForm();
-                    this.textSearch.FindNext += (_, _) => FindNext(refocus: true);
-                    this.textSearch.FindPrevious += (_, _) => FindPrevious(refocus: true);
-                    this.FormClosed += (_, _) =>
-                    {
-                        this.textSearch.Dispose();
-                    };
-                }
-            }
-
-            void ShowSearchDialog()
-            {
-                InitializeSearchForm();
-
-                if (!this.textSearch.Visible)
-                {
-                    var formBounds = ((Control)sender).GetFormRectangle();
-
-                    var formPosition = new Point(
-                        formBounds.X + (formBounds.Width - this.textSearch.Width),
-                        formBounds.Y);
-
-                    var screenPosition = new Point(
-                        Math.Max(this.Location.X + formPosition.X, 0),
-                        Math.Max(this.Location.Y + formPosition.Y, 0));
-
-                    this.textSearch.Location = screenPosition;
-
-                    this.textSearch.Show(this);
-                }
-
-                this.textSearch.Refocus();
-            }
-
-            (int documentIndex, int textIndex) GetCurrentLocation(bool reverse = false)
-            {
-                var documentIndex = this.rulePages.SelectedIndex;
-                var editor = this.GetRulesEditor(documentIndex);
-                var textIndex = reverse
-                    ? Math.Min(editor.SelectionStart, editor.SelectionStart + editor.SelectionLength)
-                    : Math.Max(editor.SelectionStart, editor.SelectionStart + editor.SelectionLength);
-                return (documentIndex, textIndex);
-            }
-
-            void HighlightSearchResult(int documentIndex, int textIndex, int length, bool refocus)
-            {
-                this.rulePages.SelectedIndex = documentIndex;
-                var editor = this.GetRulesEditor(documentIndex);
-                editor.SelectionStart = textIndex; // Steals focus.
-                editor.SelectionLength = length;
-                editor.ScrollToCaret();
-
-                if (refocus)
-                {
-                    this.textSearch.Refocus();
-                }
-            }
-
-            void FindNext(bool refocus = false)
-            {
-                var search = this.textSearch?.Search;
-
-                if (string.IsNullOrEmpty(search))
-                {
-                    ShowSearchDialog();
-                    return;
-                }
-
-                var start = GetCurrentLocation();
-                var state = start;
-
-                (int documentIndex, int textIndex)? found = null;
-                while (found == null)
-                {
-                    var aheadOfStart = state.documentIndex == start.documentIndex && state.textIndex < start.textIndex;
-                    var nextIndex = this.GetRulesEditor(state.documentIndex).Text.IndexOf(search, state.textIndex, StringComparison.CurrentCultureIgnoreCase);
-                    if (nextIndex == -1)
-                    {
-                        state.textIndex = 0;
-                        state.documentIndex = (state.documentIndex + 1) % this.rulePages.TabCount;
-                        if (aheadOfStart || state == start)
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        if (!aheadOfStart || nextIndex < start.textIndex)
-                        {
-                            found = (state.documentIndex, nextIndex);
-                        }
-
-                        break;
-                    }
-                }
-
-                if (found != null)
-                {
-                    HighlightSearchResult(found.Value.documentIndex, found.Value.textIndex, search.Length, refocus);
-                }
-            }
-
-            void FindPrevious(bool refocus = false)
-            {
-                var search = this.textSearch?.Search;
-
-                if (string.IsNullOrEmpty(search))
-                {
-                    ShowSearchDialog();
-                    return;
-                }
-
-                var start = GetCurrentLocation(reverse: true);
-                var state = start;
-
-                (int documentIndex, int textIndex)? found = null;
-                while (found == null)
-                {
-                    var aheadOfStart = state.documentIndex == start.documentIndex && state.textIndex > start.textIndex;
-                    var nextIndex = state.textIndex < search.Length ? -1 : this.GetRulesEditor(state.documentIndex).Text.LastIndexOf(search, state.textIndex - (search.Length - 1), StringComparison.CurrentCultureIgnoreCase);
-                    if (nextIndex == -1)
-                    {
-                        state.documentIndex = (state.documentIndex == 0 ? this.rulePages.TabCount : state.documentIndex) - 1;
-                        state.textIndex = this.GetRulesEditor(state.documentIndex).Text.Length;
-                        if (aheadOfStart || state == start)
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        if (!aheadOfStart || nextIndex < start.textIndex)
-                        {
-                            found = (state.documentIndex, nextIndex);
-                        }
-
-                        break;
-                    }
-                }
-
-                if (found != null)
-                {
-                    HighlightSearchResult(found.Value.documentIndex, found.Value.textIndex, search.Length, refocus);
-                }
-            }
-
             switch (e)
             {
                 case { KeyCode: Keys.F3, Shift: false, Control: false, Alt: false }:
-                    FindNext();
+                    this.searchManager.FindNext();
                     e.Handled = true;
                     e.SuppressKeyPress = true;
                     break;
                 case { Shift: true, KeyCode: Keys.F3, Control: false, Alt: false }:
-                    FindPrevious();
+                    this.searchManager.FindPrevious();
                     e.Handled = true;
                     e.SuppressKeyPress = true;
                     break;
                 case { Control: true, KeyCode: Keys.F, Alt: false, Shift: false }:
-                    ShowSearchDialog();
+                    this.searchManager.ShowSearchDialog();
                     e.Handled = true;
                     e.SuppressKeyPress = true;
                     break;
