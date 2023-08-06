@@ -4,7 +4,9 @@ namespace MediaLibrary
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.Drawing;
     using System.Linq;
+    using System.Reflection.Metadata;
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using MediaLibrary.Storage;
@@ -13,6 +15,7 @@ namespace MediaLibrary
     public partial class EditTagRulesForm : Form
     {
         private readonly IMediaIndex index;
+        private TextSearchForm textSearch;
 
         public EditTagRulesForm(IMediaIndex index)
         {
@@ -20,9 +23,14 @@ namespace MediaLibrary
             this.InitializeComponent();
         }
 
-        private static string GetRulesText(TabPage p)
+        private TextBox GetRulesEditor(int documentIndex)
         {
-            return ((TextBox)p.Controls[0]).Text;
+            return GetRulesEditor(this.rulePages.TabPages[documentIndex]);
+        }
+
+        private static TextBox GetRulesEditor(TabPage p)
+        {
+            return (TextBox)p.Controls[0];
         }
 
         private void AddCategoryMenuItem_Click(object sender, EventArgs e)
@@ -51,6 +59,7 @@ namespace MediaLibrary
             var newRules = new TextBox();
             newRules.AcceptsReturn = this.rules.AcceptsReturn;
             newRules.AcceptsTab = this.rules.AcceptsTab;
+            newRules.HideSelection = false;
             newRules.Multiline = this.rules.Multiline;
             newRules.MaxLength = this.rules.MaxLength;
             newRules.WordWrap = this.rules.WordWrap;
@@ -61,7 +70,180 @@ namespace MediaLibrary
             newRules.Dock = this.rules.Dock;
             newRules.Location = this.rules.Location;
             newRules.Text = rules;
+            newRules.KeyDown += this.Rules_KeyDown;
             newPage.Controls.Add(newRules);
+        }
+
+        private void Rules_KeyDown(object sender, KeyEventArgs e)
+        {
+            void InitializeSearchForm()
+            {
+                if (this.textSearch == null)
+                {
+                    this.textSearch = new TextSearchForm();
+                    this.textSearch.FindNext += (_, _) => FindNext(refocus: true);
+                    this.textSearch.FindPrevious += (_, _) => FindPrevious(refocus: true);
+                    this.FormClosed += (_, _) =>
+                    {
+                        this.textSearch.Dispose();
+                    };
+                }
+            }
+
+            void ShowSearchDialog()
+            {
+                InitializeSearchForm();
+
+                if (!this.textSearch.Visible)
+                {
+                    var formBounds = ((Control)sender).GetFormRectangle();
+
+                    var formPosition = new Point(
+                        formBounds.X + (formBounds.Width - this.textSearch.Width),
+                        formBounds.Y);
+
+                    var screenPosition = new Point(
+                        Math.Max(this.Location.X + formPosition.X, 0),
+                        Math.Max(this.Location.Y + formPosition.Y, 0));
+
+                    this.textSearch.Location = screenPosition;
+
+                    this.textSearch.Show(this);
+                }
+
+                this.textSearch.Refocus();
+            }
+
+            (int documentIndex, int textIndex) GetCurrentLocation(bool reverse = false)
+            {
+                var documentIndex = this.rulePages.SelectedIndex;
+                var editor = this.GetRulesEditor(documentIndex);
+                var textIndex = reverse
+                    ? Math.Min(editor.SelectionStart, editor.SelectionStart + editor.SelectionLength)
+                    : Math.Max(editor.SelectionStart, editor.SelectionStart + editor.SelectionLength);
+                return (documentIndex, textIndex);
+            }
+
+            void HighlightSearchResult(int documentIndex, int textIndex, int length, bool refocus)
+            {
+                this.rulePages.SelectedIndex = documentIndex;
+                var editor = this.GetRulesEditor(documentIndex);
+                editor.SelectionStart = textIndex; // Steals focus.
+                editor.SelectionLength = length;
+                editor.ScrollToCaret();
+
+                if (refocus)
+                {
+                    this.textSearch.Refocus();
+                }
+            }
+
+            void FindNext(bool refocus = false)
+            {
+                var search = this.textSearch?.Search;
+
+                if (string.IsNullOrEmpty(search))
+                {
+                    ShowSearchDialog();
+                    return;
+                }
+
+                var start = GetCurrentLocation();
+                var state = start;
+
+                (int documentIndex, int textIndex)? found = null;
+                while (found == null)
+                {
+                    var aheadOfStart = state.documentIndex == start.documentIndex && state.textIndex < start.textIndex;
+                    var nextIndex = this.GetRulesEditor(state.documentIndex).Text.IndexOf(search, state.textIndex, StringComparison.CurrentCultureIgnoreCase);
+                    if (nextIndex == -1)
+                    {
+                        state.textIndex = 0;
+                        state.documentIndex = (state.documentIndex + 1) % this.rulePages.TabCount;
+                        if (aheadOfStart || state == start)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (!aheadOfStart || nextIndex < start.textIndex)
+                        {
+                            found = (state.documentIndex, nextIndex);
+                        }
+
+                        break;
+                    }
+                }
+
+                if (found != null)
+                {
+                    HighlightSearchResult(found.Value.documentIndex, found.Value.textIndex, search.Length, refocus);
+                }
+            }
+
+            void FindPrevious(bool refocus = false)
+            {
+                var search = this.textSearch?.Search;
+
+                if (string.IsNullOrEmpty(search))
+                {
+                    ShowSearchDialog();
+                    return;
+                }
+
+                var start = GetCurrentLocation(reverse: true);
+                var state = start;
+
+                (int documentIndex, int textIndex)? found = null;
+                while (found == null)
+                {
+                    var aheadOfStart = state.documentIndex == start.documentIndex && state.textIndex > start.textIndex;
+                    var nextIndex = state.textIndex < search.Length ? -1 : this.GetRulesEditor(state.documentIndex).Text.LastIndexOf(search, state.textIndex - (search.Length - 1), StringComparison.CurrentCultureIgnoreCase);
+                    if (nextIndex == -1)
+                    {
+                        state.documentIndex = (state.documentIndex == 0 ? this.rulePages.TabCount : state.documentIndex) - 1;
+                        state.textIndex = this.GetRulesEditor(state.documentIndex).Text.Length;
+                        if (aheadOfStart || state == start)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (!aheadOfStart || nextIndex < start.textIndex)
+                        {
+                            found = (state.documentIndex, nextIndex);
+                        }
+
+                        break;
+                    }
+                }
+
+                if (found != null)
+                {
+                    HighlightSearchResult(found.Value.documentIndex, found.Value.textIndex, search.Length, refocus);
+                }
+            }
+
+            switch (e)
+            {
+                case { KeyCode: Keys.F3, Shift: false, Control: false, Alt: false }:
+                    FindNext();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    break;
+                case { Shift: true, KeyCode: Keys.F3, Control: false, Alt: false }:
+                    FindPrevious();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    break;
+                case { Control: true, KeyCode: Keys.F, Alt: false, Shift: false }:
+                    ShowSearchDialog();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    break;
+            }
         }
 
         private async void ApplyButton_Click(object sender, System.EventArgs e)
@@ -118,8 +300,7 @@ namespace MediaLibrary
         private void RemoveCategoryMenuItem_Click(object sender, EventArgs e)
         {
             var tabIndex = this.tabContextMenu.Tag as int?;
-            var tabPage = this.rulePages.TabPages[tabIndex.Value];
-            if (string.IsNullOrWhiteSpace(GetRulesText(tabPage)))
+            if (string.IsNullOrWhiteSpace(GetRulesEditor(tabIndex.Value).Text))
             {
                 this.rulePages.TabPages.RemoveAt(tabIndex.Value);
             }
@@ -163,7 +344,7 @@ namespace MediaLibrary
             var ruleCategories = this.rulePages.TabPages.Cast<TabPage>().Select((p, i) => new RuleCategory(
                 category: i == 0 ? string.Empty : p.Text,
                 order: i,
-                rules: GetRulesText(p))).ToList();
+                rules: GetRulesEditor(p).Text)).ToList();
 
             try
             {

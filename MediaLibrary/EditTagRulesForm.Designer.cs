@@ -111,6 +111,7 @@ namespace MediaLibrary
             this.rules.AcceptsTab = true;
             this.rules.Dock = System.Windows.Forms.DockStyle.Fill;
             this.rules.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rules.HideSelection = false;
             this.rules.Location = new System.Drawing.Point(0, 0);
             this.rules.MaxLength = 0;
             this.rules.Multiline = true;
@@ -119,6 +120,7 @@ namespace MediaLibrary
             this.rules.Size = new System.Drawing.Size(412, 471);
             this.rules.TabIndex = 1;
             this.rules.WordWrap = false;
+            this.rules.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Rules_KeyDown);
             // 
             // tabContextMenu
             // 
