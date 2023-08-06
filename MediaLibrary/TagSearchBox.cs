@@ -14,6 +14,8 @@ namespace MediaLibrary
         private static readonly StringComparer Comparer = StringComparer.CurrentCultureIgnoreCase;
         private static readonly StringComparison Comparison = StringComparison.CurrentCultureIgnoreCase;
 
+        public TagRuleEngine Engine { get; set; }
+
         protected override IList<(string part, Highlighting highlight)> RenderItem(HashSet<string> terms, TagInfo item)
         {
             var pattern = terms.Count == 0 ? NoMatch : new Regex(string.Join("|", terms.Select(Regex.Escape)), RegexOptions.IgnoreCase);
@@ -39,10 +41,21 @@ namespace MediaLibrary
                 list.Add((")", Highlighting.None));
             }
 
-            var properties = item.Properties.Where(p => p != "abstract" && !p.StartsWith("color=", StringComparison.Ordinal) && !p.StartsWith("order=", StringComparison.Ordinal)).ToList();
+            var properties = (this.Engine?.GetAllTagProperties(item.Tag) ?? item.Properties)
+                .Where(p =>
+                    p != TagRuleEngine.AbstractProperty &&
+                    !p.StartsWith("color=", StringComparison.Ordinal) &&
+                    !p.StartsWith("order=", StringComparison.Ordinal))
+                .Distinct()
+                .ToList();
             if (properties.Count > 0)
             {
                 list.Add(($" [{string.Join(", ", properties)}]", Highlighting.Subdued));
+            }
+
+            if (item.Ancestors.Count > 0)
+            {
+                list.Add(($" :: {string.Join(", ", item.Ancestors)}", Highlighting.Subdued));
             }
 
             return list;

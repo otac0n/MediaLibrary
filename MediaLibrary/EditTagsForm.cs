@@ -127,6 +127,7 @@ namespace MediaLibrary
             var rawTags = await this.index.GetAllHashTags().ConfigureAwait(true);
             var tags = engine.GetKnownTags().Concat(rawTags).Select(engine.Rename).Distinct().Select(t => engine[t]);
             var text = this.tagSearchBox.Text;
+            this.tagSearchBox.Engine = engine;
             this.tagSearchBox.Items = tags.ToList();
             this.tagSearchBox.Text = text;
         }
