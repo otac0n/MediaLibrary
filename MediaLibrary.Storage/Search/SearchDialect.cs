@@ -311,7 +311,7 @@ namespace MediaLibrary.Storage.Search
             var tagInfo = tagEngine[tag];
             var searchTags = tagInfo.RelatedTags(HierarchyRelation.SelfOrDescendant);
             var exclusionTags = tagInfo.RelatedTags(HierarchyRelation.SelfOrAncestor);
-            var rules = tagEngine[@operator].Where(rule => rule.Right.Any(r => searchTags.Contains(r)));
+            var rules = tagEngine[@operator].Where(rule => rule.Right.Contains(tag));
             var exclusions = tagEngine[TagOperator.Exclusion].Where(rule => rule.Right.Any(r => exclusionTags.Contains(r)));
             return this.CompileConjunction(
                 this.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, tag))),
