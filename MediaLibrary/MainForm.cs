@@ -458,15 +458,10 @@ namespace MediaLibrary
             {
                 form.StartPosition = FormStartPosition.Manual;
 
-                var formBounds = this.listView.GetFormRectangle();
-
-                var formPosition = new Point(
-                    formBounds.X + (formBounds.Width - form.Width) / 2,
-                    formBounds.Y + (formBounds.Height - form.Height) / 2);
-
+                var topLeft = this.listView.PointToScreen(Point.Empty);
                 var screenPosition = new Point(
-                    Math.Max(this.Location.X + formPosition.X, 0),
-                    Math.Max(this.Location.Y + formPosition.Y, 0));
+                    Math.Max(topLeft.X + (this.listView.Width - form.Width) / 2, 0),
+                    Math.Max(topLeft.Y + (this.listView.Height - form.Height) / 2, 0));
 
                 form.Location = screenPosition;
             }

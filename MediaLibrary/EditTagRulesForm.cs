@@ -40,15 +40,11 @@ namespace MediaLibrary
                 },
                 form =>
                 {
-                    var formBounds = this.rulePages.GetFormRectangle();
-
-                    var formPosition = new Point(
-                        formBounds.X + (formBounds.Width - form.Width),
-                        formBounds.Y);
-
+                    var editor = this.GetRulesEditor(0);
+                    var topLeft = editor.PointToScreen(Point.Empty);
                     var screenPosition = new Point(
-                        Math.Max(this.Location.X + formPosition.X, 0),
-                        Math.Max(this.Location.Y + formPosition.Y, 0));
+                        Math.Max(topLeft.X + (editor.Width - form.Width) - SystemInformation.VerticalScrollBarWidth, 0),
+                        Math.Max(topLeft.Y, 0));
 
                     form.Location = screenPosition;
                 });
