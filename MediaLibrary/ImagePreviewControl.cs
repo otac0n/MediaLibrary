@@ -160,7 +160,7 @@ namespace MediaLibrary
             return new SizeF(imageSize.Width * baseZoom, imageSize.Height * baseZoom);
         }
 
-        private static PointF ComputerCentering(SizeF imageSize, Size controlSize) => new PointF(
+        private static PointF ComputeCentering(SizeF imageSize, Size controlSize) => new PointF(
             (controlSize.Width - imageSize.Width) / 2,
             (controlSize.Height - imageSize.Height) / 2);
 
@@ -168,7 +168,7 @@ namespace MediaLibrary
         {
             var baseSize = ComputeBaseSize(imageSize, controlSize);
             size = new SizeF(baseSize.Width * zoom, baseSize.Height * zoom);
-            baseOffset = ComputerCentering(size, controlSize);
+            baseOffset = ComputeCentering(size, controlSize);
         }
 
         private static float ComputeZoom(Size imageSize, Size controlSize) => Math.Min(
