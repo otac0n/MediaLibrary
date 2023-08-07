@@ -154,9 +154,9 @@ namespace MediaLibrary
             this.UpdateAnimationState();
         }
 
-        private static SizeF ComputeBaseSize(Size imageSize, Size controlSize)
+        private static SizeF ComputeBaseSize(Size imageSize, Size controlSize, bool animated)
         {
-            var baseZoom = ComputeZoom(imageSize, controlSize);
+            var baseZoom = ComputeZoom(imageSize, controlSize, animated);
             return new SizeF(imageSize.Width * baseZoom, imageSize.Height * baseZoom);
         }
 
@@ -164,16 +164,26 @@ namespace MediaLibrary
             (controlSize.Width - imageSize.Width) / 2,
             (controlSize.Height - imageSize.Height) / 2);
 
-        private static void ComputeSizeAndBaseOffset(Size imageSize, Size controlSize, float zoom, out SizeF size, out PointF baseOffset)
+        private static void ComputeSizeAndBaseOffset(Size imageSize, Size controlSize, bool animated, float zoom, out SizeF size, out PointF baseOffset)
         {
-            var baseSize = ComputeBaseSize(imageSize, controlSize);
+            var baseSize = ComputeBaseSize(imageSize, controlSize, animated);
             size = new SizeF(baseSize.Width * zoom, baseSize.Height * zoom);
             baseOffset = ComputeCentering(size, controlSize);
         }
 
-        private static float ComputeZoom(Size imageSize, Size controlSize) => Math.Min(
-            (float)controlSize.Width / imageSize.Width,
-            (float)controlSize.Height / imageSize.Height);
+        private static float ComputeZoom(Size imageSize, Size controlSize, bool animated)
+        {
+            var zoom = Math.Min(
+                (float)controlSize.Width / imageSize.Width,
+                (float)controlSize.Height / imageSize.Height);
+
+            if (animated)
+            {
+                zoom = Math.Min(zoom, 1);
+            }
+
+            return zoom;
+        }
 
         private RectangleF GetImageRectangle()
         {
@@ -183,7 +193,7 @@ namespace MediaLibrary
                 return RectangleF.Empty;
             }
 
-            ComputeSizeAndBaseOffset(image.Size, this.Size, this.Zoom, out var size, out var baseOffset);
+            ComputeSizeAndBaseOffset(image.Size, this.Size, ImageAnimator.CanAnimate(image), this.Zoom, out var size, out var baseOffset);
             var offset = new PointF(baseOffset.X + this.Offset.X, baseOffset.Y + this.Offset.Y);
             return new RectangleF(offset, size);
         }
@@ -221,9 +231,10 @@ namespace MediaLibrary
             }
 
             var controlSize = this.Size;
+            var animated = ImageAnimator.CanAnimate(image);
             var newZoom = this.Zoom * factor;
-            ComputeSizeAndBaseOffset(imageSize, controlSize, this.Zoom, out var size, out var baseOffset);
-            ComputeSizeAndBaseOffset(imageSize, controlSize, newZoom, out var newSize, out var newBaseOffset);
+            ComputeSizeAndBaseOffset(imageSize, controlSize, animated, this.Zoom, out var size, out var baseOffset);
+            ComputeSizeAndBaseOffset(imageSize, controlSize, animated, newZoom, out var newSize, out var newBaseOffset);
 
             this.offset = new PointF(
                 fixedLocation.X - ((fixedLocation.X - (this.offset.X + baseOffset.X) - (size.Width / 2)) * factor + (newSize.Width / 2) + newBaseOffset.X),
