@@ -103,28 +103,32 @@ namespace MediaLibrary
             newRules.Dock = this.rules.Dock;
             newRules.Location = this.rules.Location;
             newRules.Text = rules;
-            newRules.KeyDown += this.Rules_KeyDown;
             newPage.Controls.Add(newRules);
         }
 
-        private void Rules_KeyDown(object sender, KeyEventArgs e)
+        private async void EditTagRulesForm_KeyDown(object sender, KeyEventArgs e)
         {
             switch (e)
             {
                 case { KeyCode: Keys.F3, Shift: false, Control: false, Alt: false }:
-                    this.searchManager.FindNext();
                     e.Handled = true;
                     e.SuppressKeyPress = true;
+                    this.searchManager.FindNext();
                     break;
                 case { Shift: true, KeyCode: Keys.F3, Control: false, Alt: false }:
-                    this.searchManager.FindPrevious();
                     e.Handled = true;
                     e.SuppressKeyPress = true;
+                    this.searchManager.FindPrevious();
+                    break;
+                case { Control: true, KeyCode: Keys.S, Alt: false, Shift: false }:
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    await this.SaveChanges(swallowExceptions: true).ConfigureAwait(true);
                     break;
                 case { Control: true, KeyCode: Keys.F, Alt: false, Shift: false }:
-                    this.searchManager.ShowSearchDialog();
                     e.Handled = true;
                     e.SuppressKeyPress = true;
+                    this.searchManager.ShowSearchDialog();
                     break;
             }
         }
@@ -138,15 +142,6 @@ namespace MediaLibrary
         {
             this.DialogResult = DialogResult.Cancel;
             this.Hide();
-        }
-
-        private async void EditTagRulesForm_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Control && e.KeyCode == Keys.S && !e.Alt && !e.Shift)
-            {
-                e.Handled = true;
-                await this.SaveChanges(swallowExceptions: true).ConfigureAwait(true);
-            }
         }
 
         private async void EditTagRulesForm_Load(object sender, EventArgs e)

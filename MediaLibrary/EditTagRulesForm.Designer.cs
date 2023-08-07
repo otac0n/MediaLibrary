@@ -120,7 +120,6 @@ namespace MediaLibrary
             this.rules.Size = new System.Drawing.Size(412, 471);
             this.rules.TabIndex = 1;
             this.rules.WordWrap = false;
-            this.rules.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Rules_KeyDown);
             // 
             // tabContextMenu
             // 
