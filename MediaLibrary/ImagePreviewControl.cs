@@ -69,6 +69,22 @@ namespace MediaLibrary
             }
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.StopAnimating();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        protected override void OnEnabledChanged(EventArgs e)
+        {
+            base.OnEnabledChanged(e);
+            this.UpdateAnimationState();
+        }
+
         protected override void OnMouseClick(MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Middle)
@@ -115,8 +131,8 @@ namespace MediaLibrary
             var image = this.image;
             if (image != null)
             {
-                this.AnimateImage();
-                ImageAnimator.UpdateFrames();
+                this.UpdateAnimationState();
+                ImageAnimator.UpdateFrames(image);
                 var rect = this.GetImageRectangle();
                 e.Graphics.DrawImage(image, rect);
             }
@@ -130,6 +146,12 @@ namespace MediaLibrary
 
             // TODO: Recalculate offset based on zoom change.
             this.Invalidate();
+        }
+
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            this.UpdateAnimationState();
         }
 
         private static SizeF ComputeBaseSize(Size imageSize, Size controlSize)
@@ -168,7 +190,22 @@ namespace MediaLibrary
 
         private void OnFrameChanged(object sender, EventArgs e)
         {
-            this.Invalidate();
+            if (!this.IsDisposed && !this.Disposing)
+            {
+                this.Invalidate();
+            }
+        }
+
+        private void UpdateAnimationState()
+        {
+            if (this.Enabled && this.Visible)
+            {
+                this.AnimateImage();
+            }
+            else
+            {
+                this.StopAnimating();
+            }
         }
 
         private void PerformZoom(float factor, PointF fixedLocation)
