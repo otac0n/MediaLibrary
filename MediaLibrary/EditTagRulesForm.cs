@@ -261,5 +261,67 @@ namespace MediaLibrary
                 this.Enabled = true;
             }
         }
+
+        private void RulePages_DragDrop(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(typeof(TabPage)))
+            {
+                return;
+            }
+
+            var targetTab = this.rulePages.GetTabFromPoint(this.rulePages.PointToClient(new Point(e.X, e.Y)));
+            if (targetTab != null && this.rulePages.TabPages[0] != targetTab)
+            {
+                var sourceTab = (TabPage)e.Data.GetData(typeof(TabPage));
+                if (sourceTab != targetTab && sourceTab.Parent == targetTab.Parent)
+                {
+                    var targetIx = this.rulePages.TabPages.IndexOf(targetTab);
+                    this.rulePages.SuspendLayout();
+                    this.rulePages.SelectedIndex = targetIx;
+                    this.rulePages.TabPages.Remove(sourceTab);
+                    this.rulePages.TabPages.Insert(targetIx, sourceTab);
+                    this.rulePages.SelectedIndex = targetIx;
+                    this.rulePages.ResumeLayout();
+                }
+            }
+        }
+
+        private void RulePages_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                var tabPage = this.rulePages.GetTabFromPoint(e.Location);
+                if (tabPage != null && this.rulePages.TabPages[0] != tabPage)
+                {
+                    this.rulePages.AllowDrop = true;
+                    this.rulePages.DoDragDrop(tabPage, DragDropEffects.Move);
+                }
+            }
+        }
+
+        private void RulePages_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.None;
+
+            if (!e.Data.GetDataPresent(typeof(TabPage)))
+            {
+                return;
+            }
+
+            var targetTab = this.rulePages.GetTabFromPoint(this.rulePages.PointToClient(new Point(e.X, e.Y)));
+            if (targetTab != null && this.rulePages.TabPages[0] != targetTab)
+            {
+                var sourceTab = (TabPage)e.Data.GetData(typeof(TabPage));
+                if (sourceTab.Parent == targetTab.Parent)
+                {
+                    e.Effect = DragDropEffects.Move;
+                }
+            }
+        }
+
+        private void RulePages_MouseUp(object sender, MouseEventArgs e)
+        {
+            this.rulePages.AllowDrop = false;
+        }
     }
 }

@@ -92,7 +92,11 @@ namespace MediaLibrary
             this.rulePages.SelectedIndex = 0;
             this.rulePages.Size = new System.Drawing.Size(420, 497);
             this.rulePages.TabIndex = 4;
-            this.rulePages.MouseClick += new System.Windows.Forms.MouseEventHandler(this.RulePages_MouseClick);
+            this.rulePages.DragDrop += this.RulePages_DragDrop;
+            this.rulePages.DragOver += this.RulePages_DragOver;
+            this.rulePages.MouseClick += this.RulePages_MouseClick;
+            this.rulePages.MouseDown += this.RulePages_MouseDown;
+            this.rulePages.MouseUp += this.RulePages_MouseUp;
             // 
             // defaultPage
             // 

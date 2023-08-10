@@ -116,6 +116,25 @@ namespace MediaLibrary
             return null;
         }
 
+        public static TabPage GetTabFromPoint(this TabControl tabControl, Point point)
+        {
+            var index = tabControl.GetTabIndexFromPoint(point);
+            return index == -1 ? null : tabControl.TabPages[index];
+        }
+
+        public static int GetTabIndexFromPoint(this TabControl tabControl, Point point)
+        {
+            for (var i = tabControl.TabCount - 1; i >= 0; i--)
+            {
+                if (tabControl.GetTabRect(i).Contains(point))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
         /// <summary>
         /// Extension method allowing conditional invoke usage.
         /// </summary>
