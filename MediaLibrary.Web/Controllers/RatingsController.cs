@@ -30,6 +30,8 @@ namespace MediaLibrary.Web.Controllers
         [HttpGet]
         public Task<Rating> Get(string id, string category)
         {
+            ControllerUtilities.FixSlashes(ref category);
+
             return this.index.GetRating(id, category);
         }
 
@@ -41,6 +43,8 @@ namespace MediaLibrary.Web.Controllers
         [HttpPost]
         public async Task Rate(string category, [FromBody] RateRequest rateRequest)
         {
+            ControllerUtilities.FixSlashes(ref category);
+
             var leftRating = await this.index.GetRating(rateRequest.LeftHash, category).ConfigureAwait(true) ?? new Rating(rateRequest.LeftHash, category, Rating.DefaultRating, 0);
             var rightRating = await this.index.GetRating(rateRequest.RightHash, category).ConfigureAwait(true) ?? new Rating(rateRequest.RightHash, category, Rating.DefaultRating, 0);
             Rating.ApplyScore(rateRequest.Score, ref leftRating, ref rightRating);

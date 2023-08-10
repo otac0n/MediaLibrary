@@ -45,6 +45,8 @@ namespace MediaLibrary.Web.Controllers
         [HttpGet]
         public async Task<IEnumerable<SearchResult>> Search(string q = null)
         {
+            ControllerUtilities.FixSlashes(ref q);
+
             var results = await this.index.SearchIndex(q).ConfigureAwait(true);
             return results.OrderBy(r => r.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault(), PathComparer.Instance).Take(1000);
         }

@@ -23,6 +23,8 @@ namespace MediaLibrary.Web.Controllers
         [HttpPut]
         public async Task<ActionResult> AddTag(string id, string tag)
         {
+            ControllerUtilities.FixSlashes(ref tag);
+
             if (!Regex.IsMatch(id, @"[0-9a-fA-F]{64}"))
             {
                 return this.BadRequest();
@@ -60,6 +62,8 @@ namespace MediaLibrary.Web.Controllers
         [HttpDelete]
         public async Task<ActionResult> RemoveTag(string id, string tag)
         {
+            ControllerUtilities.FixSlashes(ref tag);
+
             if (!Regex.IsMatch(id, @"[0-9a-fA-F]{64}"))
             {
                 return this.BadRequest();

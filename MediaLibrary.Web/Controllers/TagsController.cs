@@ -26,6 +26,8 @@ namespace MediaLibrary.Web.Controllers
         [HttpGet]
         public ActionResult Get(string tag)
         {
+            ControllerUtilities.FixSlashes(ref tag);
+
             var tagInfo = this.index.TagEngine[tag];
 
             if (tagInfo.Tag != tag)
