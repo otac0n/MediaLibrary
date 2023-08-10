@@ -106,6 +106,10 @@ namespace MediaLibrary
             newPage.Controls.Add(newRules);
         }
 
+        protected override bool ProcessDialogKey(Keys keyData) =>
+            (keyData == Keys.Escape && this.searchManager.HideSearchDialog()) ||
+            base.ProcessDialogKey(keyData);
+
         private async void EditTagRulesForm_KeyDown(object sender, KeyEventArgs e)
         {
             switch (e)

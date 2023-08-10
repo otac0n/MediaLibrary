@@ -46,6 +46,17 @@ namespace MediaLibrary
             this.textSearch.Refocus();
         }
 
+        public bool HideSearchDialog()
+        {
+            if (this.textSearch?.Visible ?? false)
+            {
+                this.textSearch.Hide();
+                return true;
+            }
+
+            return false;
+        }
+
         private (int documentIndex, int textIndex) GetCurrentLocation(Func<int, int, int> maxOrMin)
         {
             var (documentIndex, selectionStart, selectionLength) = this.getCurrentSelection();
