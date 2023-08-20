@@ -15,7 +15,8 @@ namespace MediaLibrary
 
         public TextSearchManager(Form parent, Func<int> getDocumentCount, Func<int, string> getDocumentText, Func<(int documentIndex, int selectionStart, int selectionLength)> getCurrentSelection, Action<int, int, int> setCurrentSelection, Action<TextSearchForm> initializeForm)
         {
-            this.parent = parent;
+            this.parent = parent ?? throw new ArgumentNullException(nameof(parent));
+            this.parent.KeyDown += this.HandleKeyDown;
             this.getDocumentCount = getDocumentCount;
             this.getDocumentText = getDocumentText;
             this.getCurrentSelection = getCurrentSelection;
@@ -55,6 +56,28 @@ namespace MediaLibrary
             }
 
             return false;
+        }
+
+        public void HandleKeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e)
+            {
+                case { KeyCode: Keys.F3, Shift: false, Control: false, Alt: false }:
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    this.FindNext();
+                    break;
+                case { Shift: true, KeyCode: Keys.F3, Control: false, Alt: false }:
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    this.FindPrevious();
+                    break;
+                case { Control: true, KeyCode: Keys.F, Alt: false, Shift: false }:
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    this.ShowSearchDialog();
+                    break;
+            }
         }
 
         private (int documentIndex, int textIndex) GetCurrentLocation(Func<int, int, int> maxOrMin)

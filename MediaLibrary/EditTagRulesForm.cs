@@ -114,25 +114,10 @@ namespace MediaLibrary
         {
             switch (e)
             {
-                case { KeyCode: Keys.F3, Shift: false, Control: false, Alt: false }:
-                    e.Handled = true;
-                    e.SuppressKeyPress = true;
-                    this.searchManager.FindNext();
-                    break;
-                case { Shift: true, KeyCode: Keys.F3, Control: false, Alt: false }:
-                    e.Handled = true;
-                    e.SuppressKeyPress = true;
-                    this.searchManager.FindPrevious();
-                    break;
                 case { Control: true, KeyCode: Keys.S, Alt: false, Shift: false }:
                     e.Handled = true;
                     e.SuppressKeyPress = true;
                     await this.SaveChanges(swallowExceptions: true).ConfigureAwait(true);
-                    break;
-                case { Control: true, KeyCode: Keys.F, Alt: false, Shift: false }:
-                    e.Handled = true;
-                    e.SuppressKeyPress = true;
-                    this.searchManager.ShowSearchDialog();
                     break;
             }
         }
@@ -182,7 +167,7 @@ namespace MediaLibrary
         private void RemoveCategoryMenuItem_Click(object sender, EventArgs e)
         {
             var tabIndex = this.tabContextMenu.Tag as int?;
-            if (string.IsNullOrWhiteSpace(GetRulesEditor(tabIndex.Value).Text))
+            if (string.IsNullOrWhiteSpace(this.GetRulesEditor(tabIndex.Value).Text))
             {
                 this.rulePages.TabPages.RemoveAt(tabIndex.Value);
             }
