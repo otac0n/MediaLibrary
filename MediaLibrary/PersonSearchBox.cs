@@ -41,7 +41,7 @@ namespace MediaLibrary
             return list;
         }
 
-        protected override List<Person> Search(HashSet<string> searchTerms, IEnumerable<Person> people)
+        protected override IEnumerable<Person> Search(HashSet<string> searchTerms, IEnumerable<Person> people)
         {
             return people
                 .Select(p =>
@@ -68,8 +68,7 @@ namespace MediaLibrary
                 .ThenByDescending(p => new[] { p.NameScore }.Concat(p.Aliases.Values.Select(a => a.AliasScore)).Max())
                 .ThenByDescending(p => p.NameScore)
                 .ThenBy(p => p.Person.Name, Comparer)
-                .Select(p => p.Person)
-                .ToList();
+                .Select(p => p.Person);
         }
 
         protected override HashSet<string> ToTerms(string name) =>

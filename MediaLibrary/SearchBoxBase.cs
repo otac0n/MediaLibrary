@@ -320,14 +320,15 @@ namespace MediaLibrary
 
         protected override void OnTextUpdate(EventArgs e)
         {
-            if (base.SelectedItem is TItem item && item.ToString() != this.Text)
+            var value = this.Text;
+
+            if (base.SelectedItem is TItem item && item.ToString() != value)
             {
                 this.ClearSelectedItemRestoreText();
             }
 
             base.OnTextUpdate(e);
 
-            var value = this.Text;
             this.UpdateSearchRestoreSelection(this.Search(this.terms = this.ToTerms(value), this.items));
         }
 
@@ -337,7 +338,7 @@ namespace MediaLibrary
             return HighlightString(pattern, item.ToString()).ToList();
         }
 
-        protected abstract List<TItem> Search(HashSet<string> searchTerms, IEnumerable<TItem> people);
+        protected abstract IEnumerable<TItem> Search(HashSet<string> searchTerms, IEnumerable<TItem> people);
 
         protected abstract HashSet<string> ToTerms(string name);
 
@@ -435,7 +436,7 @@ namespace MediaLibrary
             this.EndUpdate();
         }
 
-        private void UpdateSearchRestoreSelection(IEnumerable<TItem> people)
+        private void UpdateSearchRestoreSelection(IEnumerable<TItem> items)
         {
             if (!this.IsDisposed)
             {
@@ -444,12 +445,14 @@ namespace MediaLibrary
                 var selectionStart = this.SelectionStart;
                 var selectionLength = this.SelectionLength;
 
-                var peopleArray = people.ToArray();
+                var itemArray = items
+                    .OrderByDescending(i => i.ToString().StartsWith(text, StringComparison.CurrentCultureIgnoreCase))
+                    .ToArray();
                 this.BeginUpdate();
                 base.Items.Clear();
-                base.Items.AddRange(peopleArray);
+                base.Items.AddRange(itemArray);
 
-                this.SelectedIndex = Array.IndexOf(peopleArray, selectedItem);
+                this.SelectedIndex = Array.IndexOf(itemArray, selectedItem);
                 this.Text = text;
                 this.SelectionStart = selectionStart;
                 this.SelectionLength = selectionLength;

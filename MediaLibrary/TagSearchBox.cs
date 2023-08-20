@@ -61,7 +61,7 @@ namespace MediaLibrary
             return list;
         }
 
-        protected override List<TagInfo> Search(HashSet<string> searchTerms, IEnumerable<TagInfo> tags)
+        protected override IEnumerable<TagInfo> Search(HashSet<string> searchTerms, IEnumerable<TagInfo> tags)
         {
             return tags
                 .Select(t =>
@@ -83,13 +83,11 @@ namespace MediaLibrary
                         }),
                     };
                 })
-                .OrderByDescending(t => t.TagTerms.SetEquals(searchTerms))
-                .ThenByDescending(t => t.Aliases.Values.Any(a => a.AliasTerms.SetEquals(searchTerms)))
+                .OrderByDescending(t => t.Aliases.Values.Any(a => a.AliasTerms.SetEquals(searchTerms)))
                 .ThenByDescending(t => new[] { t.TagScore }.Concat(t.Aliases.Values.Select(a => a.AliasScore)).Max())
                 .ThenByDescending(t => t.TagScore)
                 .ThenBy(t => t.TagInfo.Tag, Comparer)
-                .Select(t => t.TagInfo)
-                .ToList();
+                .Select(t => t.TagInfo);
         }
 
         protected override HashSet<string> ToTerms(string name) =>
