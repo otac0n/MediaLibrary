@@ -38,6 +38,7 @@ namespace MediaLibrary
             this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.AllowColumnReorder = true;
             this.FullRowSelect = true;
+            this.CanUseApplicationIdle = false;
             this.View = View.Details;
 
             this.columnDefinitions = new List<ColumnDefinition>
@@ -317,9 +318,12 @@ namespace MediaLibrary
         {
             var before = this.SelectedObjects;
 
-            var intersection = new HashSet<SearchResult>(before.Cast<SearchResult>());
-            intersection.IntersectWith(collection.Cast<SearchResult>());
-            this.suppressSelectionChanged = before.Count > 0 && before.Count == intersection.Count;
+            if (before.Count > 0)
+            {
+                var intersection = new HashSet<SearchResult>(before.Cast<SearchResult>());
+                intersection.IntersectWith(collection.Cast<SearchResult>());
+                this.suppressSelectionChanged = before.Count == intersection.Count;
+            }
 
             this.SelectedIndex = -1;
             base.SetObjects(collection, preserveState);
