@@ -30,7 +30,7 @@ namespace MediaLibrary
         private readonly List<SearchResult> orderdResults = new List<SearchResult>();
         private bool columnsSized = false;
         private PersonComparer personComparer;
-        private bool selectionChangedInvoked;
+        private bool suppressSelectionChanged;
         private TagComparer tagComparer;
 
         public VirtualSearchResultsView(IMediaIndex index)
@@ -315,20 +315,26 @@ namespace MediaLibrary
         /// <inheritdoc/>
         public override void SetObjects(IEnumerable collection, bool preserveState)
         {
-            var before = new HashSet<int>(this.SelectedIndices.Cast<int>());
-            this.selectionChangedInvoked = false;
+            var before = this.SelectedObjects;
+
+            var intersection = new HashSet<SearchResult>(before.Cast<SearchResult>());
+            intersection.IntersectWith(collection.Cast<SearchResult>());
+            this.suppressSelectionChanged = before.Count > 0 && before.Count == intersection.Count;
+
+            this.SelectedIndex = -1;
             base.SetObjects(collection, preserveState);
-            if (!before.SetEquals(this.SelectedIndices.Cast<int>()) && !this.selectionChangedInvoked)
-            {
-                // TODO: this.TriggerDeferredSelectionChangedEvent(); after v2.9.1
-                this.OnSelectionChanged(EventArgs.Empty);
-            }
+            this.SelectObjects(before);
         }
 
         /// <inheritdoc/>
         protected override void OnSelectionChanged(EventArgs e)
         {
-            this.selectionChangedInvoked = true;
+            if (this.suppressSelectionChanged)
+            {
+                this.suppressSelectionChanged = false;
+                return;
+            }
+
             base.OnSelectionChanged(e);
         }
 

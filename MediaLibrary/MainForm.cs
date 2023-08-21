@@ -483,7 +483,6 @@ namespace MediaLibrary
         private async Task PerformSearch(bool throttle = false)
         {
             var searchText = this.searchBox.Text;
-            var selectedHashes = new HashSet<string>(this.listView.SelectedResults.Select(r => r.Hash));
             var searchVersion = Interlocked.Increment(ref this.searchVersion);
             if (throttle)
             {
@@ -508,7 +507,6 @@ namespace MediaLibrary
             if (this.searchVersion == searchVersion)
             {
                 this.listView.SearchResults = data;
-                this.listView.SelectObjects(data.Where(d => selectedHashes.Contains(d.Hash)).ToList());
             }
         }
 
