@@ -164,6 +164,7 @@ namespace MediaLibrary.Views
                     tagControl.Dispose();
                 });
 
+            Application.DoEvents();
             var rulesLookup = analysisResult.SuggestedTags.ToLookup(r => r.Result, r => r.Rules);
             this.suggestedTags.UpdateControlsCollection(
                 rulesLookup.OrderByDescending(g => missingTags.Contains(g.Key)).ThenByDescending(g => g.Count()).ToList(),
