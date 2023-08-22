@@ -40,15 +40,14 @@ namespace MediaLibrary.Views
             // 
             // personASearchBox
             // 
-            this.personASearchBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.personASearchBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.personASearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.personASearchBox.Location = new System.Drawing.Point(108, 83);
             this.personASearchBox.Name = "personASearchBox";
             this.personASearchBox.SelectedItem = null;
             this.personASearchBox.Size = new System.Drawing.Size(382, 21);
             this.personASearchBox.TabIndex = 0;
-            this.personASearchBox.SelectedItemChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
+            this.personASearchBox.SelectedItemChanged += this.PersonSearchBox_SelectedPersonChanged;
             // 
             // personALabel
             // 
@@ -70,20 +69,19 @@ namespace MediaLibrary.Views
             // 
             // personBSearchBox
             // 
-            this.personBSearchBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.personBSearchBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.personBSearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.personBSearchBox.Location = new System.Drawing.Point(108, 110);
             this.personBSearchBox.Name = "personBSearchBox";
             this.personBSearchBox.SelectedItem = null;
             this.personBSearchBox.Size = new System.Drawing.Size(382, 21);
             this.personBSearchBox.TabIndex = 2;
-            this.personBSearchBox.SelectedItemChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
+            this.personBSearchBox.SelectedItemChanged += this.PersonSearchBox_SelectedPersonChanged;
             // 
             // titleLabel
             // 
             this.titleLabel.AutoSize = true;
-            this.titleLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.titleLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.titleLabel.Location = new System.Drawing.Point(12, 9);
             this.titleLabel.Name = "titleLabel";
             this.titleLabel.Size = new System.Drawing.Size(147, 26);
@@ -101,7 +99,7 @@ namespace MediaLibrary.Views
             // 
             // okButton
             // 
-            this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.okButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.okButton.Enabled = false;
             this.okButton.Location = new System.Drawing.Point(415, 158);
             this.okButton.Name = "okButton";
@@ -109,11 +107,11 @@ namespace MediaLibrary.Views
             this.okButton.TabIndex = 9;
             this.okButton.Text = "&OK";
             this.okButton.UseVisualStyleBackColor = true;
-            this.okButton.Click += new System.EventHandler(this.OkButton_Click);
+            this.okButton.Click += this.OkButton_Click;
             // 
             // cancelButton
             // 
-            this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.cancelButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.cancelButton.Location = new System.Drawing.Point(322, 158);
             this.cancelButton.Name = "cancelButton";
@@ -121,7 +119,7 @@ namespace MediaLibrary.Views
             this.cancelButton.TabIndex = 8;
             this.cancelButton.Text = "&Cancel";
             this.cancelButton.UseVisualStyleBackColor = true;
-            this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
+            this.cancelButton.Click += this.CancelButton_Click;
             // 
             // MergePeopleForm
             // 
@@ -144,10 +142,9 @@ namespace MediaLibrary.Views
             this.Name = "MergePeopleForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Edit People";
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.EditPersonForm_KeyDown);
+            this.KeyDown += this.EditPersonForm_KeyDown;
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion

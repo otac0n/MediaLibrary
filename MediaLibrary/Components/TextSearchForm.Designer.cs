@@ -37,8 +37,7 @@ namespace MediaLibrary.Components
             // 
             // SearchText
             // 
-            this.SearchText.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.SearchText.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.SearchText.HideSelection = false;
             this.SearchText.Location = new System.Drawing.Point(12, 12);
             this.SearchText.Name = "SearchText";
@@ -48,8 +47,7 @@ namespace MediaLibrary.Components
             // 
             // flowLayoutPanel1
             // 
-            this.flowLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.flowLayoutPanel1.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.flowLayoutPanel1.Controls.Add(this.FindPreviousButton);
             this.flowLayoutPanel1.Controls.Add(this.FindNextButton);
             this.flowLayoutPanel1.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
@@ -60,7 +58,7 @@ namespace MediaLibrary.Components
             // 
             // FindPreviousButton
             // 
-            this.FindPreviousButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.FindPreviousButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.FindPreviousButton.AutoSize = true;
             this.FindPreviousButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.FindPreviousButton.Location = new System.Drawing.Point(323, 3);
@@ -69,11 +67,11 @@ namespace MediaLibrary.Components
             this.FindPreviousButton.TabIndex = 2;
             this.FindPreviousButton.Text = "Find Previous";
             this.FindPreviousButton.UseVisualStyleBackColor = true;
-            this.FindPreviousButton.Click += new System.EventHandler(this.FindPreviousButton_Click);
+            this.FindPreviousButton.Click += this.FindPreviousButton_Click;
             // 
             // FindNextButton
             // 
-            this.FindNextButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.FindNextButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.FindNextButton.AutoSize = true;
             this.FindNextButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.FindNextButton.Location = new System.Drawing.Point(220, 3);
@@ -82,7 +80,7 @@ namespace MediaLibrary.Components
             this.FindNextButton.TabIndex = 1;
             this.FindNextButton.Text = "Find Next";
             this.FindNextButton.UseVisualStyleBackColor = true;
-            this.FindNextButton.Click += new System.EventHandler(this.FindNextButton_Click);
+            this.FindNextButton.Click += this.FindNextButton_Click;
             // 
             // TextSearchForm
             // 
@@ -101,12 +99,11 @@ namespace MediaLibrary.Components
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "Find";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.TextSearchForm_FormClosing);
+            this.FormClosing += this.TextSearchForm_FormClosing;
             this.flowLayoutPanel1.ResumeLayout(false);
             this.flowLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion

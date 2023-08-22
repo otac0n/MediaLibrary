@@ -35,8 +35,8 @@ namespace MediaLibrary.Views
             // 
             // iconAttributionLink
             // 
-            this.iconAttributionLink.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.iconAttributionLink.Image = global::MediaLibrary.Properties.Resources.mood_happy;
+            this.iconAttributionLink.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            this.iconAttributionLink.Image = Properties.Resources.mood_happy;
             this.iconAttributionLink.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.iconAttributionLink.Location = new System.Drawing.Point(141, 101);
             this.iconAttributionLink.Name = "iconAttributionLink";
@@ -45,11 +45,11 @@ namespace MediaLibrary.Views
             this.iconAttributionLink.TabStop = true;
             this.iconAttributionLink.Text = "Free Icons from the Streamline Icons Pack";
             this.iconAttributionLink.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.iconAttributionLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.IconAttributionLink_LinkClicked);
+            this.iconAttributionLink.LinkClicked += this.IconAttributionLink_LinkClicked;
             // 
             // closeButton
             // 
-            this.closeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.closeButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.closeButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.closeButton.Location = new System.Drawing.Point(303, 138);
             this.closeButton.Name = "closeButton";
@@ -86,7 +86,6 @@ namespace MediaLibrary.Views
             this.Text = "About";
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion

@@ -42,15 +42,7 @@ namespace MediaLibrary.Views
             // 
             // toolStrip
             // 
-            this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.previousButton,
-            this.playPauseButton,
-            this.nextButton,
-            this.toolStripSeparator2,
-            this.shuffleButton,
-            this.toolStripSeparator1,
-            this.toolStripButton6,
-            this.favoriteButton});
+            this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.previousButton, this.playPauseButton, this.nextButton, this.toolStripSeparator2, this.shuffleButton, this.toolStripSeparator1, this.toolStripButton6, this.favoriteButton });
             this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
             this.toolStrip.Size = new System.Drawing.Size(800, 25);
@@ -60,12 +52,12 @@ namespace MediaLibrary.Views
             // previousButton
             // 
             this.previousButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.previousButton.Image = global::MediaLibrary.Properties.Resources.controls_previous;
+            this.previousButton.Image = Properties.Resources.controls_previous;
             this.previousButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.previousButton.Name = "previousButton";
             this.previousButton.Size = new System.Drawing.Size(23, 22);
             this.previousButton.Text = "Previous";
-            this.previousButton.Click += new System.EventHandler(this.PreviousButton_Click);
+            this.previousButton.Click += this.PreviousButton_Click;
             // 
             // playPauseButton
             // 
@@ -73,22 +65,22 @@ namespace MediaLibrary.Views
             this.playPauseButton.CheckOnClick = true;
             this.playPauseButton.CheckState = System.Windows.Forms.CheckState.Checked;
             this.playPauseButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.playPauseButton.Image = global::MediaLibrary.Properties.Resources.controls_pause;
+            this.playPauseButton.Image = Properties.Resources.controls_pause;
             this.playPauseButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.playPauseButton.Name = "playPauseButton";
             this.playPauseButton.Size = new System.Drawing.Size(23, 22);
             this.playPauseButton.Text = "Play";
-            this.playPauseButton.Click += new System.EventHandler(this.PlayPauseButton_Click);
+            this.playPauseButton.Click += this.PlayPauseButton_Click;
             // 
             // nextButton
             // 
             this.nextButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.nextButton.Image = global::MediaLibrary.Properties.Resources.controls_next;
+            this.nextButton.Image = Properties.Resources.controls_next;
             this.nextButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.nextButton.Name = "nextButton";
             this.nextButton.Size = new System.Drawing.Size(23, 22);
             this.nextButton.Text = "Next";
-            this.nextButton.Click += new System.EventHandler(this.NextButton_Click);
+            this.nextButton.Click += this.NextButton_Click;
             // 
             // toolStripSeparator2
             // 
@@ -99,12 +91,12 @@ namespace MediaLibrary.Views
             // 
             this.shuffleButton.CheckOnClick = true;
             this.shuffleButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.shuffleButton.Image = global::MediaLibrary.Properties.Resources.button_shuffle;
+            this.shuffleButton.Image = Properties.Resources.button_shuffle;
             this.shuffleButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.shuffleButton.Name = "shuffleButton";
             this.shuffleButton.Size = new System.Drawing.Size(23, 22);
             this.shuffleButton.Text = "Shuffle";
-            this.shuffleButton.CheckedChanged += new System.EventHandler(this.ShuffleButton_CheckedChanged);
+            this.shuffleButton.CheckedChanged += this.ShuffleButton_CheckedChanged;
             // 
             // toolStripSeparator1
             // 
@@ -114,7 +106,7 @@ namespace MediaLibrary.Views
             // toolStripButton6
             // 
             this.toolStripButton6.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.toolStripButton6.Image = global::MediaLibrary.Properties.Resources.expand_full;
+            this.toolStripButton6.Image = Properties.Resources.expand_full;
             this.toolStripButton6.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton6.Name = "toolStripButton6";
             this.toolStripButton6.Size = new System.Drawing.Size(23, 22);
@@ -124,12 +116,12 @@ namespace MediaLibrary.Views
             // 
             this.favoriteButton.CheckOnClick = true;
             this.favoriteButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.favoriteButton.Image = global::MediaLibrary.Properties.Resources.love_it;
+            this.favoriteButton.Image = Properties.Resources.love_it;
             this.favoriteButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.favoriteButton.Name = "favoriteButton";
             this.favoriteButton.Size = new System.Drawing.Size(23, 22);
             this.favoriteButton.Text = "favoriteButton";
-            this.favoriteButton.Click += new System.EventHandler(this.FavoriteButton_Click);
+            this.favoriteButton.Click += this.FavoriteButton_Click;
             // 
             // SlideShowForm
             // 
@@ -142,14 +134,13 @@ namespace MediaLibrary.Views
             this.Name = "SlideShowForm";
             this.ShowIcon = false;
             this.Text = "Slide Show";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SlideShowForm_FormClosing);
-            this.Click += new System.EventHandler(this.PlayPauseButton_Click);
-            this.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.SlideShowForm_PreviewKeyDown);
+            this.FormClosing += this.SlideShowForm_FormClosing;
+            this.Click += this.PlayPauseButton_Click;
+            this.PreviewKeyDown += this.SlideShowForm_PreviewKeyDown;
             this.toolStrip.ResumeLayout(false);
             this.toolStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion

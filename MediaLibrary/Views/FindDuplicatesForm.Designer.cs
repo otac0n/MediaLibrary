@@ -29,7 +29,7 @@ namespace MediaLibrary.Views
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FindDuplicatesForm));
+            var resources = new System.ComponentModel.ComponentResourceManager(typeof(FindDuplicatesForm));
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
@@ -43,11 +43,11 @@ namespace MediaLibrary.Views
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.panel1 = new System.Windows.Forms.Panel();
             this.duplicatesList = new System.Windows.Forms.ListView();
-            this.pathHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.pathHeader = new System.Windows.Forms.ColumnHeader();
             this.searchBox = new System.Windows.Forms.TextBox();
             this.treeView = new System.Windows.Forms.TreeView();
-            ((System.ComponentModel.ISupportInitialize)(this.sizeChart)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)this.sizeChart).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)this.splitContainer).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
             this.splitContainer.SuspendLayout();
@@ -56,7 +56,7 @@ namespace MediaLibrary.Views
             // 
             // imageList
             // 
-            this.imageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList.ImageStream")));
+            this.imageList.ImageStream = (System.Windows.Forms.ImageListStreamer)resources.GetObject("imageList.ImageStream");
             this.imageList.TransparentColor = System.Drawing.Color.Transparent;
             this.imageList.Images.SetKeyName(0, "none");
             this.imageList.Images.SetKeyName(1, "save");
@@ -68,7 +68,7 @@ namespace MediaLibrary.Views
             // 
             // cancelButton
             // 
-            this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.cancelButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.cancelButton.Location = new System.Drawing.Point(620, 415);
             this.cancelButton.Name = "cancelButton";
@@ -76,11 +76,11 @@ namespace MediaLibrary.Views
             this.cancelButton.TabIndex = 1;
             this.cancelButton.Text = "&Cancel";
             this.cancelButton.UseVisualStyleBackColor = true;
-            this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
+            this.cancelButton.Click += this.CancelButton_Click;
             // 
             // okButton
             // 
-            this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.okButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.okButton.Enabled = false;
             this.okButton.Location = new System.Drawing.Point(713, 415);
             this.okButton.Name = "okButton";
@@ -88,12 +88,11 @@ namespace MediaLibrary.Views
             this.okButton.TabIndex = 2;
             this.okButton.Text = "&OK";
             this.okButton.UseVisualStyleBackColor = true;
-            this.okButton.Click += new System.EventHandler(this.OKButton_Click);
+            this.okButton.Click += this.OKButton_Click;
             // 
             // progressBar
             // 
-            this.progressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.progressBar.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.progressBar.Location = new System.Drawing.Point(13, 415);
             this.progressBar.Maximum = 1000;
             this.progressBar.Name = "progressBar";
@@ -108,13 +107,12 @@ namespace MediaLibrary.Views
             this.instructionsLabel.Name = "instructionsLabel";
             this.instructionsLabel.Size = new System.Drawing.Size(296, 26);
             this.instructionsLabel.TabIndex = 4;
-            this.instructionsLabel.Text = "Select the items in each group you wish to keep.\r\nIf you do not select any items " +
-    "in a group, all items will be kept.";
+            this.instructionsLabel.Text = "Select the items in each group you wish to keep.\r\nIf you do not select any items in a group, all items will be kept.";
             // 
             // titleLabel
             // 
             this.titleLabel.AutoSize = true;
-            this.titleLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.titleLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.titleLabel.Location = new System.Drawing.Point(12, 9);
             this.titleLabel.Name = "titleLabel";
             this.titleLabel.Size = new System.Drawing.Size(162, 26);
@@ -148,9 +146,7 @@ namespace MediaLibrary.Views
             // 
             // splitContainer
             // 
-            this.splitContainer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.splitContainer.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.splitContainer.Location = new System.Drawing.Point(12, 132);
             this.splitContainer.Name = "splitContainer";
             // 
@@ -178,10 +174,8 @@ namespace MediaLibrary.Views
             // duplicatesList
             // 
             this.duplicatesList.CheckBoxes = true;
-            this.duplicatesList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.pathHeader});
+            this.duplicatesList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] { this.pathHeader });
             this.duplicatesList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.duplicatesList.HideSelection = false;
             this.duplicatesList.Location = new System.Drawing.Point(0, 20);
             this.duplicatesList.Name = "duplicatesList";
             this.duplicatesList.Size = new System.Drawing.Size(468, 257);
@@ -202,7 +196,7 @@ namespace MediaLibrary.Views
             this.searchBox.Name = "searchBox";
             this.searchBox.Size = new System.Drawing.Size(468, 20);
             this.searchBox.TabIndex = 2;
-            this.searchBox.TextChanged += new System.EventHandler(this.SearchBox_TextChangedAsync);
+            this.searchBox.TextChanged += this.SearchBox_TextChangedAsync;
             // 
             // treeView
             // 
@@ -215,7 +209,7 @@ namespace MediaLibrary.Views
             this.treeView.SelectedImageIndex = 0;
             this.treeView.Size = new System.Drawing.Size(303, 277);
             this.treeView.TabIndex = 8;
-            this.treeView.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.TreeView_AfterCheck);
+            this.treeView.AfterCheck += this.TreeView_AfterCheck;
             // 
             // FindDuplicatesForm
             // 
@@ -237,18 +231,17 @@ namespace MediaLibrary.Views
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Find Duplicates";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FindDuplicatesForm_FormClosing);
-            this.Load += new System.EventHandler(this.FindDuplicatesForm_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.sizeChart)).EndInit();
+            this.FormClosing += this.FindDuplicatesForm_FormClosing;
+            this.Load += this.FindDuplicatesForm_Load;
+            ((System.ComponentModel.ISupportInitialize)this.sizeChart).EndInit();
             this.splitContainer.Panel1.ResumeLayout(false);
             this.splitContainer.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)this.splitContainer).EndInit();
             this.splitContainer.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion

@@ -49,24 +49,22 @@ namespace MediaLibrary.Views
             this.editorTablePanel.SuspendLayout();
             this.addUsernameFlowPanel.SuspendLayout();
             this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)this.errorProvider).BeginInit();
             this.advancedMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // addNewPersonMenuItem
             // 
             this.addNewPersonMenuItem.Enabled = false;
-            this.addNewPersonMenuItem.Image = global::MediaLibrary.Properties.Resources.add_circle;
+            this.addNewPersonMenuItem.Image = Properties.Resources.add_circle;
             this.addNewPersonMenuItem.Name = "addNewPersonMenuItem";
             this.addNewPersonMenuItem.Size = new System.Drawing.Size(169, 22);
             this.addNewPersonMenuItem.Text = "Add new person...";
-            this.addNewPersonMenuItem.Click += new System.EventHandler(this.AddNewPersonMenuItem_Click);
+            this.addNewPersonMenuItem.Click += this.AddNewPersonMenuItem_Click;
             // 
             // editorTablePanel
             // 
-            this.editorTablePanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.editorTablePanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.editorTablePanel.AutoScroll = true;
             this.editorTablePanel.ColumnCount = 2;
             this.editorTablePanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
@@ -89,7 +87,7 @@ namespace MediaLibrary.Views
             // nameLabel
             // 
             this.nameLabel.AutoSize = true;
-            this.nameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.nameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.nameLabel.Location = new System.Drawing.Point(3, 5);
             this.nameLabel.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
             this.nameLabel.Name = "nameLabel";
@@ -100,13 +98,13 @@ namespace MediaLibrary.Views
             // nameTextBox
             // 
             this.nameTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.nameTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.nameTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.nameTextBox.Location = new System.Drawing.Point(93, 3);
             this.nameTextBox.Margin = new System.Windows.Forms.Padding(10, 3, 3, 3);
             this.nameTextBox.Name = "nameTextBox";
             this.nameTextBox.Size = new System.Drawing.Size(450, 32);
             this.nameTextBox.TabIndex = 1;
-            this.nameTextBox.Validated += new System.EventHandler(this.NameTextBox_Validated);
+            this.nameTextBox.Validated += this.NameTextBox_Validated;
             // 
             // aliasesTablePanel
             // 
@@ -172,7 +170,7 @@ namespace MediaLibrary.Views
             this.addUsernameButton.TabIndex = 2;
             this.addUsernameButton.Text = "Add Username";
             this.addUsernameButton.UseVisualStyleBackColor = true;
-            this.addUsernameButton.Click += new System.EventHandler(this.AddUsernameButton_Click);
+            this.addUsernameButton.Click += this.AddUsernameButton_Click;
             // 
             // usernameTextBox
             // 
@@ -196,7 +194,7 @@ namespace MediaLibrary.Views
             // 
             // advancedButton
             // 
-            this.advancedButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.advancedButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.advancedButton.Location = new System.Drawing.Point(529, 13);
             this.advancedButton.Name = "advancedButton";
             this.advancedButton.Size = new System.Drawing.Size(29, 21);
@@ -206,20 +204,18 @@ namespace MediaLibrary.Views
             // 
             // advancedMenuStrip
             // 
-            this.advancedMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.addNewPersonMenuItem,
-            this.deletePersonMenuItem});
+            this.advancedMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.addNewPersonMenuItem, this.deletePersonMenuItem });
             this.advancedMenuStrip.Name = "advancedMenuStrip";
             this.advancedMenuStrip.Size = new System.Drawing.Size(170, 48);
             // 
             // deletePersonMenuItem
             // 
             this.deletePersonMenuItem.Enabled = false;
-            this.deletePersonMenuItem.Image = global::MediaLibrary.Properties.Resources.remove_circle_red;
+            this.deletePersonMenuItem.Image = Properties.Resources.remove_circle_red;
             this.deletePersonMenuItem.Name = "deletePersonMenuItem";
             this.deletePersonMenuItem.Size = new System.Drawing.Size(169, 22);
             this.deletePersonMenuItem.Text = "Delete person...";
-            this.deletePersonMenuItem.Click += new System.EventHandler(this.DeletePersonMenuItem_Click);
+            this.deletePersonMenuItem.Click += this.DeletePersonMenuItem_Click;
             // 
             // personSearchBox
             // 
@@ -229,8 +225,8 @@ namespace MediaLibrary.Views
             this.personSearchBox.SelectedItem = null;
             this.personSearchBox.Size = new System.Drawing.Size(418, 21);
             this.personSearchBox.TabIndex = 0;
-            this.personSearchBox.SelectedItemChanged += new System.EventHandler<System.EventArgs>(this.PersonSearchBox_SelectedPersonChanged);
-            this.personSearchBox.TextUpdate += new System.EventHandler(this.PersonSearchBox_TextUpdate);
+            this.personSearchBox.SelectedItemChanged += this.PersonSearchBox_SelectedPersonChanged;
+            this.personSearchBox.TextUpdate += this.PersonSearchBox_TextUpdate;
             // 
             // EditPeopleForm
             // 
@@ -246,17 +242,16 @@ namespace MediaLibrary.Views
             this.Name = "EditPeopleForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Edit People";
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.EditPersonForm_KeyDown);
+            this.KeyDown += this.EditPersonForm_KeyDown;
             this.editorTablePanel.ResumeLayout(false);
             this.editorTablePanel.PerformLayout();
             this.addUsernameFlowPanel.ResumeLayout(false);
             this.addUsernameFlowPanel.PerformLayout();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)this.errorProvider).EndInit();
             this.advancedMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
-
         }
 
         #endregion

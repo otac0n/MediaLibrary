@@ -38,18 +38,18 @@ namespace MediaLibrary.Views
             // 
             // saveButton
             // 
-            this.saveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.saveButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.saveButton.Location = new System.Drawing.Point(227, 88);
             this.saveButton.Name = "saveButton";
             this.saveButton.Size = new System.Drawing.Size(75, 23);
             this.saveButton.TabIndex = 4;
             this.saveButton.Text = "&Save";
             this.saveButton.UseVisualStyleBackColor = true;
-            this.saveButton.Click += new System.EventHandler(this.FinishButton_Click);
+            this.saveButton.Click += this.FinishButton_Click;
             // 
             // cancelButton
             // 
-            this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.cancelButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.cancelButton.Location = new System.Drawing.Point(318, 88);
             this.cancelButton.Name = "cancelButton";
@@ -57,12 +57,11 @@ namespace MediaLibrary.Views
             this.cancelButton.TabIndex = 5;
             this.cancelButton.Text = "&Cancel";
             this.cancelButton.UseVisualStyleBackColor = true;
-            this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
+            this.cancelButton.Click += this.CancelButton_Click;
             // 
             // name
             // 
-            this.name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.name.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.name.Location = new System.Drawing.Point(54, 14);
             this.name.Name = "name";
             this.name.Size = new System.Drawing.Size(339, 20);
@@ -79,8 +78,7 @@ namespace MediaLibrary.Views
             // 
             // query
             // 
-            this.query.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.query.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.query.Location = new System.Drawing.Point(54, 40);
             this.query.Name = "query";
             this.query.Size = new System.Drawing.Size(339, 20);
@@ -117,7 +115,6 @@ namespace MediaLibrary.Views
             this.Text = "Edit Saved Search";
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion

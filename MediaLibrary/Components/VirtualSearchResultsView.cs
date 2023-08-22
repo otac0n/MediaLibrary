@@ -591,7 +591,7 @@ namespace MediaLibrary.Components
                     groupable,
                     getImage,
                     drawSubItem == null
-                        ? default(Action<Graphics, Rectangle, SearchResult>)
+                        ? default
                         : (g, r, t) => drawSubItem(g, r, getValue(t)));
 
             public static ColumnDefinition<T> Create<T>(

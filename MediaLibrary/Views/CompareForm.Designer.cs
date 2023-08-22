@@ -34,12 +34,12 @@ namespace MediaLibrary.Views
             this.controlLayoutTable = new System.Windows.Forms.TableLayoutPanel();
             this.ratingBar = new System.Windows.Forms.TrackBar();
             this.controlLayoutTable.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ratingBar)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)this.ratingBar).BeginInit();
             this.SuspendLayout();
             // 
             // previewTable
             // 
-            this.previewTable.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.previewTable.BackColor = System.Drawing.Color.FromArgb(64, 64, 64);
             this.previewTable.ColumnCount = 2;
             this.previewTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
             this.previewTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
@@ -53,14 +53,14 @@ namespace MediaLibrary.Views
             // 
             // rateButton
             // 
-            this.rateButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.rateButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.rateButton.Location = new System.Drawing.Point(322, 54);
             this.rateButton.Name = "rateButton";
             this.rateButton.Size = new System.Drawing.Size(75, 23);
             this.rateButton.TabIndex = 1;
             this.rateButton.Text = "Rate";
             this.rateButton.UseVisualStyleBackColor = true;
-            this.rateButton.Click += new System.EventHandler(this.RateButton_Click);
+            this.rateButton.Click += this.RateButton_Click;
             // 
             // skipButton
             // 
@@ -71,7 +71,7 @@ namespace MediaLibrary.Views
             this.skipButton.TabIndex = 2;
             this.skipButton.Text = "Skip";
             this.skipButton.UseVisualStyleBackColor = true;
-            this.skipButton.Click += new System.EventHandler(this.SkipButton_Click);
+            this.skipButton.Click += this.SkipButton_Click;
             // 
             // controlLayoutTable
             // 
@@ -122,10 +122,9 @@ namespace MediaLibrary.Views
             this.Text = "CompareForm";
             this.controlLayoutTable.ResumeLayout(false);
             this.controlLayoutTable.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ratingBar)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)this.ratingBar).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion

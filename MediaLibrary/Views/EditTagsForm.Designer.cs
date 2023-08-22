@@ -52,7 +52,7 @@ namespace MediaLibrary.Views
             // 
             // addButton
             // 
-            this.addButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.addButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.addButton.Location = new System.Drawing.Point(408, 15);
             this.addButton.Name = "addButton";
             this.addButton.Size = new System.Drawing.Size(29, 21);
@@ -60,13 +60,11 @@ namespace MediaLibrary.Views
             this.addButton.TabStop = false;
             this.addButton.Text = "&Add";
             this.addButton.UseVisualStyleBackColor = true;
-            this.addButton.Click += new System.EventHandler(this.AddButton_Click);
+            this.addButton.Click += this.AddButton_Click;
             // 
             // tagLayoutPanel
             // 
-            this.tagLayoutPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tagLayoutPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.tagLayoutPanel.AutoScroll = true;
             this.tagLayoutPanel.Controls.Add(this.existingTags);
             this.tagLayoutPanel.Controls.Add(this.suggestedTags);
@@ -103,9 +101,7 @@ namespace MediaLibrary.Views
             // 
             // tagContextMenu
             // 
-            this.tagContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.removeTagMenuItem,
-            this.rejectTagMenuItem});
+            this.tagContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.removeTagMenuItem, this.rejectTagMenuItem });
             this.tagContextMenu.Name = "tagContextMenu";
             this.tagContextMenu.Size = new System.Drawing.Size(139, 48);
             // 
@@ -114,19 +110,18 @@ namespace MediaLibrary.Views
             this.removeTagMenuItem.Name = "removeTagMenuItem";
             this.removeTagMenuItem.Size = new System.Drawing.Size(138, 22);
             this.removeTagMenuItem.Text = "Remove Tag";
-            this.removeTagMenuItem.Click += new System.EventHandler(this.RemoveTagMenuItem_Click);
+            this.removeTagMenuItem.Click += this.RemoveTagMenuItem_Click;
             // 
             // rejectTagMenuItem
             // 
             this.rejectTagMenuItem.Name = "rejectTagMenuItem";
             this.rejectTagMenuItem.Size = new System.Drawing.Size(138, 22);
             this.rejectTagMenuItem.Text = "Reject Tag";
-            this.rejectTagMenuItem.Click += new System.EventHandler(this.RejectTagMenuItem_Click);
+            this.rejectTagMenuItem.Click += this.RejectTagMenuItem_Click;
             // 
             // suggestionContextMenu
             // 
-            this.suggestionContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.rejectSuggestionMenuItem});
+            this.suggestionContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.rejectSuggestionMenuItem });
             this.suggestionContextMenu.Name = "suggestionContextMenu";
             this.suggestionContextMenu.Size = new System.Drawing.Size(169, 26);
             // 
@@ -135,11 +130,11 @@ namespace MediaLibrary.Views
             this.rejectSuggestionMenuItem.Name = "rejectSuggestionMenuItem";
             this.rejectSuggestionMenuItem.Size = new System.Drawing.Size(168, 22);
             this.rejectSuggestionMenuItem.Text = "Reject Suggestion";
-            this.rejectSuggestionMenuItem.Click += new System.EventHandler(this.RejectSuggestionMenuItem_Click);
+            this.rejectSuggestionMenuItem.Click += this.RejectSuggestionMenuItem_Click;
             // 
             // advancedButton
             // 
-            this.advancedButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.advancedButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.advancedButton.Location = new System.Drawing.Point(343, 14);
             this.advancedButton.Name = "advancedButton";
             this.advancedButton.Size = new System.Drawing.Size(29, 21);
@@ -149,34 +144,31 @@ namespace MediaLibrary.Views
             // 
             // advancedMenuStrip
             // 
-            this.advancedMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.addSelectedTagMenuItem,
-            this.rejectSelectedTagMenuItem});
+            this.advancedMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.addSelectedTagMenuItem, this.rejectSelectedTagMenuItem });
             this.advancedMenuStrip.Name = "advancedMenuStrip";
             this.advancedMenuStrip.Size = new System.Drawing.Size(173, 48);
             // 
             // addSelectedTagMenuItem
             // 
             this.addSelectedTagMenuItem.Enabled = false;
-            this.addSelectedTagMenuItem.Image = global::MediaLibrary.Properties.Resources.add_circle;
+            this.addSelectedTagMenuItem.Image = Properties.Resources.add_circle;
             this.addSelectedTagMenuItem.Name = "addSelectedTagMenuItem";
             this.addSelectedTagMenuItem.Size = new System.Drawing.Size(172, 22);
             this.addSelectedTagMenuItem.Text = "Add selected tag";
-            this.addSelectedTagMenuItem.Click += new System.EventHandler(this.AddSelectedTagMenuItem_Click);
+            this.addSelectedTagMenuItem.Click += this.AddSelectedTagMenuItem_Click;
             // 
             // rejectSelectedTagMenuItem
             // 
             this.rejectSelectedTagMenuItem.Enabled = false;
-            this.rejectSelectedTagMenuItem.Image = global::MediaLibrary.Properties.Resources.remove_circle_red;
+            this.rejectSelectedTagMenuItem.Image = Properties.Resources.remove_circle_red;
             this.rejectSelectedTagMenuItem.Name = "rejectSelectedTagMenuItem";
             this.rejectSelectedTagMenuItem.Size = new System.Drawing.Size(172, 22);
             this.rejectSelectedTagMenuItem.Text = "Reject selected tag";
-            this.rejectSelectedTagMenuItem.Click += new System.EventHandler(this.RejectSelectedTagMenuItem_Click);
+            this.rejectSelectedTagMenuItem.Click += this.RejectSelectedTagMenuItem_Click;
             // 
             // tagSearchBox
             // 
-            this.tagSearchBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tagSearchBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.tagSearchBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.tagSearchBox.FormattingEnabled = true;
             this.tagSearchBox.Location = new System.Drawing.Point(12, 14);
@@ -184,7 +176,7 @@ namespace MediaLibrary.Views
             this.tagSearchBox.SelectedItem = null;
             this.tagSearchBox.Size = new System.Drawing.Size(325, 21);
             this.tagSearchBox.TabIndex = 0;
-            this.tagSearchBox.TextUpdate += new System.EventHandler(this.TagSearchBox_TextUpdate);
+            this.tagSearchBox.TextUpdate += this.TagSearchBox_TextUpdate;
             // 
             // EditTagsForm
             // 
@@ -204,15 +196,14 @@ namespace MediaLibrary.Views
             this.Name = "EditTagsForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Edit Tags";
-            this.Load += new System.EventHandler(this.EditTagsForm_Load);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.AddTagsForm_KeyDown);
+            this.Load += this.EditTagsForm_Load;
+            this.KeyDown += this.AddTagsForm_KeyDown;
             this.tagLayoutPanel.ResumeLayout(false);
             this.tagLayoutPanel.PerformLayout();
             this.tagContextMenu.ResumeLayout(false);
             this.suggestionContextMenu.ResumeLayout(false);
             this.advancedMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
-
         }
 
         #endregion

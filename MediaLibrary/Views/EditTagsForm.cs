@@ -4,7 +4,6 @@ namespace MediaLibrary.Views
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Drawing;
     using System.Linq;
     using System.Threading.Tasks;
@@ -13,7 +12,6 @@ namespace MediaLibrary.Views
     using MediaLibrary.Services;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
-    using TaggingLibrary;
 
     public partial class EditTagsForm : Form
     {

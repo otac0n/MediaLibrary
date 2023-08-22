@@ -36,18 +36,18 @@ namespace MediaLibrary.Views
             // 
             // finishButton
             // 
-            this.finishButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.finishButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.finishButton.Location = new System.Drawing.Point(273, 57);
             this.finishButton.Name = "finishButton";
             this.finishButton.Size = new System.Drawing.Size(75, 23);
             this.finishButton.TabIndex = 3;
             this.finishButton.Text = "&Save";
             this.finishButton.UseVisualStyleBackColor = true;
-            this.finishButton.Click += new System.EventHandler(this.FinishButton_Click);
+            this.finishButton.Click += this.FinishButton_Click;
             // 
             // cancelButton
             // 
-            this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.cancelButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.cancelButton.Location = new System.Drawing.Point(364, 57);
             this.cancelButton.Name = "cancelButton";
@@ -55,12 +55,11 @@ namespace MediaLibrary.Views
             this.cancelButton.TabIndex = 4;
             this.cancelButton.Text = "&Cancel";
             this.cancelButton.UseVisualStyleBackColor = true;
-            this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
+            this.cancelButton.Click += this.CancelButton_Click;
             // 
             // name
             // 
-            this.name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.name.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.name.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.name.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystemDirectories;
             this.name.Location = new System.Drawing.Point(54, 14);
@@ -97,7 +96,6 @@ namespace MediaLibrary.Views
             this.Text = "Name Input";
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion
