@@ -3,6 +3,7 @@
 namespace MediaLibrary.Views
 {
     using System.Diagnostics;
+    using System.Reflection;
     using System.Windows.Forms;
 
     public partial class AboutForm : Form
@@ -10,6 +11,7 @@ namespace MediaLibrary.Views
         public AboutForm()
         {
             this.InitializeComponent();
+            this.versionLabel.Text = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
         }
 
         private void IconAttributionLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
