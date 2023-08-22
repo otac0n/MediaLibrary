@@ -7,6 +7,7 @@ namespace MediaLibrary
     using System.Windows.Forms;
     using CommandLine;
     using MediaLibrary.Storage;
+    using MediaLibrary.Views;
     using MediaLibrary.Web.Hosting;
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;

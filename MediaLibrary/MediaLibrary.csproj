@@ -59,6 +59,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <PegGrammar Include="Services\ColorParser.peg" />
     <COMReference Include="AxWMPLib.dll">
       <Guid>6bf52a50-394a-11d3-b153-00c04f79faa6</Guid>
       <VersionMajor>1</VersionMajor>
@@ -68,8 +69,6 @@
       <Isolated>false</Isolated>
     </COMReference>
     <None Remove="ColorParser.peg" />
-    <PegGrammar Include="ColorParser.peg" />
-    <Compile Update="EditSavedSearchForm.cs" />
     <AdditionalFiles Include="MediaLibrary.ruleset" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
