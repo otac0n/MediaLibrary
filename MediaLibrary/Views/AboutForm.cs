@@ -16,7 +16,7 @@ namespace MediaLibrary.Views
 
         private void IconAttributionLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start(@"https://www.streamlineicons.com/");
+            Process.Start(new ProcessStartInfo { FileName = @"https://www.streamlineicons.com/", UseShellExecute = true });
         }
     }
 }
