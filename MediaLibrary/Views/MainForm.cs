@@ -27,13 +27,16 @@ namespace MediaLibrary.Views
         private int progressVersion;
         private List<string> ratingCategories;
         private List<SavedSearch> savedSearches;
-        private int searchVersion;
         private List<Form> selectionDialogs = new List<Form>();
+        private int searchVersion;
+        private AutoSearchManager autoSearchManager;
 
         public MainForm(MediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.index.RescanProgressUpdated += this.Index_RescanProgressUpdated;
+            this.autoSearchManager = new AutoSearchManager();
+            this.autoSearchManager.PerformSearch += this.AutoSearchManager_PerformSearch;
             this.InitializeComponent();
 
             this.listView = new VirtualSearchResultsView(index)
@@ -60,17 +63,6 @@ namespace MediaLibrary.Views
             this.splitContainer.Panel2.Controls.Add(this.preview);
 
             this.ApplySettings();
-        }
-
-        public TimeSpan AutoSearchDelay
-        {
-            get
-            {
-                const double KeyboardDelayIncrementSeconds = 0.250;
-                var systemKeyboardDelay = TimeSpan.FromSeconds(Math.Max(0.0, Math.Min(9.0, SystemInformation.KeyboardDelay)) * KeyboardDelayIncrementSeconds + KeyboardDelayIncrementSeconds);
-                var value = TimeSpan.FromSeconds(Math.Max(systemKeyboardDelay.TotalSeconds, Math.Min(Settings.Default.AutoSearchDelay.TotalSeconds, systemKeyboardDelay.TotalSeconds * 4)));
-                return value;
-            }
         }
 
         private static bool CanDrop(DragEventArgs e) =>
@@ -481,18 +473,10 @@ namespace MediaLibrary.Views
             new SlideShowForm(this.index, searchResults, shuffle, autoPlay).Show(this);
         }
 
-        private async Task PerformSearch(bool throttle = false)
+        private async void AutoSearchManager_PerformSearch(object sender, EventArgs args)
         {
             var searchText = this.searchBox.Text;
             var searchVersion = Interlocked.Increment(ref this.searchVersion);
-            if (throttle)
-            {
-                await Task.Delay(this.AutoSearchDelay).ConfigureAwait(true);
-                if (this.searchVersion != searchVersion)
-                {
-                    return;
-                }
-            }
 
             IList<SearchResult> data;
             try
@@ -537,9 +521,9 @@ namespace MediaLibrary.Views
             }
         }
 
-        private async void RefreshMenuItem_Click(object sender, EventArgs e)
+        private void RefreshMenuItem_Click(object sender, EventArgs e)
         {
-            await this.PerformSearch().ConfigureAwait(true);
+            this.autoSearchManager.Refresh();
         }
 
         private void SavedSearchMenuItem_Click(object sender, EventArgs e)
@@ -569,6 +553,7 @@ namespace MediaLibrary.Views
         private void Search(string search)
         {
             this.searchBox.Text = search ?? string.Empty;
+            this.autoSearchManager.Flush();
         }
 
         private void SearchBookmark_Click(object sender, EventArgs e)
@@ -586,9 +571,26 @@ namespace MediaLibrary.Views
             this.Search(tag);
         }
 
-        private async void SearchBox_TextChangedAsync(object sender, EventArgs e)
+        private void SearchBox_TextChangedAsync(object sender, EventArgs e)
         {
-            await this.PerformSearch(throttle: true).ConfigureAwait(true);
+            this.autoSearchManager.Dirty();
+        }
+
+        private void SearchBox_Leave(object sender, EventArgs e)
+        {
+            this.autoSearchManager.Flush();
+        }
+
+        private void SearchBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e)
+            {
+                case { KeyCode: Keys.Enter, Shift: false, Control: false, Alt: false }:
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    this.autoSearchManager.Refresh();
+                    break;
+            }
         }
 
         private void ShowPreviewMenuItem_CheckedChanged(object sender, EventArgs e)

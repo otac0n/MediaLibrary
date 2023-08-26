@@ -622,6 +622,8 @@ namespace MediaLibrary.Views
             this.searchBox.Name = "searchBox";
             this.searchBox.Size = new System.Drawing.Size(200, 25);
             this.searchBox.TextChanged += this.SearchBox_TextChangedAsync;
+            this.searchBox.Leave += this.SearchBox_Leave;
+            this.searchBox.KeyDown += this.SearchBox_KeyDown;
             // 
             // viewButton
             // 
