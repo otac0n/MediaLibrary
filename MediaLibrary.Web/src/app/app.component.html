@@ -9,7 +9,7 @@
         </div>
       </div>
     </div>
-    <input class="form-control" type="text" [(ngModel)]="query" (keypress)="searchKeyPress($event)" />
+    <input class="form-control" type="text" [(ngModel)]="query" (keypress)="searchKeyPress($event)" autocapitalization="off" autocorrect="off" autocomplete="off" />
     <div class="input-group-append">
       <button class="btn btn-primary" type="button" (click)="search()">Search</button>
     </div>
