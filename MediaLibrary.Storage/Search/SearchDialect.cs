@@ -236,6 +236,22 @@ namespace MediaLibrary.Storage.Search
                         return new DetailsExpression(ImageDetailRecognizer.Properties.Duration, field.Operator, seconds);
                     }
 
+                case "width":
+                    if (!long.TryParse(field.Value, out var width))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return new DetailsExpression(ImageDetailRecognizer.Properties.Width, field.Operator, width);
+
+                case "height":
+                    if (!long.TryParse(field.Value, out var height))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return new DetailsExpression(ImageDetailRecognizer.Properties.Height, field.Operator, height);
+
                 case "hash":
                     {
                         var value = field.Value.ToLowerInvariant();
