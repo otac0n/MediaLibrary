@@ -12,6 +12,7 @@ namespace MediaLibrary.Components
         private static readonly double ClickZoomFactor = Math.Pow(2, 1.0 / ClicksToDouble);
 
         private bool currentlyAnimating;
+        private bool idleBetweenFrames = false;
         private Point? dragOffset;
         private Image image;
         private PointF offset;
@@ -65,6 +66,7 @@ namespace MediaLibrary.Components
             if (!this.currentlyAnimating)
             {
                 ImageAnimator.Animate(this.image, this.OnFrameChanged);
+                Application.Idle += this.DetectIdle;
                 this.currentlyAnimating = true;
             }
         }
@@ -192,8 +194,18 @@ namespace MediaLibrary.Components
         {
             if (!this.IsDisposed && !this.Disposing)
             {
-                this.Invalidate();
+                // drop frames rather than DoS the UI.
+                if (this.idleBetweenFrames)
+                {
+                    this.idleBetweenFrames = false;
+                    this.Invalidate();
+                }
             }
+        }
+
+        private void DetectIdle(object sender, EventArgs e)
+        {
+            this.idleBetweenFrames = true;
         }
 
         private void UpdateAnimationState()
@@ -236,6 +248,7 @@ namespace MediaLibrary.Components
             if (this.currentlyAnimating)
             {
                 ImageAnimator.StopAnimate(this.image, this.OnFrameChanged);
+                Application.Idle -= this.DetectIdle;
                 this.currentlyAnimating = false;
             }
         }
