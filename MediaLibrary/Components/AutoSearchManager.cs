@@ -20,7 +20,7 @@ namespace MediaLibrary.Components
         {
             var searchVersion = Interlocked.Increment(ref this.dirtyVersion);
             await Task.Delay(Settings.Default.AutoSearchDelay).ConfigureAwait(true);
-            if (this.dirtyVersion == searchVersion)
+            if (this.dirtyVersion != searchVersion)
             {
                 return;
             }
