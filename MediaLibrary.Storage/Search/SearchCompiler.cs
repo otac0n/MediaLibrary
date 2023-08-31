@@ -40,12 +40,21 @@ namespace MediaLibrary.Storage.Search
         {
             var expression = this.dialect.Compile(term);
 
-            var containsHidden = this.containsHiddenReplacer.Replace(expression);
-            if (this.excludeHidden & !containsHidden)
+            // An empty search would usually return everything, but this is bad for performance and causes user anxiety.
+            if (expression is ConjunctionExpression conjunction && conjunction.Expressions.Count == 0)
             {
-                expression = new ConjunctionExpression(ImmutableList.Create(
-                    expression,
-                    this.dialect.Compile(ExcludeHiddenTerm)));
+                expression = new DisjunctionExpression(conjunction.Expressions);
+            }
+            else
+            {
+                // Hidden tags should be excluded unless explicitly requested.
+                var containsHidden = this.containsHiddenReplacer.Replace(expression);
+                if (this.excludeHidden & !containsHidden)
+                {
+                    expression = new ConjunctionExpression(ImmutableList.Create(
+                        expression,
+                        this.dialect.Compile(ExcludeHiddenTerm)));
+                }
             }
 
             while (true)
