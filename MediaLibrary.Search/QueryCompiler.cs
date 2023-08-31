@@ -5,6 +5,7 @@ namespace MediaLibrary.Search
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using MediaLibrary.Search.Terms;
 
     public abstract class QueryCompiler<TQuery>
     {

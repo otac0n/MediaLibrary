@@ -6,7 +6,7 @@ namespace MediaLibrary.Storage.Search
     using System.Collections.Immutable;
     using System.Linq;
     using System.Text;
-    using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.Search.Expressions;
     using MediaLibrary.Storage.Search.Optimizations;
     using TaggingLibrary;

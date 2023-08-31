@@ -13,7 +13,7 @@ namespace MediaLibrary.Views
     using System.Windows.Forms;
     using MediaLibrary.Components;
     using MediaLibrary.Properties;
-    using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;

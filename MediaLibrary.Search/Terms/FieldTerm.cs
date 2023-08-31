@@ -2,7 +2,7 @@
 
 using System.Text.RegularExpressions;
 
-namespace MediaLibrary.Search
+namespace MediaLibrary.Search.Terms
 {
     public class FieldTerm : Term
     {

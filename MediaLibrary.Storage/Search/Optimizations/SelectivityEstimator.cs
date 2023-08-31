@@ -5,7 +5,7 @@ namespace MediaLibrary.Storage.Search.Optimizations
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.Search.Expressions;
 
     public class SelectivityEstimator : ExpressionReplacer<double>

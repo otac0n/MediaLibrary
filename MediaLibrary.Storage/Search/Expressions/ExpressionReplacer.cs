@@ -3,7 +3,7 @@
 namespace MediaLibrary.Storage.Search.Expressions
 {
     using System;
-    using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
 
     public abstract class ExpressionReplacer<TResult>
     {
