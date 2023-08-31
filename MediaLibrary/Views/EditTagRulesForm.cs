@@ -14,10 +14,10 @@ namespace MediaLibrary.Views
 
     public partial class EditTagRulesForm : Form
     {
-        private readonly IMediaIndex index;
+        private readonly MediaIndex index;
         private readonly TextSearchManager searchManager;
 
-        public EditTagRulesForm(IMediaIndex index)
+        public EditTagRulesForm(MediaIndex index)
         {
             this.index = index;
             this.InitializeComponent();

@@ -115,7 +115,7 @@ namespace MediaLibrary.Components
 
         private ImmutableList<SearchResult> previewItems = ImmutableList<SearchResult>.Empty;
 
-        public PreviewControl(IMediaIndex index)
+        public PreviewControl(MediaIndex index)
         {
             this.InitializeComponent();
 

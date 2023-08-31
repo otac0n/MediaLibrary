@@ -12,7 +12,7 @@ namespace MediaLibrary.Views
     public partial class CompareForm : Form
     {
         private readonly string category;
-        private readonly IMediaIndex index;
+        private readonly MediaIndex index;
         private readonly Random random;
         private readonly Dictionary<string, long> ratingsInverseFrequency;
         private readonly List<SearchResult> searchResults;
@@ -20,7 +20,7 @@ namespace MediaLibrary.Views
         private PreviewControl leftPreview;
         private PreviewControl rightPreview;
 
-        public CompareForm(IMediaIndex index, string category, IEnumerable<SearchResult> searchResults)
+        public CompareForm(MediaIndex index, string category, IEnumerable<SearchResult> searchResults)
         {
             this.index = index;
             this.category = category;

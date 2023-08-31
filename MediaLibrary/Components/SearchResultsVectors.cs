@@ -15,10 +15,10 @@ namespace MediaLibrary.Components
 
     public class SearchResultsVectors : FlowLayoutPanel
     {
-        private readonly IMediaIndex index;
+        private readonly MediaIndex index;
         private ImmutableList<SearchResult> searchResults;
 
-        public SearchResultsVectors(IMediaIndex index)
+        public SearchResultsVectors(MediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.index.HashTagAdded += this.Index_HashTagAdded;

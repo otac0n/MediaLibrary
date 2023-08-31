@@ -23,7 +23,7 @@ namespace MediaLibrary.Storage
     using Nito.AsyncEx;
     using TaggingLibrary;
 
-    public class MediaIndex : IMediaIndex
+    public class MediaIndex
     {
         public static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
         private static readonly TimeSpan BufferOverflowDelay = TimeSpan.FromSeconds(2);

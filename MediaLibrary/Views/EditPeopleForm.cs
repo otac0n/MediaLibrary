@@ -12,11 +12,11 @@ namespace MediaLibrary.Views
 
     public partial class EditPeopleForm : Form
     {
-        private readonly IMediaIndex index;
+        private readonly MediaIndex index;
         private List<Person> people;
         private int update;
 
-        public EditPeopleForm(IMediaIndex index)
+        public EditPeopleForm(MediaIndex index)
         {
             this.InitializeComponent();
             this.advancedButton.AttachDropDownMenu(this.advancedMenuStrip, this.components);

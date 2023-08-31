@@ -15,13 +15,13 @@ namespace MediaLibrary.Views
 
     public partial class EditTagsForm : Form
     {
-        private readonly IMediaIndex index;
+        private readonly MediaIndex index;
         private readonly HashSet<string> rejectedTags = new HashSet<string>();
         private readonly IList<SearchResult> searchResults;
         private readonly List<string> tagsInEntryOrder = new List<string>();
         private Dictionary<string, int> tagCounts;
 
-        public EditTagsForm(IMediaIndex index, IList<SearchResult> searchResults)
+        public EditTagsForm(MediaIndex index, IList<SearchResult> searchResults)
         {
             this.InitializeComponent();
             this.advancedButton.AttachDropDownMenu(this.advancedMenuStrip, this.components);

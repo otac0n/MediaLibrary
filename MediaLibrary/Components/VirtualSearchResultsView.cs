@@ -27,14 +27,14 @@ namespace MediaLibrary.Components
     {
         private readonly ImmutableDictionary<Column, ColumnDefinition> columnDefinitions;
         private readonly Dictionary<Column, OLVColumn> columns = new Dictionary<Column, OLVColumn>();
-        private readonly IMediaIndex index;
+        private readonly MediaIndex index;
         private readonly List<SearchResult> orderdResults = new List<SearchResult>();
         private bool columnsSized = false;
         private PersonComparer personComparer;
         private bool suppressSelectionChanged;
         private TagComparer tagComparer;
 
-        public VirtualSearchResultsView(IMediaIndex index)
+        public VirtualSearchResultsView(MediaIndex index)
         {
             this.index = index ?? throw new ArgumentNullException(nameof(index));
             this.AllowColumnReorder = true;
