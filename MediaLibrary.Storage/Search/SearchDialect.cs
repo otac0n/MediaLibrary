@@ -14,6 +14,10 @@ namespace MediaLibrary.Storage.Search
 
     public sealed class SearchDialect : QueryCompiler<Expression>
     {
+        public static readonly string HiddenTag = "hidden";
+
+        private static readonly Term ExcludeHiddenTerm = new NegationTerm(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, HiddenTag));
+
         public SearchDialect(TagRuleEngine tagEngine, Func<string, Term> getSavedSearch)
             : base(getSavedSearch)
         {
@@ -21,6 +25,33 @@ namespace MediaLibrary.Storage.Search
         }
 
         private TagRuleEngine TagEngine { get; }
+
+        public Expression CompileQuery(Term term, bool excludeHidden = true)
+        {
+            var expression = this.Compile(term);
+
+            if (excludeHidden)
+            {
+                // An empty search would usually return everything, but this is bad for performance and causes user anxiety.
+                if (expression is ConjunctionExpression conjunction && conjunction.Expressions.Count == 0)
+                {
+                    expression = new DisjunctionExpression(conjunction.Expressions);
+                }
+                else
+                {
+                    // Hidden tags should be excluded unless explicitly requested.
+                    var containsHidden = new ContainsHiddenReplacer(this.TagEngine).Replace(expression);
+                    if (!containsHidden)
+                    {
+                        expression = new ConjunctionExpression(ImmutableList.Create(
+                            expression,
+                            this.Compile(ExcludeHiddenTerm)));
+                    }
+                }
+            }
+
+            return expression;
+        }
 
         /// <inheritdoc/>
         public override Expression CompileConjunction(IEnumerable<Expression> query) =>
@@ -347,6 +378,56 @@ namespace MediaLibrary.Storage.Search
                         rule.Right.Where(r => !exclusionTags.Contains(r)).Select(excluded => this.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, excluded)))));
                     return this.CompileDisjunction(requirements);
                 })));
+        }
+
+        private class ContainsHiddenReplacer : ExpressionReplacer<bool>
+        {
+            private readonly ImmutableHashSet<string> hiddenTags;
+
+            public ContainsHiddenReplacer(TagRuleEngine tagEngine)
+            {
+                this.hiddenTags = tagEngine.GetTagDescendants(HiddenTag).Add(HiddenTag);
+            }
+
+            public override bool Replace(ConjunctionExpression expression) => expression.Expressions.Select(this.Replace).Any(c => c);
+
+            public override bool Replace(DisjunctionExpression expression) => expression.Expressions.Select(this.Replace).Any(c => c);
+
+            public override bool Replace(NegationExpression expression) => this.Replace(expression.Expression);
+
+            public override bool Replace(CopiesExpression expression) => false;
+
+            public override bool Replace(DetailsExpression expression) => false;
+
+            public override bool Replace(FileSizeExpression expression) => false;
+
+            public override bool Replace(HashExpression expression) => false;
+
+            public override bool Replace(NoPeopleExpression expression) => false;
+
+            public override bool Replace(PeopleCountExpression expression) => false;
+
+            public override bool Replace(PersonIdExpression expression) => false;
+
+            public override bool Replace(PersonNameExpression expression) => false;
+
+            public override bool Replace(RatingExpression expression) => false;
+
+            public override bool Replace(RatingsCountExpression expression) => false;
+
+            public override bool Replace(StarsExpression expression) => false;
+
+            public override bool Replace(TagExpression expression) => expression.Tags.Overlaps(this.hiddenTags);
+
+            public override bool Replace(RejectedTagExpression expression) => expression.Tags.Overlaps(this.hiddenTags);
+
+            public override bool Replace(TagCountExpression expression) => false;
+
+            public override bool Replace(TextExpression expression) => false;
+
+            public override bool Replace(TypeEqualsExpression expression) => false;
+
+            public override bool Replace(TypePrefixExpression expression) => false;
         }
     }
 }

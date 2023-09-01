@@ -7,16 +7,10 @@ namespace MediaLibrary.Storage.Search
     using System.Linq;
     using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.Search.Expressions;
-    using TaggingLibrary;
 
     public class PredicateSearchCompiler : SearchCompiler<Predicate<SearchResult>>
     {
         private static readonly PredicateReplacer ReplacerInstance = new PredicateReplacer();
-
-        public PredicateSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden, Func<string, Term> getSavedSearch)
-            : base(tagEngine, excludeHidden, getSavedSearch)
-        {
-        }
 
         protected override Predicate<SearchResult> Compile(Expression expression) => ReplacerInstance.Replace(expression);
 

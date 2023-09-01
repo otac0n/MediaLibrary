@@ -17,6 +17,7 @@ namespace MediaLibrary.Views
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;
+    using MediaLibrary.Storage.Search.Expressions;
 
     public partial class MainForm : Form
     {
@@ -478,12 +479,23 @@ namespace MediaLibrary.Views
             var searchText = this.searchBox.Text;
             var searchVersion = Interlocked.Increment(ref this.searchVersion);
 
+            Expression expression;
+            try
+            {
+                expression = await this.index.CompileQuery(searchText).ConfigureAwait(true);
+            }
+            catch
+            {
+                // TODO: Display syntactic/semantic query error.
+                return;
+            }
+
             IList<SearchResult> data;
             try
             {
-                data = await this.index.SearchIndex(searchText).ConfigureAwait(true);
+                data = await this.index.SearchIndex(expression).ConfigureAwait(true);
             }
-            catch (Exception ex)
+            catch
             {
                 // TODO: ex.Message
                 data = Array.Empty<SearchResult>();

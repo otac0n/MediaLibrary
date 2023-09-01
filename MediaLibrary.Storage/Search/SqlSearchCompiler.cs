@@ -9,16 +9,10 @@ namespace MediaLibrary.Storage.Search
     using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.Search.Expressions;
     using MediaLibrary.Storage.Search.Optimizations;
-    using TaggingLibrary;
     using static MediaLibrary.Storage.Search.QueryBuilder;
 
     public class SqlSearchCompiler : SearchCompiler<string>
     {
-        public SqlSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden, Func<string, Term> getSavedSearch)
-            : base(tagEngine, excludeHidden, getSavedSearch)
-        {
-        }
-
         protected override string Compile(Expression expression)
         {
             var fetchTags = true;
@@ -450,7 +444,7 @@ namespace MediaLibrary.Storage.Search
             {
                 if (expression.Tags.Count > 3)
                 {
-                    var setIndex = GetOrAddMaterializedTags(expression.Tags);
+                    var setIndex = this.GetOrAddMaterializedTags(expression.Tags);
                     return $"{this.indent}EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN (SELECT Tag FROM temp.MaterializedTags WHERE SetIndex = {setIndex})){Environment.NewLine}";
                 }
                 else
@@ -471,7 +465,7 @@ namespace MediaLibrary.Storage.Search
             {
                 if (expression.Tags.Count > 3)
                 {
-                    var setIndex = GetOrAddMaterializedTags(expression.Tags);
+                    var setIndex = this.GetOrAddMaterializedTags(expression.Tags);
                     return $"{this.indent}EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN (SELECT Tag FROM temp.MaterializedTags WHERE SetIndex = {setIndex})){Environment.NewLine}";
                 }
                 else

@@ -20,6 +20,7 @@ namespace MediaLibrary.Storage
     using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;
+    using MediaLibrary.Storage.Search.Expressions;
     using Nito.AsyncEx;
     using TaggingLibrary;
 
@@ -532,18 +533,36 @@ namespace MediaLibrary.Storage
             await this.StartIndexRescanTask().ConfigureAwait(false);
         }
 
-        public Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
+        public async Task<Expression> CompileQuery(string query, bool excludeHidden = true)
+        {
+            var grammar = new SearchGrammar();
+            var term = grammar.Parse(query ?? string.Empty);
+            var containsSavedSearches = new ContainsSavedSearchTermCompiler().Compile(term);
+            var savedSearches = containsSavedSearches
+                ? (await this.GetAllSavedSearches().ConfigureAwait(false)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
+                : null;
+            var dialect = new SearchDialect(this.TagEngine, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
+            return dialect.CompileQuery(term, excludeHidden);
+        }
+
+        public async Task<TQuery> CompileQuery<TCompiler, TQuery>(string query, bool excludeHidden = true)
+            where TCompiler : SearchCompiler<TQuery>, new() =>
+                await this.CompileQuery<TCompiler, TQuery>(await this.CompileQuery(query, excludeHidden).ConfigureAwait(false)).ConfigureAwait(false);
+
+        public async Task<TQuery> CompileQuery<TCompiler, TQuery>(Expression query)
+            where TCompiler : SearchCompiler<TQuery>, new()
+        {
+            return new TCompiler().CompileQuery(query);
+        }
+
+        public async Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true) =>
+            await this.SearchIndex(await this.CompileQuery(query, excludeHidden).ConfigureAwait(false)).ConfigureAwait(false);
+
+        public Task<List<SearchResult>> SearchIndex(Expression query)
         {
             return Task.Run(async () =>
             {
-                var grammar = new SearchGrammar();
-                var term = grammar.Parse(query ?? string.Empty);
-                var containsSavedSearches = new ContainsSavedSearchTermCompiler().Compile(term);
-                var savedSearches = containsSavedSearches
-                    ? (await this.GetAllSavedSearches().ConfigureAwait(false)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
-                    : null;
-                var dialect = new SqlSearchCompiler(this.TagEngine, excludeHidden, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
-                var sqlQuery = dialect.Compile(term);
+                var sqlQuery = await this.CompileQuery<SqlSearchCompiler, string>(query).ConfigureAwait(false);
 
                 using (var conn = await this.GetConnection().ConfigureAwait(false))
                 {

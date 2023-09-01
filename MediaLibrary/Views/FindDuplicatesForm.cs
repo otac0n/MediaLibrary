@@ -22,7 +22,7 @@ namespace MediaLibrary.Views
         private readonly MediaIndex index;
         private readonly Dictionary<string, PathModel> pathModels = new Dictionary<string, PathModel>();
         private readonly Dictionary<string, ResultModel> resultModels = new Dictionary<string, ResultModel>();
-        private readonly PredicateSearchCompiler searchCompiler;
+        private readonly Func<string, Predicate<SearchResult>> searchCompiler;
         private CancellationTokenSource cancel = new CancellationTokenSource();
         private bool initialized;
         private bool running;
@@ -38,7 +38,14 @@ namespace MediaLibrary.Views
             this.InitializeComponent();
             this.searchBox.Enabled = false;
             var grammar = new SearchGrammar();
-            this.searchCompiler = new PredicateSearchCompiler(index.TagEngine, excludeHidden: false, name => this.savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
+            var dialect = new SearchDialect(index.TagEngine, name => this.savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
+            var compiler = new PredicateSearchCompiler();
+            this.searchCompiler = query =>
+            {
+                var term = grammar.Parse(query ?? string.Empty);
+                var expression = dialect.CompileQuery(term, excludeHidden: false);
+                return compiler.CompileQuery(expression);
+            };
         }
 
         private static string FindBestPath(IEnumerable<string> paths)
@@ -400,8 +407,7 @@ namespace MediaLibrary.Views
             Predicate<SearchResult> predicate;
             try
             {
-                var term = new SearchGrammar().Parse(query ?? string.Empty);
-                predicate = this.searchCompiler.Compile(term);
+                predicate = this.searchCompiler(query);
             }
             catch
             {
