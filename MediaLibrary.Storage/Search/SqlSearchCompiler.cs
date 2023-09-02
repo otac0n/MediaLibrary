@@ -389,7 +389,7 @@ namespace MediaLibrary.Storage.Search
             public override string Replace(FileSizeExpression expression) => $"{this.indent}FileSize {ConvertOperator(expression.Operator)} {expression.FileSize}{Environment.NewLine}";
 
             /// <inheritdoc/>
-            public override string Replace(HashExpression expression) => $"{this.indent}Hash {ConvertOperator(expression.Operator)} {Literal(expression.Value)}{Environment.NewLine}";
+            public override string Replace(HashExpression expression) => $"{this.indent}h.Hash {ConvertOperator(expression.Operator)} {Literal(expression.Value)}{Environment.NewLine}";
 
             /// <inheritdoc/>
             public override string Replace(PeopleCountExpression expression)
