@@ -156,12 +156,9 @@ namespace MediaLibrary.Components
                     favicon = null;
                 }
 
-                if (favicon != null)
+                if (favicon != null && this.iconVersion == version && !this.IsDisposed)
                 {
-                    if (this.iconVersion == version)
-                    {
-                        this.personPicture.Image = favicon;
-                    }
+                    this.personPicture.Image = favicon;
                 }
             }
         }

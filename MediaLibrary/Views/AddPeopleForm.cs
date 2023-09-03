@@ -46,15 +46,18 @@ namespace MediaLibrary.Views
                 this.personSearchBox.Focus();
             }
 
-            if (this.personControls.TryGetValue(person.PersonId, out var personControl))
+            if (!this.IsDisposed)
             {
-                personControl.Indeterminate = false;
-                this.existingPeople.ScrollControlIntoView(personControl);
-            }
-            else
-            {
-                personControl = this.AddPersonControl(person, indeterminate: false);
-                this.existingPeople.ScrollControlIntoView(personControl);
+                if (this.personControls.TryGetValue(person.PersonId, out var personControl))
+                {
+                    personControl.Indeterminate = false;
+                    this.existingPeople.ScrollControlIntoView(personControl);
+                }
+                else
+                {
+                    personControl = this.AddPersonControl(person, indeterminate: false);
+                    this.existingPeople.ScrollControlIntoView(personControl);
+                }
             }
 
             foreach (var searchResult in this.searchResults)
@@ -127,7 +130,10 @@ namespace MediaLibrary.Views
         private async void PopulatePeopleCombo()
         {
             var people = await this.index.GetAllPeople().ConfigureAwait(true);
-            this.personSearchBox.Items = people;
+            if (!this.IsDisposed)
+            {
+                this.personSearchBox.Items = people;
+            }
         }
 
         private async void RejectPersonMenuItem_Click(object sender, EventArgs e)

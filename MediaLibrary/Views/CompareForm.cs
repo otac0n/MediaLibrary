@@ -164,8 +164,11 @@ namespace MediaLibrary.Views
             var expected = Rating.GetExpectedScore(leftRating, rightRating);
 
             this.CompareInfo = (left, right);
-            this.ratingBar.Value = this.ratingBar.Minimum + (int)Math.Round(expected * (this.ratingBar.Maximum - this.ratingBar.Minimum));
-            this.ratingBar.Focus();
+            if (!this.IsDisposed)
+            {
+                this.ratingBar.Value = this.ratingBar.Minimum + (int)Math.Round(expected * (this.ratingBar.Maximum - this.ratingBar.Minimum));
+                this.ratingBar.Focus();
+            }
         }
 
         private async void RateButton_Click(object sender, EventArgs e)
@@ -194,9 +197,9 @@ namespace MediaLibrary.Views
             }
         }
 
-        private void SkipButton_Click(object sender, EventArgs e)
+        private async void SkipButton_Click(object sender, EventArgs e)
         {
-            this.LoadNextComparison();
+            await this.LoadNextComparison();
         }
 
         private struct ItemInfo

@@ -219,7 +219,10 @@ namespace MediaLibrary.Views
             this.savedSearches = (await this.index.GetAllSavedSearches().ConfigureAwait(true)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase);
             this.searchBox.Enabled = true;
             var results = await this.index.SearchIndex("copies>1", excludeHidden: false).ConfigureAwait(true);
-            this.UpdateSearchResults(results);
+            if (!this.IsDisposed)
+            {
+                this.UpdateSearchResults(results);
+            }
         }
 
         private async void OKButton_Click(object sender, System.EventArgs e)

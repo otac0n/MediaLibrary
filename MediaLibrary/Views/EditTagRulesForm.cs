@@ -137,16 +137,18 @@ namespace MediaLibrary.Views
         private async void EditTagRulesForm_Load(object sender, EventArgs e)
         {
             var ruleCategories = await this.index.GetAllRuleCategories().ConfigureAwait(true);
-
-            var isDefaultLookup = ruleCategories.ToLookup(c => string.IsNullOrEmpty(c.Category));
-            this.rules.Text = isDefaultLookup[true].FirstOrDefault()?.Rules ?? string.Empty;
-
-            foreach (var c in isDefaultLookup[true].Skip(1).Concat(isDefaultLookup[false]).OrderBy(c => c.Order))
+            if (!this.IsDisposed)
             {
-                this.AppendNewTab(c.Category, c.Rules);
-            }
+                var isDefaultLookup = ruleCategories.ToLookup(c => string.IsNullOrEmpty(c.Category));
+                this.rules.Text = isDefaultLookup[true].FirstOrDefault()?.Rules ?? string.Empty;
 
-            this.rulePages.Enabled = this.okButton.Enabled = this.applyButton.Enabled = true;
+                foreach (var c in isDefaultLookup[true].Skip(1).Concat(isDefaultLookup[false]).OrderBy(c => c.Order))
+                {
+                    this.AppendNewTab(c.Category, c.Rules);
+                }
+
+                this.rulePages.Enabled = this.okButton.Enabled = this.applyButton.Enabled = true;
+            }
         }
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "The contract of the `SaveChanges` function allows generic exception handling.")]
@@ -244,7 +246,10 @@ namespace MediaLibrary.Views
             }
             finally
             {
-                this.Enabled = true;
+                if (!this.IsDisposed)
+                {
+                    this.Enabled = true;
+                }
             }
         }
 

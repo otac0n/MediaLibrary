@@ -38,12 +38,15 @@ namespace MediaLibrary.Views
             {
                 this.editorTablePanel.Enabled = false;
                 var person = await this.index.AddPerson(name).ConfigureAwait(true);
-                this.people.Add(person);
-                this.personSearchBox.Items = this.people;
-                this.personSearchBox.Text = name;
-                this.personSearchBox.SelectedItem = person;
-                this.SelectedPerson = person;
-                this.RefreshView();
+                if (!this.IsDisposed)
+                {
+                    this.people.Add(person);
+                    this.personSearchBox.Items = this.people;
+                    this.personSearchBox.Text = name;
+                    this.personSearchBox.SelectedItem = person;
+                    this.SelectedPerson = person;
+                    this.RefreshView();
+                }
             }
         }
 
@@ -180,7 +183,10 @@ namespace MediaLibrary.Views
                 if (result == DialogResult.Yes)
                 {
                     await this.index.RemovePerson(person).ConfigureAwait(true);
-                    this.editorTablePanel.Enabled = false;
+                    if (!this.IsDisposed)
+                    {
+                        this.editorTablePanel.Enabled = false;
+                    }
                 }
             }
         }
@@ -255,10 +261,13 @@ namespace MediaLibrary.Views
             {
                 this.SelectedPerson = await this.index.GetPersonById(person.PersonId).ConfigureAwait(true);
                 this.SelectedPersonAliases = await this.index.GetAliases(person.PersonId).ConfigureAwait(true);
-                this.siteTextBox.Text = string.Empty;
-                this.usernameTextBox.Text = string.Empty;
-                this.deletePersonMenuItem.Enabled = true;
-                this.RefreshView();
+                if (!this.IsDisposed)
+                {
+                    this.siteTextBox.Text = string.Empty;
+                    this.usernameTextBox.Text = string.Empty;
+                    this.deletePersonMenuItem.Enabled = true;
+                    this.RefreshView();
+                }
             }
             else
             {
@@ -274,15 +283,25 @@ namespace MediaLibrary.Views
         private async void PopulatePeopleSearchBox()
         {
             this.people = await this.index.GetAllPeople().ConfigureAwait(true);
-            var text = this.personSearchBox.Text;
-            this.personSearchBox.Items = this.people;
-            this.personSearchBox.Text = text;
+            var sites = await this.index.GetAllAliasSites().ConfigureAwait(true);
 
-            this.siteTextBox.AutoCompleteCustomSource.AddRange(await this.index.GetAllAliasSites().ConfigureAwait(true));
+            if (!this.IsDisposed)
+            {
+                var text = this.personSearchBox.Text;
+                this.personSearchBox.Items = this.people;
+                this.personSearchBox.Text = text;
+
+                this.siteTextBox.AutoCompleteCustomSource.AddRange(sites);
+            }
         }
 
         private void RefreshView()
         {
+            if (this.IsDisposed)
+            {
+                return;
+            }
+
             const int TypeGeneric = 0;
             const int TypeSiteSpecific = 1;
             var aliasTypeLookup = this.SelectedPersonAliases.ToLookup(a => IsGeneric(a) ? TypeGeneric : TypeSiteSpecific);
