@@ -615,6 +615,7 @@ namespace MediaLibrary.Storage
                             (key, searchResult) =>
                             {
                                 // TODO: Deeper inspection of changes.
+                                // TODO: Trigger Change Events?
                                 if (searchResult.Details != updatedDetails)
                                 {
                                     searchResult.Details = updatedDetails;
