@@ -52,30 +52,28 @@ namespace MediaLibrary.Services
                 (int)Math.Round(Math.Pow(b / weight, 1 / Gamma)));
         }
 
-        public static Color ContrastColor(Color? color)
+        public static double Contrast(Color a, Color b) =>
+            ContrastRatio(
+                ContrastBrightness(a),
+                ContrastBrightness(b));
+
+        public static double ContrastBrightness(Color color) =>
+            ContrastBrightness(color, Gamma);
+
+        public static double ContrastBrightness(Color color, double gamma) =>
+            0.25 * Math.Pow(color.R / 255.0, gamma * 2) +
+            0.54 * Math.Pow(color.G / 255.0, gamma * 2) +
+            0.21 * Math.Pow(color.B / 255.0, gamma * 2);
+
+        public static Color ContrastColor(Color? color) =>
+            color is Color c ? ContrastColor(c) : Color.Black;
+
+        public static Color ContrastColor(Color color)
         {
-            if (color == null)
-            {
-                return Color.Black;
-            }
-
-            double HumanBrightness(Color c)
-            {
-                return
-                    0.25 * Math.Pow(c.R / 255.0, 1.8 * 2) +
-                    0.54 * Math.Pow(c.G / 255.0, 1.8 * 2) +
-                    0.21 * Math.Pow(c.B / 255.0, 1.8 * 2);
-            }
-
-            double Contrast(double l1, double l2)
-            {
-                return (Math.Max(l1, l2) + 0.25) / (Math.Min(l1, l2) + 0.25);
-            }
-
-            var brightness = HumanBrightness(color.Value);
-            var whiteR = Contrast(brightness, HumanBrightness(Color.White));
-            var blackR = Contrast(brightness, HumanBrightness(Color.Black));
-            return whiteR > blackR ? Color.White : Color.Black;
+            var brightness = ContrastBrightness(color);
+            var whiteContrast = ContrastRatio(brightness, ContrastBrightness(Color.White));
+            var blackContrast = ContrastRatio(brightness, ContrastBrightness(Color.Black));
+            return whiteContrast > blackContrast ? Color.White : Color.Black;
         }
 
         public static Color? ParseColor(string color)
@@ -107,6 +105,11 @@ namespace MediaLibrary.Services
             {
                 return cache[color] = value;
             }
+        }
+
+        private static double ContrastRatio(double l1, double l2)
+        {
+            return (Math.Max(l1, l2) + 0.25) / (Math.Min(l1, l2) + 0.25);
         }
     }
 }
