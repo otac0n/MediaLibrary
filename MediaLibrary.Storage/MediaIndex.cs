@@ -497,6 +497,25 @@ namespace MediaLibrary.Storage
             this.HashTagRemoved?.Invoke(this, new ItemRemovedEventArgs<HashTag>(hashTag));
         }
 
+        public async Task RemoveRejectedHashTag(HashTag hashTag)
+        {
+            if (hashTag == null)
+            {
+                throw new ArgumentNullException(nameof(hashTag));
+            }
+
+            await this.IndexWriteAsync(conn => conn.ExecuteAsync(HashTag.Queries.RemoveRejectedHashTag, hashTag)).ConfigureAwait(false);
+
+            var hash = hashTag.Hash;
+            if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.RejectedTags.Contains(hashTag.Tag))
+            {
+                searchResult.RejectedTags = searchResult.RejectedTags.Remove(hashTag.Tag);
+            }
+
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
+            this.HashTagRemoved?.Invoke(this, new ItemRemovedEventArgs<HashTag>(hashTag));
+        }
+
         public async Task RemoveIndexedPath(string path)
         {
             this.RemoveFileSystemWatcher(path);
