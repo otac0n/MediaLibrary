@@ -112,11 +112,11 @@ namespace MediaLibrary.Views
             var senderButton = (ToolStripButton)sender;
             if (senderButton.Checked)
             {
-                await this.index.AddHashTag(new HashTag(hash, "favorite")).ConfigureAwait(false);
+                await this.index.AddHashTag(new HashTag(hash, TagComparer.FavoriteTag)).ConfigureAwait(false);
             }
             else
             {
-                await this.index.RemoveHashTag(new HashTag(hash, "favorite")).ConfigureAwait(false);
+                await this.index.RemoveHashTag(new HashTag(hash, TagComparer.FavoriteTag)).ConfigureAwait(false);
             }
         }
 
@@ -284,7 +284,7 @@ namespace MediaLibrary.Views
             this.advanceOnNextStop = false;
             this.preview.PreviewItems = new[] { this.Current };
             this.favoriteButton.Enabled = this.Current != null;
-            this.favoriteButton.Checked = this.Current?.Tags?.Contains("favorite") ?? false;
+            this.favoriteButton.Checked = this.Current?.Tags?.Contains(TagComparer.FavoriteTag) ?? false;
         }
 
         private void UpdateSearchResult(string hash)

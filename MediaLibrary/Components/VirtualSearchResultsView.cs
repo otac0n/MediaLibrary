@@ -84,14 +84,14 @@ namespace MediaLibrary.Components
                         var padding = (int)Math.Floor((bounds.Height - baseSize.Height) / 2);
 
                         var xOffset = 0f;
-                        if (tags.Contains("favorite"))
+                        if (tags.Contains(TagComparer.FavoriteTag))
                         {
                             var size = bounds.Height - padding * 2;
                             g.DrawImage(Resources.love_it_filled, new RectangleF(bounds.Left + xOffset, bounds.Top + padding, size, size));
                             xOffset += size + padding;
                         }
 
-                        foreach (var tag in tags.Where(t => t != "favorite").OrderBy(t => t, tagComparer))
+                        foreach (var tag in tags.Where(t => t != TagComparer.FavoriteTag).OrderBy(t => t, tagComparer))
                         {
                             var backgroundColor = tagComparer.GetTagColor(tag) ?? SystemColors.Info;
                             var textColor = ColorService.ContrastColor(backgroundColor);

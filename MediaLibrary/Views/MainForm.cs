@@ -250,7 +250,7 @@ namespace MediaLibrary.Views
 
         private void EditToolStripMenuItem_DropDownOpened(object sender, EventArgs e)
         {
-            this.favoriteMainMenuItem.CheckState = this.listView.SelectedResults.All(r => r.Tags.Contains("favorite")) ? CheckState.Checked : CheckState.Unchecked;
+            this.favoriteMainMenuItem.CheckState = this.listView.SelectedResults.All(r => r.Tags.Contains(TagComparer.FavoriteTag)) ? CheckState.Checked : CheckState.Unchecked;
         }
 
         private async void FavoriteToolStripMenuItem_Click(object sender, EventArgs e)
@@ -261,7 +261,7 @@ namespace MediaLibrary.Views
             if (!(senderMenu.Tag is IList<SearchResult> searchResults))
             {
                 searchResults = this.listView.SelectedResults;
-                @checked = searchResults.All(r => r.Tags.Contains("favorite"));
+                @checked = searchResults.All(r => r.Tags.Contains(TagComparer.FavoriteTag));
             }
             else
             {
@@ -274,14 +274,14 @@ namespace MediaLibrary.Views
                 {
                     foreach (var searchResult in searchResults)
                     {
-                        await this.index.RemoveHashTag(new HashTag(searchResult.Hash, "favorite")).ConfigureAwait(false);
+                        await this.index.RemoveHashTag(new HashTag(searchResult.Hash, TagComparer.FavoriteTag)).ConfigureAwait(false);
                     }
                 }
                 else
                 {
                     foreach (var searchResult in searchResults)
                     {
-                        await this.index.AddHashTag(new HashTag(searchResult.Hash, "favorite")).ConfigureAwait(false);
+                        await this.index.AddHashTag(new HashTag(searchResult.Hash, TagComparer.FavoriteTag)).ConfigureAwait(false);
                     }
                 }
             }
@@ -361,7 +361,7 @@ namespace MediaLibrary.Views
                 if (item.Bounds.Contains(e.Location))
                 {
                     var searchResults = this.listView.SelectedResults;
-                    this.favoriteContextMenuItem.CheckState = searchResults.All(r => r.Tags.Contains("favorite")) ? CheckState.Checked : CheckState.Unchecked;
+                    this.favoriteContextMenuItem.CheckState = searchResults.All(r => r.Tags.Contains(TagComparer.FavoriteTag)) ? CheckState.Checked : CheckState.Unchecked;
                     this.favoriteContextMenuItem.Tag = searchResults;
                     this.editTagsContextMenuItem.Tag = searchResults;
                     this.addPeopleContextMenuItem.Tag = searchResults;

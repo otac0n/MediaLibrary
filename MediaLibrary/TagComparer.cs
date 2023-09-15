@@ -11,6 +11,8 @@ namespace MediaLibrary
 
     public class TagComparer : IComparer<string>, IComparer<IList<string>>, IComparer<ISet<string>>
     {
+        public static readonly string FavoriteTag = "favorite";
+
         private readonly Dictionary<string, Color?> colorCache = new Dictionary<string, Color?>();
         private readonly StringComparer nameComparer;
         private readonly Dictionary<string, double> orderCache = new Dictionary<string, double>();
@@ -29,6 +31,15 @@ namespace MediaLibrary
                 return b == null ? 0 : -1;
             }
             else if (b == null)
+            {
+                return 1;
+            }
+
+            if (a == FavoriteTag)
+            {
+                return b == FavoriteTag ? 0 : -1;
+            }
+            else if (b == FavoriteTag)
             {
                 return 1;
             }

@@ -75,9 +75,9 @@ namespace MediaLibrary.Components
                 personCounts[person.PersonId] = personCounts.TryGetValue(person.PersonId, out var count) ? count + 1 : 1;
             }
 
-            if (tagCounts.ContainsKey("favorite"))
+            if (tagCounts.TryGetValue(TagComparer.FavoriteTag, out var favoriteCount))
             {
-                yield return ("favorite", tagCounts["favorite"] != searchResults.Count);
+                yield return (TagComparer.FavoriteTag, favoriteCount != searchResults.Count);
             }
 
             foreach (var person in personCounts)
@@ -85,7 +85,7 @@ namespace MediaLibrary.Components
                 yield return (people[person.Key], person.Value != this.searchResults.Count);
             }
 
-            foreach (var tag in tagCounts.Where(t => t.Key != "favorite").OrderBy(t => t.Key, tagComparer))
+            foreach (var tag in tagCounts.Where(t => t.Key != TagComparer.FavoriteTag).OrderBy(t => t.Key, tagComparer))
             {
                 yield return (tag.Key, tag.Value != searchResults.Count);
             }
@@ -116,12 +116,12 @@ namespace MediaLibrary.Components
             this.UpdateControlsCollection(
                 vectors,
                 vector => vector.key is string tag
-                    ? tag == "favorite"
+                    ? tag == TagComparer.FavoriteTag
                         ? (Control)ControlHelpers.Construct<PictureBox>(p => p.SizeMode = PictureBoxSizeMode.Zoom)
                         : (Control)ControlHelpers.Construct<TagControl>(t => t.AllowDelete = false)
                     : (Control)ControlHelpers.Construct<PersonControl>(t => t.AllowDelete = false),
                 (control, vector) => vector.key is string tag
-                    ? tag == "favorite"
+                    ? tag == TagComparer.FavoriteTag
                         ? control is PictureBox
                         : control is TagControl
                     : control is PersonControl,
@@ -129,7 +129,7 @@ namespace MediaLibrary.Components
                 {
                     if (vector.key is string tag)
                     {
-                        if (tag == "favorite")
+                        if (tag == TagComparer.FavoriteTag)
                         {
                             var pictureBox = (PictureBox)control;
                             var fontHeight = (int)Math.Round(this.Font.GetHeight()) + 3 * 2;
