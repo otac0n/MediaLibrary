@@ -11,6 +11,7 @@ namespace MediaLibrary.Components
     public partial class TagControl : UserControl
     {
         private bool indeterminate;
+        private bool negated;
         private Color? tagColor;
 
         public TagControl()
@@ -50,6 +51,36 @@ namespace MediaLibrary.Components
             }
         }
 
+        [DefaultValue(false)]
+        [SettingsBindable(true)]
+        [Browsable(true)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        public bool Negated
+        {
+            get => this.negated;
+
+            set
+            {
+                if (this.negated != value)
+                {
+                    this.negated = value;
+                    base.Font = UpdateFont(this.Font, value);
+                    this.RefreshColor();
+                }
+            }
+        }
+
+        public override Font Font
+        {
+            get => base.Font;
+
+            set
+            {
+                base.Font = UpdateFont(value, this.negated);
+            }
+        }
+
         public Color? TagColor
         {
             get => this.tagColor;
@@ -75,6 +106,11 @@ namespace MediaLibrary.Components
             get => this.tagName.Text;
             set => this.tagName.Text = base.Text = value;
         }
+
+        private static Font UpdateFont(Font value, bool negated) =>
+            value.Strikeout == negated
+                ? value
+                : new Font(value, negated ? value.Style | FontStyle.Strikeout : value.Style & ~FontStyle.Strikeout);
 
         /// <inheritdoc/>
         protected override void OnPaint(PaintEventArgs e)
@@ -129,8 +165,14 @@ namespace MediaLibrary.Components
                 }
                 else
                 {
-                    this.BackColor = SystemColors.Info;
-                    this.ForeColor = ColorService.ContrastColor(SystemColors.Info);
+                    var blended = SystemColors.Info;
+                    if (this.negated)
+                    {
+                        blended = ColorService.Blend(0.5, blended, SystemColors.ControlLightLight);
+                    }
+
+                    this.BackColor = blended;
+                    this.ForeColor = ColorService.ContrastColor(blended);
                 }
             }
         }
