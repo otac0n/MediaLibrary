@@ -23,6 +23,12 @@ namespace MediaLibrary.Storage.Search
                     case FieldTerm.EqualsOperator:
                         return x => x == 0;
 
+                    case FieldTerm.UnequalOperator:
+                        return x => x != 0;
+
+                    case FieldTerm.ComparableOperator:
+                        return x => true;
+
                     case FieldTerm.GreaterThanOperator:
                         return x => x > 0;
 

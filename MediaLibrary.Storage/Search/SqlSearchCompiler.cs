@@ -240,6 +240,7 @@ namespace MediaLibrary.Storage.Search
                     case FieldTerm.GreaterThanOrEqualOperator:
                     case FieldTerm.LessThanOperator:
                     case FieldTerm.LessThanOrEqualOperator:
+                    case FieldTerm.UnequalOperator:
                         return fieldOperator;
 
                     default:

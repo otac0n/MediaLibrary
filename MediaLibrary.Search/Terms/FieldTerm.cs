@@ -11,6 +11,8 @@ namespace MediaLibrary.Search.Terms
         public const string GreaterThanOrEqualOperator = ">=";
         public const string LessThanOperator = "<";
         public const string LessThanOrEqualOperator = "<=";
+        public const string ComparableOperator = ">=<";
+        public const string UnequalOperator = "<>";
         public static readonly int Precedence = 3;
 
         public FieldTerm(string field, string @operator, string value)
@@ -49,10 +51,10 @@ namespace MediaLibrary.Search.Terms
                     case "rejected" when this.Operator == GreaterThanOrEqualOperator:
                         return $"!{valueEscaped}";
 
-                    case "suggested" when this.Operator == LessThanOrEqualOperator:
+                    case "suggested" when this.Operator == ComparableOperator:
                         return $"?{valueEscaped}";
 
-                    case "missing" when this.Operator == LessThanOrEqualOperator:
+                    case "missing" when this.Operator == ComparableOperator:
                         return $"^{valueEscaped}";
 
                     case "add" when this.Operator == LessThanOrEqualOperator:

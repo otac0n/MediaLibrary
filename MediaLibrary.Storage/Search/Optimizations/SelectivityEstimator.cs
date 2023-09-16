@@ -59,9 +59,14 @@ namespace MediaLibrary.Storage.Search.Optimizations
         {
             const double HexSelectivity = 1 / 16.0;
 
-            if (expression.Operator == FieldTerm.EqualsOperator)
+            switch (expression.Operator)
             {
-                return Math.Pow(HexSelectivity, expression.Value.Length);
+                case FieldTerm.EqualsOperator:
+                    return Math.Pow(HexSelectivity, expression.Value.Length);
+                case FieldTerm.UnequalOperator:
+                    return 1 - Math.Pow(HexSelectivity, expression.Value.Length);
+                case FieldTerm.ComparableOperator:
+                    return 0;
             }
 
             int HexValue(char c)
@@ -160,9 +165,14 @@ namespace MediaLibrary.Storage.Search.Optimizations
 
         protected static double AccumulateContinuous(string fieldOperator, double value, double mean, double scale)
         {
-            if (fieldOperator == FieldTerm.EqualsOperator)
+            switch (fieldOperator)
             {
-                return 1 / scale;
+                case FieldTerm.EqualsOperator:
+                    return 1 / scale;
+                case FieldTerm.UnequalOperator:
+                    return 1 - 1 / scale;
+                case FieldTerm.ComparableOperator:
+                    return 0;
             }
 
             var sum = CumulativeLogistic(mean, scale, value);
@@ -193,6 +203,12 @@ namespace MediaLibrary.Storage.Search.Optimizations
             {
                 case FieldTerm.EqualsOperator:
                     return probability(value);
+
+                case FieldTerm.UnequalOperator:
+                    return 1 - probability(value);
+
+                case FieldTerm.ComparableOperator:
+                    return 0;
 
                 case FieldTerm.GreaterThanOperator:
                     upper = value;

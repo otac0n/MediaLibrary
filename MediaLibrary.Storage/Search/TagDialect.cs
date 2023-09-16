@@ -16,6 +16,8 @@ namespace MediaLibrary.Storage.Search
             [FieldTerm.GreaterThanOrEqualOperator] = HierarchyRelation.SelfOrAncestor,
             [FieldTerm.LessThanOperator] = HierarchyRelation.Descendant,
             [FieldTerm.LessThanOrEqualOperator] = HierarchyRelation.SelfOrDescendant,
+            [FieldTerm.UnequalOperator] = HierarchyRelation.Related,
+            [FieldTerm.ComparableOperator] = HierarchyRelation.SelfOrRelated,
         });
     }
 }
