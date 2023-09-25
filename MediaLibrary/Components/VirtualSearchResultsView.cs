@@ -124,8 +124,8 @@ namespace MediaLibrary.Components
                     Column.Rating,
                     HorizontalAlignment.Right,
                     r => r.Rating,
-                    value => value != null ? $"{Math.Round(value.Value)}{(value.Count < 15 ? "?" : string.Empty)}" : string.Empty,
-                    (a, b) => Rating.Compare(a.Rating, b.Rating)),
+                    value => value?.ToString() ?? string.Empty,
+                    Rating.Compare),
                 ColumnDefinition.Create(
                     Column.VisualHash,
                     HorizontalAlignment.Left,

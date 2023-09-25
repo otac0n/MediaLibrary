@@ -6,6 +6,7 @@ namespace MediaLibrary.Storage
     {
         public static readonly double DefaultRating = 1500;
         public static readonly double RatingScale = 400.0;
+        public static readonly long ProvisionalPeriod = 15;
 
         public Rating(string hash, string category, double value, long count)
         {
@@ -62,6 +63,12 @@ namespace MediaLibrary.Storage
                 right?.Value ?? Rating.DefaultRating);
 
         public int CompareTo(Rating other) => Rating.Compare(this, other);
+
+        public override string ToString()
+        {
+            var rounded = Math.Round(this.Value);
+            return this.Count < ProvisionalPeriod ? $"{rounded}?" : $"{rounded}";
+        }
 
         internal static class Queries
         {
