@@ -124,8 +124,30 @@ namespace MediaLibrary.Components
                     Column.Rating,
                     HorizontalAlignment.Right,
                     r => r.Rating,
-                    value => value?.ToString() ?? string.Empty,
-                    Rating.Compare),
+                    value => value == null ? string.Empty : "##### " + value,
+                    Rating.Compare,
+                    drawSubItem: (g, col, bounds, r) =>
+                    {
+                        var value = r?.Value ?? Rating.DefaultRating;
+
+                        var baseSize = g.MeasureString("#", this.Font) / 2;
+                        var padding = (int)Math.Floor((bounds.Height - baseSize.Height) / 2);
+                        var size = baseSize.Height;
+                        for (var i = 0; i < this.RatingStarRanges.Count; i++)
+                        {
+                            if (!(this.RatingStarRanges[i].min >= value))
+                            {
+                                g.DrawImage(Resources.rating_star, new RectangleF(bounds.Left, bounds.Top + padding, size, size));
+                            }
+
+                            bounds.X += (int)size;
+                        }
+
+                        if (r != null)
+                        {
+                            col.DrawText(g, bounds, r.ToString());
+                        }
+                    }),
                 ColumnDefinition.Create(
                     Column.VisualHash,
                     HorizontalAlignment.Left,
@@ -294,6 +316,8 @@ namespace MediaLibrary.Components
                 this.SetObjects(this.orderdResults);
             }
         }
+
+        public ImmutableList<(double? min, double? max)> RatingStarRanges { get; set; }
 
         public IList<SearchResult> SelectedResults =>
             this.SelectedObjects.Cast<SearchResult>().ToList();

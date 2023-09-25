@@ -501,6 +501,7 @@ namespace MediaLibrary.Views
                 data = Array.Empty<SearchResult>();
             }
 
+            this.listView.RatingStarRanges = await this.index.GetRatingStarRanges().ConfigureAwait(true);
             if (this.searchVersion == searchVersion)
             {
                 this.listView.SearchResults = data;
