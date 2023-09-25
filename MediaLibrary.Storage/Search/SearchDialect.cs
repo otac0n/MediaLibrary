@@ -18,9 +18,9 @@ namespace MediaLibrary.Storage.Search
 
         private static readonly Term ExcludeHiddenTerm = new NegationTerm(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, HiddenTag));
 
-        private ImmutableArray<(double? min, double? max)> starRanges;
+        private ImmutableList<(double? min, double? max)> starRanges;
 
-        public SearchDialect(TagRuleEngine tagEngine, ImmutableArray<(double? min, double? max)> starRanges, Func<string, Term> getSavedSearch)
+        public SearchDialect(TagRuleEngine tagEngine, ImmutableList<(double? min, double? max)> starRanges, Func<string, Term> getSavedSearch)
             : base(getSavedSearch)
         {
             this.TagEngine = tagEngine;
@@ -257,7 +257,7 @@ namespace MediaLibrary.Storage.Search
                                 return gte != null && lte != null ? this.CompileConjunction(gte, lte) : gte ?? lte;
 
                             case FieldTerm.LessThanOrEqualOperator:
-                                if (stars >= this.starRanges.Length)
+                                if (stars >= this.starRanges.Count)
                                 {
                                     return null;
                                 }
@@ -272,7 +272,7 @@ namespace MediaLibrary.Storage.Search
 
                             case FieldTerm.GreaterThanOrEqualOperator:
                                 stars -= 1;
-                                if (stars >= this.starRanges.Length)
+                                if (stars >= this.starRanges.Count)
                                 {
                                     return this.CompileDisjunction();
                                 }

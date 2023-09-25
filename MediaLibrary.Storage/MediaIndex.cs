@@ -45,6 +45,10 @@ namespace MediaLibrary.Storage
         private Task fileScanTask;
         private Task indexRescanTask;
 
+        private long starRangesCacheVersion;
+        private ImmutableList<(double? min, double? max)> starRangesCache;
+        private object starRangesSync = new object();
+
         public MediaIndex(string indexPath)
         {
             this.indexPath = indexPath;
@@ -314,9 +318,29 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<string>(Rating.Queries.GetRatingCategories).ConfigureAwait(false)).ToList());
 
-        public Task<ImmutableArray<(double?, double?)>> GetRatingStarRanges() =>
-            this.IndexReadAsync(async conn =>
-                (await conn.QueryAsync<(long stars, double? min, double? max)>(Rating.Queries.GetRatingStarRanges).ConfigureAwait(false)).Select(r => (r.min, r.max)).ToImmutableArray());
+        public async Task<ImmutableList<(double?, double?)>> GetRatingStarRanges()
+        {
+            var starRanges = this.starRangesCache;
+            if (starRanges != null)
+            {
+                return starRanges;
+            }
+
+            var currentVersion = this.starRangesCacheVersion;
+
+            starRanges = await this.IndexReadAsync(async conn =>
+                (await conn.QueryAsync<(long stars, double? min, double? max)>(Rating.Queries.GetRatingStarRanges).ConfigureAwait(false)).Select(r => (r.min, r.max)).ToImmutableList()).ConfigureAwait(false);
+
+            lock (this.starRangesSync)
+            {
+                if (currentVersion == this.starRangesCacheVersion)
+                {
+                    this.starRangesCache = starRanges;
+                }
+            }
+
+            return starRanges;
+        }
 
         public Task<List<RuleCategory>> GetAllRuleCategories() =>
             this.IndexReadAsync(async conn =>
@@ -691,6 +715,12 @@ namespace MediaLibrary.Storage
 
             if (string.IsNullOrEmpty(rating.Category))
             {
+                lock (this.starRangesSync)
+                {
+                    this.starRangesCache = null;
+                    this.starRangesCacheVersion++;
+                }
+
                 var hash = rating.Hash;
                 if (this.searchResultsCache.TryGetValue(hash, out var searchResult))
                 {
