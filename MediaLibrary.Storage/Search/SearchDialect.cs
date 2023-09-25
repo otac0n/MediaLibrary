@@ -18,10 +18,13 @@ namespace MediaLibrary.Storage.Search
 
         private static readonly Term ExcludeHiddenTerm = new NegationTerm(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, HiddenTag));
 
-        public SearchDialect(TagRuleEngine tagEngine, Func<string, Term> getSavedSearch)
+        private ImmutableArray<(double? min, double? max)> starRanges;
+
+        public SearchDialect(TagRuleEngine tagEngine, ImmutableArray<(double? min, double? max)> starRanges, Func<string, Term> getSavedSearch)
             : base(getSavedSearch)
         {
             this.TagEngine = tagEngine;
+            this.starRanges = starRanges;
         }
 
         private TagRuleEngine TagEngine { get; }
@@ -238,7 +241,56 @@ namespace MediaLibrary.Storage.Search
                         throw new NotSupportedException($"Field '{field.Field}' expects a value between 1 and 5.");
                     }
 
-                    return new StarsExpression(field.Operator, stars);
+                    Expression StarsExpr(string op, int stars)
+                    {
+                        switch (op)
+                        {
+                            case FieldTerm.LessThanOperator:
+                                return StarsExpr(FieldTerm.LessThanOrEqualOperator, stars - 1);
+
+                            case FieldTerm.GreaterThanOperator:
+                                return StarsExpr(FieldTerm.GreaterThanOrEqualOperator, stars + 1);
+
+                            case FieldTerm.EqualsOperator:
+                                var lte = StarsExpr(FieldTerm.LessThanOrEqualOperator, stars);
+                                var gte = StarsExpr(FieldTerm.GreaterThanOrEqualOperator, stars);
+                                return gte != null && lte != null ? this.CompileConjunction(gte, lte) : gte ?? lte;
+
+                            case FieldTerm.LessThanOrEqualOperator:
+                                if (stars >= this.starRanges.Length)
+                                {
+                                    return null;
+                                }
+                                else if (stars >= 0 && this.starRanges[stars].min is double min)
+                                {
+                                    return new RatingExpression(FieldTerm.LessThanOperator, min);
+                                }
+                                else
+                                {
+                                    return this.CompileDisjunction();
+                                }
+
+                            case FieldTerm.GreaterThanOrEqualOperator:
+                                stars -= 1;
+                                if (stars >= this.starRanges.Length)
+                                {
+                                    return this.CompileDisjunction();
+                                }
+                                else if (stars >= 0 && this.starRanges[stars].min is double min)
+                                {
+                                    return new RatingExpression(FieldTerm.GreaterThanOrEqualOperator, min);
+                                }
+                                else
+                                {
+                                    return null;
+                                }
+
+                            default:
+                                throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                        }
+                    }
+
+                    return StarsExpr(field.Operator, stars) ?? this.CompileConjunction();
 
                 case "size":
                     // TODO: Parse filesizes.
@@ -424,8 +476,6 @@ namespace MediaLibrary.Storage.Search
             public override bool Replace(RatingExpression expression) => false;
 
             public override bool Replace(RatingsCountExpression expression) => false;
-
-            public override bool Replace(StarsExpression expression) => false;
 
             public override bool Replace(TagExpression expression) => expression.Tags.Overlaps(this.hiddenTags);
 

@@ -135,13 +135,6 @@ namespace MediaLibrary.Storage.Search
             public override Predicate<SearchResult> Replace(TextExpression expression) => x => x.Paths.Any(p => p.IndexOf(expression.Value, StringComparison.CurrentCultureIgnoreCase) > 0);
 
             /// <inheritdoc/>
-            public override Predicate<SearchResult> Replace(StarsExpression expression)
-            {
-                var op = ConvertOperator(expression.Operator);
-                throw new NotImplementedException("Get stars statistics from the database and compare to the percentiles.");
-            }
-
-            /// <inheritdoc/>
             public override Predicate<SearchResult> Replace(TagExpression expression) => x => x.Tags.Overlaps(expression.Tags);
 
             /// <inheritdoc/>

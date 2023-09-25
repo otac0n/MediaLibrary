@@ -134,20 +134,6 @@ namespace MediaLibrary.Storage.Search.Optimizations
         public override double Replace(RatingsCountExpression expression) =>
             AccumulateDiscreet(expression.Operator, expression.RatingsCount, ExpectedRatingsCount);
 
-        public override double Replace(StarsExpression expression) =>
-            AccumulateDiscreet(expression.Operator, expression.Stars, i =>
-            {
-                switch (i)
-                {
-                    case 1: return 0.1;
-                    case 2: return 0.2;
-                    case 3: return 0.4;
-                    case 4: return 0.2;
-                    case 5: return 0.1;
-                    default: return 0;
-                }
-            });
-
         public override double Replace(TagExpression expression) =>
             1 - Math.Pow(1 - PerTagSelectivity, expression.Tags.Count);
 

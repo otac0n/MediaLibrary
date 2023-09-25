@@ -92,6 +92,22 @@ namespace MediaLibrary.Storage
             public static readonly string UpdateRating = @"
                 INSERT OR REPLACE INTO Rating (Hash, Category, Value, Count) VALUES (@Hash, @Category, @Value, @Count)
             ";
+
+            public static readonly string GetRatingStarRanges = @"
+                SELECT
+                    Stars,
+                    CASE WHEN Stars <= 1 THEN NULL ELSE MIN(Value) END Min,
+                    CASE WHEN Stars >= 5 THEN NULL ELSE MAX(Value) END Max
+                    FROM (
+                        SELECT Value, CASE WHEN NTile < 2 THEN 1 WHEN NTile < 4 THEN 2 WHEN NTile < 8 THEN 3 WHEN NTile < 10 THEN 4 ELSE 5 END AS Stars FROM (
+                            SELECT Hash, Value, Count, NTILE(10) OVER (PARTITION BY Category ORDER BY Value) NTile
+                            FROM Rating
+                            WHERE Category = ''
+                        ) r
+                ) s
+                GROUP BY Stars
+                ORDER BY Stars
+            ";
         }
     }
 }

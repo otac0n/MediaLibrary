@@ -35,8 +35,6 @@ namespace MediaLibrary.Storage.Search.Expressions
 
         public abstract TResult Replace(RatingsCountExpression expression);
 
-        public abstract TResult Replace(StarsExpression expression);
-
         public abstract TResult Replace(TagExpression expression);
 
         public abstract TResult Replace(RejectedTagExpression expression);
@@ -67,7 +65,6 @@ namespace MediaLibrary.Storage.Search.Expressions
                 case PersonNameExpression personNameExpression: return this.Replace(personNameExpression);
                 case RatingExpression ratingExpression: return this.Replace(ratingExpression);
                 case RatingsCountExpression ratingsCountExpression: return this.Replace(ratingsCountExpression);
-                case StarsExpression starsExpression: return this.Replace(starsExpression);
                 case TagExpression tagExpression: return this.Replace(tagExpression);
                 case RejectedTagExpression rejectedTagExpression: return this.Replace(rejectedTagExpression);
                 case TagCountExpression tagCountExpression: return this.Replace(tagCountExpression);

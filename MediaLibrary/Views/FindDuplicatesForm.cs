@@ -22,11 +22,10 @@ namespace MediaLibrary.Views
         private readonly MediaIndex index;
         private readonly Dictionary<string, PathModel> pathModels = new Dictionary<string, PathModel>();
         private readonly Dictionary<string, ResultModel> resultModels = new Dictionary<string, ResultModel>();
-        private readonly Func<string, Predicate<SearchResult>> searchCompiler;
+        private Func<string, Predicate<SearchResult>> searchCompiler;
         private CancellationTokenSource cancel = new CancellationTokenSource();
         private bool initialized;
         private bool running;
-        private Dictionary<string, SavedSearch> savedSearches;
         private int searchVersion;
         private bool synchronizeTreeView;
         private Predicate<SearchResult> visiblePredicate;
@@ -37,15 +36,6 @@ namespace MediaLibrary.Views
             this.visiblePredicate = x => true;
             this.InitializeComponent();
             this.searchBox.Enabled = false;
-            var grammar = new SearchGrammar();
-            var dialect = new SearchDialect(index.TagEngine, name => this.savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
-            var compiler = new PredicateSearchCompiler();
-            this.searchCompiler = query =>
-            {
-                var term = grammar.Parse(query ?? string.Empty);
-                var expression = dialect.CompileQuery(term, excludeHidden: false);
-                return compiler.CompileQuery(expression);
-            };
         }
 
         private static string FindBestPath(IEnumerable<string> paths)
@@ -216,7 +206,19 @@ namespace MediaLibrary.Views
 
         private async void FindDuplicatesForm_Load(object sender, System.EventArgs e)
         {
-            this.savedSearches = (await this.index.GetAllSavedSearches().ConfigureAwait(true)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase);
+            var savedSearches = (await this.index.GetAllSavedSearches().ConfigureAwait(true)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase);
+            var starRanges = await this.index.GetRatingStarRanges().ConfigureAwait(true);
+
+            var grammar = new SearchGrammar();
+            var dialect = new SearchDialect(this.index.TagEngine, starRanges, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
+            var compiler = new PredicateSearchCompiler();
+            this.searchCompiler = query =>
+            {
+                var term = grammar.Parse(query ?? string.Empty);
+                var expression = dialect.CompileQuery(term, excludeHidden: false);
+                return compiler.CompileQuery(expression);
+            };
+
             this.searchBox.Enabled = true;
             var results = await this.index.SearchIndex("copies>1", excludeHidden: false).ConfigureAwait(true);
             if (!this.IsDisposed)

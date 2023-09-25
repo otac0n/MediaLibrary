@@ -112,11 +112,9 @@ namespace MediaLibrary.Storage.Search
             {
                 sb
                     .AppendLine("LEFT JOIN (")
-                    .AppendLine("    SELECT Hash, Value, Count, CASE WHEN NTile < 2 THEN 1 WHEN NTile < 4 THEN 2 WHEN NTile < 8 THEN 3 WHEN NTile < 10 THEN 4 ELSE 5 END AS Stars FROM (")
-                    .AppendLine("        SELECT Hash, Value, Count, NTILE(10) OVER (PARTITION BY Category ORDER BY Value) NTile")
-                    .AppendLine("        FROM Rating")
-                    .AppendLine("        WHERE Category = ''")
-                    .AppendLine("    ) z")
+                    .AppendLine("    SELECT Hash, Value, Count")
+                    .AppendLine("    FROM Rating")
+                    .AppendLine("    WHERE Category = ''")
                     .AppendLine(") s ON h.Hash = s.Hash");
             }
 
@@ -461,13 +459,6 @@ namespace MediaLibrary.Storage.Search
                 {
                     return $"{this.indent}EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
                 }
-            }
-
-            /// <inheritdoc/>
-            public override string Replace(StarsExpression expression)
-            {
-                this.JoinRatings = true;
-                return $"{this.indent}COALESCE(s.Stars, 3) {ConvertOperator(expression.Operator)} {expression.Stars}{Environment.NewLine}";
             }
 
             /// <inheritdoc/>

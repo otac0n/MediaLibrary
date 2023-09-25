@@ -314,6 +314,10 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<string>(Rating.Queries.GetRatingCategories).ConfigureAwait(false)).ToList());
 
+        public Task<ImmutableArray<(double?, double?)>> GetRatingStarRanges() =>
+            this.IndexReadAsync(async conn =>
+                (await conn.QueryAsync<(long stars, double? min, double? max)>(Rating.Queries.GetRatingStarRanges).ConfigureAwait(false)).Select(r => (r.min, r.max)).ToImmutableArray());
+
         public Task<List<RuleCategory>> GetAllRuleCategories() =>
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<RuleCategory>(RuleCategory.Queries.GetAllRuleCategories).ConfigureAwait(false)).ToList());
@@ -560,7 +564,8 @@ namespace MediaLibrary.Storage
             var savedSearches = containsSavedSearches
                 ? (await this.GetAllSavedSearches().ConfigureAwait(false)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
                 : null;
-            var dialect = new SearchDialect(this.TagEngine, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
+            var starRanges = await this.GetRatingStarRanges().ConfigureAwait(false);
+            var dialect = new SearchDialect(this.TagEngine, starRanges, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
             return dialect.CompileQuery(term, excludeHidden);
         }
 
