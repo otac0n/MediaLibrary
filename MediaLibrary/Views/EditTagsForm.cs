@@ -79,7 +79,7 @@ namespace MediaLibrary.Views
             {
                 this.RefreshTags();
 
-                this.tagLayoutPanel.ScrollControlIntoView(this.existingTags.Controls.OfType<TagControl>().Where(c => c.Text == tag).Single());
+                this.tagLayoutPanel.ScrollControlIntoView(this.existingTags.Controls.OfType<TagControl>().Where(c => c.Text == tag && !c.Negated).Single());
             }
         }
 
