@@ -77,7 +77,7 @@ namespace MediaLibrary.Components
                     r => r.Tags,
                     value => string.Join("; ", value),
                     (ISet<string> a, ISet<string> b) => this.TagComparer.Compare(a, b),
-                    drawSubItem: (g, bounds, tags) =>
+                    drawSubItem: (g, col, bounds, tags) =>
                     {
                         var tagComparer = this.TagComparer;
                         var baseSize = g.MeasureString("#", this.Font);
@@ -133,7 +133,7 @@ namespace MediaLibrary.Components
                     value => value != null ? $"0x{value:X16}" : string.Empty,
                     Nullable.Compare,
                     true,
-                    drawSubItem: (g, bounds, r) =>
+                    drawSubItem: (g, col, bounds, r) =>
                     {
                         if (r == null)
                         {
@@ -145,7 +145,7 @@ namespace MediaLibrary.Components
                         const int Margin = 2; // Margin of 1px, plus an additional 1px beyond the left beyond to compensate for the system carat. This could have trouble if the selection rectangle is too fat (wider than 1px), but we assume a 1px border for now.
                         const int HashEdgeSize = 8;
 
-                        var left = Margin;
+                        bounds.X += Margin;
                         using (var bmp = new Bitmap(HashEdgeSize, HashEdgeSize))
                         {
                             var bmpData = bmp.LockBits(new Rectangle(0, 0, HashEdgeSize, HashEdgeSize), ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
@@ -160,14 +160,14 @@ namespace MediaLibrary.Components
 
                             bmp.UnlockBits(bmpData);
 
-                            g.DrawImageUnscaled(bmp, bounds.X + left, bounds.Top + (bounds.Height - HashEdgeSize) / 2);
-                            left += HashEdgeSize + Margin;
+                            g.DrawImageUnscaled(bmp, bounds.X, bounds.Top + (bounds.Height - HashEdgeSize) / 2);
+                            bounds.X += HashEdgeSize + Margin;
                         }
 
-                        using (var textBrush = new SolidBrush(this.ForeColor))
+                        using (var textBrush = new SolidBrush(col.GetForegroundColor()))
                         using (var monspaced = new Font(FontFamily.GenericMonospace, this.Font.Size))
                         {
-                            g.DrawString($"{value:x16}", monspaced, textBrush, bounds.X + left, bounds.Top + Margin);
+                            g.DrawString($"{value:x16}", monspaced, textBrush, bounds.X, bounds.Top + Margin);
                         }
                     }),
                 ColumnDefinition.Create(
@@ -507,7 +507,7 @@ namespace MediaLibrary.Components
                 Comparison<SearchResult> comparison,
                 bool groupable,
                 Func<SearchResult, object> getImage,
-                Action<Graphics, Rectangle, SearchResult> drawSubItem)
+                Action<Graphics, ColumnRenderer, Rectangle, SearchResult> drawSubItem)
                 : base(
                     column,
                     horizontalAlignment,
@@ -537,7 +537,7 @@ namespace MediaLibrary.Components
                 Comparison<SearchResult> comparison,
                 bool groupable,
                 Func<SearchResult, object> getImage,
-                Action<Graphics, Rectangle, SearchResult> drawSubItem)
+                Action<Graphics, ColumnRenderer, Rectangle, SearchResult> drawSubItem)
             {
                 this.Column = column;
                 this.HorizontalAlignment = horizontalAlignment;
@@ -555,7 +555,7 @@ namespace MediaLibrary.Components
 
             public Comparison<SearchResult> Comparison { get; }
 
-            public Action<Graphics, Rectangle, SearchResult> DrawSubItem { get; }
+            public Action<Graphics, ColumnRenderer, Rectangle, SearchResult> DrawSubItem { get; }
 
             public Func<object, string> FormatValue { get; }
 
@@ -579,7 +579,7 @@ namespace MediaLibrary.Components
                 Comparison<T> comparison = null,
                 bool groupable = false,
                 Func<SearchResult, object> getImage = null,
-                Action<Graphics, Rectangle, T> drawSubItem = null) =>
+                Action<Graphics, ColumnRenderer, Rectangle, T> drawSubItem = null) =>
                 Create(
                     column,
                     horizontalAlignment,
@@ -592,7 +592,7 @@ namespace MediaLibrary.Components
                     getImage,
                     drawSubItem == null
                         ? default
-                        : (g, r, t) => drawSubItem(g, r, getValue(t)));
+                        : (g, c, r, t) => drawSubItem(g, c, r, getValue(t)));
 
             public static ColumnDefinition<T> Create<T>(
                 Column column,
@@ -602,7 +602,7 @@ namespace MediaLibrary.Components
                 Comparison<SearchResult> comparison = null,
                 bool groupable = false,
                 Func<SearchResult, object> getImage = null,
-                Action<Graphics, Rectangle, SearchResult> drawSubItem = null) =>
+                Action<Graphics, ColumnRenderer, Rectangle, SearchResult> drawSubItem = null) =>
                 new ColumnDefinition<T>(
                     column,
                     horizontalAlignment,
@@ -616,9 +616,9 @@ namespace MediaLibrary.Components
 
         private class ColumnRenderer : BaseRenderer
         {
-            private Action<Graphics, Rectangle, SearchResult> drawSubItem;
+            private Action<Graphics, ColumnRenderer, Rectangle, SearchResult> drawSubItem;
 
-            public ColumnRenderer(Action<Graphics, Rectangle, SearchResult> drawSubItem)
+            public ColumnRenderer(Action<Graphics, ColumnRenderer, Rectangle, SearchResult> drawSubItem)
             {
                 this.drawSubItem = drawSubItem;
             }
@@ -627,7 +627,7 @@ namespace MediaLibrary.Components
             {
                 this.DrawBackground(g, r);
                 var searchResult = this.RowObject as SearchResult;
-                this.drawSubItem(g, r, searchResult);
+                this.drawSubItem(g, this, r, searchResult);
             }
         }
 
