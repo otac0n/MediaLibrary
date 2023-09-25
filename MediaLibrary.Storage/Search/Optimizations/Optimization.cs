@@ -52,6 +52,8 @@ namespace MediaLibrary.Storage.Search.Optimizations
 
         public override Expression Replace(HashExpression expression) => expression;
 
+        public override Expression Replace(SampleExpression expression) => expression;
+
         public override Expression Replace(NoPeopleExpression expression) => expression;
 
         public override Expression Replace(PeopleCountExpression expression) => expression;

@@ -21,6 +21,8 @@ namespace MediaLibrary.Storage.Search.Expressions
 
         public abstract TResult Replace(HashExpression expression);
 
+        public abstract TResult Replace(SampleExpression expression);
+
         public virtual TResult Replace(NoPeopleExpression expression) => this.Replace(new PeopleCountExpression(FieldTerm.EqualsOperator, 0));
 
         public abstract TResult Replace(PeopleCountExpression expression);
@@ -58,6 +60,7 @@ namespace MediaLibrary.Storage.Search.Expressions
                 case DetailsExpression detailsExpression: return this.Replace(detailsExpression);
                 case FileSizeExpression fileSizeExpression: return this.Replace(fileSizeExpression);
                 case HashExpression hashExpression: return this.Replace(hashExpression);
+                case SampleExpression sampleExpression: return this.Replace(sampleExpression);
                 case NoPeopleExpression noPeopleExpression: return this.Replace(noPeopleExpression);
                 case PeopleCountExpression peopleCountExpression: return this.Replace(peopleCountExpression);
                 case PersonIdExpression personIdExpression: return this.Replace(personIdExpression);

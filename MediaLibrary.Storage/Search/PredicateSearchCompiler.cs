@@ -76,6 +76,9 @@ namespace MediaLibrary.Storage.Search
                 return x => op(StringComparer.InvariantCultureIgnoreCase.Compare(x.Hash, expression.Value));
             }
 
+            public override Predicate<SearchResult> Replace(SampleExpression expression) =>
+                x => Random.Shared.NextDouble() < expression.Portion;
+
             /// <inheritdoc/>
             public override Predicate<SearchResult> Replace(PeopleCountExpression expression)
             {

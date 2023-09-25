@@ -393,6 +393,15 @@ namespace MediaLibrary.Storage.Search
             public override string Replace(HashExpression expression) => $"{this.indent}h.Hash {ConvertOperator(expression.Operator)} {Literal(expression.Value)}{Environment.NewLine}";
 
             /// <inheritdoc/>
+            public override string Replace(SampleExpression expression)
+            {
+                double Lerp(double x) =>
+                    x * (long.MaxValue - (double)long.MinValue) + long.MinValue;
+
+                return $"{this.indent}RANDOM() < {Literal(Lerp(expression.Portion))}{Environment.NewLine}";
+            }
+
+            /// <inheritdoc/>
             public override string Replace(PeopleCountExpression expression)
             {
                 this.JoinPersonCount = true;

@@ -111,6 +111,9 @@ namespace MediaLibrary.Storage.Search.Optimizations
             }
         }
 
+        public override double Replace(SampleExpression expression) =>
+            Math.Clamp(expression.Portion, 0, 1);
+
         public override double Replace(PeopleCountExpression expression) =>
             AccumulateDiscreet(expression.Operator, expression.PeopleCount, ExpectedPeopleCount);
 

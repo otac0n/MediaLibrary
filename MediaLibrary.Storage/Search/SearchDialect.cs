@@ -295,6 +295,14 @@ namespace MediaLibrary.Storage.Search
                         return new HashExpression(field.Operator, value);
                     }
 
+                case "percent":
+                    if (!double.TryParse(field.Value, out var percent))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return new SampleExpression(Math.Clamp(percent / 100.0, 0, 1));
+
                 default:
                     throw new NotSupportedException();
             }
@@ -402,6 +410,8 @@ namespace MediaLibrary.Storage.Search
             public override bool Replace(FileSizeExpression expression) => false;
 
             public override bool Replace(HashExpression expression) => false;
+
+            public override bool Replace(SampleExpression expression) => false;
 
             public override bool Replace(NoPeopleExpression expression) => false;
 
