@@ -1,8 +1,15 @@
-.heart {
+:host {
     width: 1.5em;
-    height: 1.1em;
-    display: inline-block;
+    height: 1.5em;
+    display: inline-flex;
     vertical-align: middle;
+    align-items: center;
+}
+
+.heart {
+    width: 100%;
+    height: 1.1em;
+    display: flex;
     cursor: pointer;
 
     svg {
