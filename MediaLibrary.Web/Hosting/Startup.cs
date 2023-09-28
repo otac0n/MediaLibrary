@@ -8,6 +8,7 @@ namespace MediaLibrary.Web.Hosting
     using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
     using MediaLibrary.Storage;
+    using Microsoft.AspNetCore.Authentication.Negotiate;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,12 @@ namespace MediaLibrary.Web.Hosting
                     services.AddControllers();
                     services
                         .AddSingleton(index)
+                        .AddAuthentication(NegotiateDefaults.AuthenticationScheme)
+                        .AddAuthorization(options =>
+                        {
+                            options.FallbackPolicy = options.DefaultPolicy;
+                        })
+                        .AddNegotiate()
                         .AddResponseCompression();
                 })
                 .ConfigureKestrel(serverOptions =>
@@ -35,6 +42,8 @@ namespace MediaLibrary.Web.Hosting
                 .Configure(app =>
                 {
                     app
+                        .UseAuthentication()
+                        .UseAuthorization()
                         .UseResponseCompression()
                         .UseRouting()
                         .UseEndpoints(endpoints =>
