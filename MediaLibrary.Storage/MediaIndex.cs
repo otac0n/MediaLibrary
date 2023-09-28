@@ -318,7 +318,7 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<string>(Rating.Queries.GetRatingCategories).ConfigureAwait(false)).ToList());
 
-        public async Task<ImmutableList<(double?, double?)>> GetRatingStarRanges()
+        public async Task<ImmutableList<(double? min, double? max)>> GetRatingStarRanges()
         {
             var starRanges = this.starRangesCache;
             if (starRanges != null)

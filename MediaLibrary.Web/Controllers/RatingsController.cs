@@ -4,6 +4,7 @@ namespace MediaLibrary.Web.Controllers
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
+    using System.Linq;
     using System.Threading.Tasks;
     using MediaLibrary.Storage;
     using Microsoft.AspNetCore.Mvc;
@@ -38,6 +39,10 @@ namespace MediaLibrary.Web.Controllers
         [Route("files/{id}")]
         [HttpGet]
         public Task<Rating> GetDefault(string id) => this.Get(id, null);
+
+        [Route("stars")]
+        [HttpGet]
+        public async Task<IEnumerable<double?[]>> GetRatingStarRanges() => (await this.index.GetRatingStarRanges().ConfigureAwait(true)).Select(r => new[] { r.min, r.max });
 
         [Route("categories/{category}/rate")]
         [HttpPost]
