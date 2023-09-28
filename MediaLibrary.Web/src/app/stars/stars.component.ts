@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 
+import { Rating } from '../../schema';
 import { RatingsService, StarRange } from '../ratings.service';
 
 @Component({
@@ -9,7 +10,7 @@ import { RatingsService, StarRange } from '../ratings.service';
 })
 export class StarsComponent {
     @Input()
-    public rating: number;
+    public rating: Rating;
 
     @Input()
     public starRanges: StarRange[];

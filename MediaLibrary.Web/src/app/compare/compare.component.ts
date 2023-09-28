@@ -63,8 +63,8 @@ export class CompareComponent implements OnChanges {
         const rightIx = this.randomIndex(leftIx);
         const leftResult = this.searchResults[leftIx];
         const rightResult = this.searchResults[rightIx];
-        const leftRating = await this.ratingsService.get(leftResult.hash, this.category) || { hash: leftResult.hash, category: this.category, value: RatingsService.DefaultRating, count: 0 };
-        const rightRating = await this.ratingsService.get(rightResult.hash, this.category) || { hash: rightResult.hash, category: this.category, value: RatingsService.DefaultRating, count: 0 };
+        const leftRating = await this.getRating(leftResult);
+        const rightRating = await this.getRating(rightResult);
         this.leftItem = { index: leftIx, rating: leftRating };
         this.rightItem = { index: rightIx, rating: rightRating };
         this.score = this.ratingsService.getExpectedScore(leftRating.value, rightRating.value);
@@ -74,6 +74,24 @@ export class CompareComponent implements OnChanges {
         this.leftItem = null;
         this.rightItem = null;
         this.score = 0.5;
+    }
+
+    private async getRating(result: SearchResult): Promise<Rating> {
+        var rating: Rating;
+
+        if (!this.category) {
+            rating = result.rating;
+        }
+
+        if (!rating) {
+            rating = await this.ratingsService.get(result.hash, this.category) || { hash: result.hash, category: this.category, value: RatingsService.DefaultRating, count: 0 };
+
+            if (!this.category) {
+                result.rating = rating;
+            }
+        }
+
+        return rating;
     }
 
     private randomIndex(avoid?: number): number {

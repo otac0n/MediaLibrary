@@ -60,7 +60,7 @@ namespace MediaLibrary.Web.Controllers
 
         [Route("rate")]
         [HttpPost]
-        public Task RateDefault([FromBody] RateRequest rateRequest) => this.Rate(null, rateRequest);
+        public Task<Rating[]> RateDefault([FromBody] RateRequest rateRequest) => this.Rate(null, rateRequest);
 
         public class RateRequest
         {
