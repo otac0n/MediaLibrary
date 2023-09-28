@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { filter } from 'rxjs/operators';
 
 import { SavedSearch, SearchResult } from '../schema';
-import { RatingsService } from './ratings.service';
+import { RatingsService, StarRange } from './ratings.service';
 import { SavedSearchService } from './saved-search.service';
 import { SearchService } from './search.service';
 import { TaggingService } from './tagging.service';
@@ -22,6 +22,7 @@ export class AppComponent implements OnInit {
     public selectedHashes: { [hash: string]: boolean } = {};
     public resultsPage: SearchResult[] = [];
     public compareResults: SearchResult[];
+    public starRanges: StarRange[];
 
     private searchVersion = 0;
 
@@ -67,6 +68,9 @@ export class AppComponent implements OnInit {
                 this.resultsPage = results;
                 this.selectedHashes = newSelected;
             });
+        this.ratingsService.getRatingStarRanges().then(starRanges => {
+            this.starRanges = starRanges;
+        });
     }
 
     public select(result: SearchResult) {

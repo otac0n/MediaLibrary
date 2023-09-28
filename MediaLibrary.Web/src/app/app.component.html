@@ -35,6 +35,7 @@
       {{result.paths[0] | fileName}}
       <br />
       <app-heart [favorite]="result.tags.indexOf('favorite') > -1" (favorited)="favorite(result)" (unfavorited)="unfavorite(result)"></app-heart>
+      <app-stars [rating]="result.rating?.value" [starRanges]="starRanges"></app-stars>
       <app-person-list [people]="result.people"></app-person-list>
       <app-tag-list [tags]="result.tags" [excludeFavorite]="true"></app-tag-list>
     </div>

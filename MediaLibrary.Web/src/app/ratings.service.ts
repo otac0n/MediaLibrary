@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 
 import { Rating } from '../schema';
 
+export type StarRange = [number | null, number | null];
+
 function isRating(value: number | Rating): value is Rating {
     return typeof value === 'object';
 }
@@ -18,6 +20,10 @@ export class RatingsService {
 
     public getAllRatingCategories(): Promise<string[]> {
         return this.http.get<string[]>('ratings/categories').toPromise();
+    }
+
+    public getRatingStarRanges(): Promise<StarRange[]> {
+        return this.http.get<StarRange[]>('ratings/stars').toPromise();
     }
 
     public get(id: string, category: string): Promise<Rating> {
