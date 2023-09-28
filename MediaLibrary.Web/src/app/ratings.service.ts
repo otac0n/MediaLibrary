@@ -3,6 +3,10 @@ import { Injectable } from '@angular/core';
 
 import { Rating } from '../schema';
 
+function isRating(value: number | Rating): value is Rating {
+    return typeof value === 'object';
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -24,11 +28,11 @@ export class RatingsService {
     }
 
     public getExpectedScore(left: number | Rating, right: number | Rating) {
-        if (typeof left === 'object') {
+        if (isRating(left)) {
             left = left.value;
         }
 
-        if (typeof right === 'object') {
+        if (isRating(right)) {
             right = right.value;
         }
 
