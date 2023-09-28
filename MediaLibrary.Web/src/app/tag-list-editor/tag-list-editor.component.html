@@ -1,6 +1,6 @@
 <div class="tag-list">
   <ng-container *ngFor="let tag of searchResult?.tags">
-    <app-tag *ngIf="!excludeFavorite || tag != 'favorite'" [tag]="tag" [allowDelete]="true" (edit)="editTag(tag)" (remove)="removeTag(tag)" (reject)="rejectTag(tag)"></app-tag>
+    <app-tag *ngIf="!excludeFavorite || tag !== 'favorite'" [tag]="tag" [allowDelete]="true" (edit)="editTag(tag)" (remove)="removeTag(tag)" (reject)="rejectTag(tag)"></app-tag>
   </ng-container>
   <input #tagInput (keydown)="keydown($event)" (keypress)="keypress($event)" (click)="click($event)" [(ngModel)]="inputValue" autocapitalization="off" autocorrect="off" autocomplete="off" />
 </div>

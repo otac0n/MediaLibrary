@@ -27,7 +27,7 @@
   </div>
 </div>
 <div id="results">
-  <div *ngFor="let result of resultsPage" [ngClass]="{ 'result': true, 'selected': result == selectedItem }" (click)="select(result)">
+  <div *ngFor="let result of resultsPage" [ngClass]="{ 'result': true, 'selected': result === selectedItem }" (click)="select(result)">
     <div>
       <input type="checkbox" [checked]="selectedHashes[result.hash]" (change)="toggleCheck($event, result)" (click)="stopClick($event)" />
     </div>
