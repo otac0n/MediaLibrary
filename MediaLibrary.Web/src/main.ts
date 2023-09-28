@@ -5,7 +5,7 @@ import { AppModule } from './app/app.module';
 
 enableProdMode();
 
-// tslint:disable:no-console
+/* eslint-disable no-console */
 platformBrowserDynamic().bootstrapModule(AppModule)
     .catch(err => console.error(err));
-// tslint:enable
+/* eslint-enable */

@@ -21,7 +21,7 @@
     <AngularBuildTask AngularCommand="$(AngularCommand)" />
   </Target>
   <Target Name="IncludeDistributables" DependsOnTargets="AngularBuild" AfterTargets="BeforeBuild">
-    <Exec Command="$(AngularCommand) lint" IgnoreExitCode="true" />
+    <Exec Command="$(AngularCommand) lint --format visualstudio" IgnoreExitCode="true" />
     <ItemGroup>
       <AngularDistributable Include="obj\dist\**\*.*" />
     </ItemGroup>
