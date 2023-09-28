@@ -601,6 +601,8 @@ namespace MediaLibrary.Views
                 }
             }
 
+            Array.Resize(ref items, i);
+
             this.duplicatesList.Groups.AddRange(added.Values.ToArray());
             this.duplicatesList.Items.AddRange(items);
             this.duplicatesList.EndUpdate();
