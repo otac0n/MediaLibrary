@@ -13,12 +13,12 @@ export class RatingsService {
         private http: HttpClient) { }
 
     public getAllRatingCategories(): Promise<string[]> {
-        return this.http.get<string[]>('ratings').toPromise();
+        return this.http.get<string[]>('ratings/categories').toPromise();
     }
 
     public get(id: string, category: string): Promise<Rating> {
         const uri = category
-            ? `ratings/${encodeURIComponent(category)}/files/${encodeURIComponent(id)}`
+            ? `ratings/categories/${encodeURIComponent(category)}/files/${encodeURIComponent(id)}`
             : `ratings/files/${encodeURIComponent(id)}`;
         return this.http.get<Rating>(uri).toPromise();
     }
@@ -43,7 +43,7 @@ export class RatingsService {
         }
 
         const uri = leftCategory
-            ? `ratings/${encodeURIComponent(left.category)}/rate`
+            ? `ratings/categories/${encodeURIComponent(left.category)}/rate`
             : `ratings/rate`;
         return this.http.post<void>(uri, { score, leftHash: left.hash, rightHash: right.hash }).toPromise();
     }

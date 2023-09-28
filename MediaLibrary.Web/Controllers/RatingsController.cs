@@ -19,14 +19,14 @@ namespace MediaLibrary.Web.Controllers
             this.index = index;
         }
 
-        [Route("")]
+        [Route("categories")]
         [HttpGet]
         public Task<List<string>> Get()
         {
             return this.index.GetAllRatingCategories();
         }
 
-        [Route("{category}/files/{id}")]
+        [Route("categories/{category}/files/{id}")]
         [HttpGet]
         public Task<Rating> Get(string id, string category)
         {
@@ -39,7 +39,7 @@ namespace MediaLibrary.Web.Controllers
         [HttpGet]
         public Task<Rating> GetDefault(string id) => this.Get(id, null);
 
-        [Route("{category}/rate")]
+        [Route("categories/{category}/rate")]
         [HttpPost]
         public async Task Rate(string category, [FromBody] RateRequest rateRequest)
         {
