@@ -49,6 +49,9 @@ export class RatingsService {
         const uri = leftCategory
             ? `ratings/categories/${encodeURIComponent(left.category)}/rate`
             : `ratings/rate`;
-        return this.http.post<void>(uri, { score, leftHash: left.hash, rightHash: right.hash }).toPromise();
+        return this.http.post<Rating[]>(uri, { score, leftHash: left.hash, rightHash: right.hash }).toPromise().then(updates => {
+            Object.assign(left, updates[0]);
+            Object.assign(right, updates[1]);
+        });
     }
 }

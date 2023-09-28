@@ -46,7 +46,7 @@ namespace MediaLibrary.Web.Controllers
 
         [Route("categories/{category}/rate")]
         [HttpPost]
-        public async Task Rate(string category, [FromBody] RateRequest rateRequest)
+        public async Task<Rating[]> Rate(string category, [FromBody] RateRequest rateRequest)
         {
             ControllerUtilities.FixSlashes(ref category);
 
@@ -55,6 +55,7 @@ namespace MediaLibrary.Web.Controllers
             Rating.ApplyScore(rateRequest.Score, ref leftRating, ref rightRating);
             await this.index.UpdateRating(leftRating).ConfigureAwait(true);
             await this.index.UpdateRating(rightRating).ConfigureAwait(true);
+            return new[] { leftRating, rightRating };
         }
 
         [Route("rate")]
