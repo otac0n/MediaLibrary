@@ -345,7 +345,7 @@ namespace MediaLibrary.Views
             });
         }
 
-        private async void ListView_DoubleClick(object sender, MouseEventArgs e)
+        private void ListView_DoubleClick(object sender, MouseEventArgs e)
         {
             if (this.listView.HitTest(e.X, e.Y).Item != null)
             {
@@ -437,7 +437,10 @@ namespace MediaLibrary.Views
         {
             foreach (var path in this.GetSelectedPaths())
             {
-                Process.Start(path);
+                Process.Start(new ProcessStartInfo(path)
+                {
+                    UseShellExecute = true,
+                });
             }
         }
 
