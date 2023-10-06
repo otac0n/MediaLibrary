@@ -12,6 +12,7 @@ export interface SearchResult {
     paths: string[];
     people: Person[];
     rejectedPeople: Person[];
+    rating: Rating;
 }
 
 export interface Person {

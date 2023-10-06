@@ -2,61 +2,94 @@
 
 namespace MediaLibrary.Web.Hosting
 {
-    using System.Net.Http.Formatting;
-    using System.Text;
-    using System.Web.Http;
+    using System;
+    using System.Linq;
+    using System.Net;
+    using System.Security.Cryptography;
+    using System.Security.Cryptography.X509Certificates;
     using MediaLibrary.Storage;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
-    using Newtonsoft.Json.Serialization;
-    using Owin;
-    using SqueezeMe;
-    using Unity;
-    using Unity.AspNet.WebApi;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.Extensions.DependencyInjection;
 
-    public class Startup
+    public static class Startup
     {
-        private MediaIndex index;
-
-        public Startup(MediaIndex index)
+        public static void Build(IWebHostBuilder builder, string baseUri, MediaIndex index)
         {
-            this.index = index;
+            builder.UseUrls(baseUri);
+            builder
+                .ConfigureServices(services =>
+                {
+                    services.AddControllers();
+                    services
+                        .AddSingleton(index)
+                        .AddResponseCompression();
+                })
+                .ConfigureKestrel(serverOptions =>
+                {
+                    serverOptions.ConfigureHttpsDefaults(listenOptions =>
+                    {
+                        listenOptions.ServerCertificate = GetOrAddSelfSigned("cn=MediaLibrary", StoreName.My, StoreLocation.CurrentUser);
+                    });
+                })
+                .Configure(app =>
+                {
+                    app
+                        .UseResponseCompression()
+                        .UseRouting()
+                        .UseEndpoints(endpoints =>
+                            endpoints
+                                .MapControllers());
+                });
         }
 
-        public void Configuration(IAppBuilder appBuilder)
+        private static X509Certificate2 GetOrAddSelfSigned(string subjectName, StoreName storeName, StoreLocation storeLocation)
         {
-            var container = new UnityContainer();
-
-            container.RegisterInstance(this.index);
-
-            var config = new HttpConfiguration();
-
-            config.DependencyResolver = new UnityHierarchicalDependencyResolver(container);
-
-            var formatter = new JsonMediaTypeFormatter
+            var now = DateTimeOffset.Now;
+            using (var store = new X509Store(storeName, storeLocation))
             {
-                SerializerSettings = new JsonSerializerSettings
+                store.Open(OpenFlags.ReadWrite);
+
+                var cert = (from X509Certificate2 c in store.Certificates
+                            where c.Subject.Equals(subjectName, StringComparison.OrdinalIgnoreCase)
+                            where c.NotBefore <= now && now < c.NotAfter
+                            select c).FirstOrDefault();
+                if (cert == null)
                 {
-                    ContractResolver = new DefaultContractResolver
+                    using (var key = RSA.Create(2048))
                     {
-                        NamingStrategy = new CamelCaseNamingStrategy
-                        {
-                            ProcessDictionaryKeys = false,
-                        },
-                    },
-                },
-            };
-            formatter.SupportedEncodings.Clear();
-            formatter.SupportedEncodings.Add(new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+                        var request = new CertificateRequest(subjectName, key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
-            config.Formatters.Clear();
-            config.Formatters.Add(formatter);
-            config.Formatters.JsonFormatter.SerializerSettings.Converters.Add(new StringEnumConverter());
+                        request.CertificateExtensions.Add(
+                            new X509KeyUsageExtension(
+                                X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DigitalSignature,
+                                critical: false));
 
-            config.MapHttpAttributeRoutes();
+                        request.CertificateExtensions.Add(
+                            new X509EnhancedKeyUsageExtension(
+                                new OidCollection
+                                {
+                                    new Oid("1.3.6.1.5.5.7.3.1"),
+                                },
+                                critical: false));
 
-            appBuilder.UseCompression();
-            appBuilder.UseWebApi(config);
+                        var san = new SubjectAlternativeNameBuilder();
+                        san.AddIpAddress(IPAddress.Loopback);
+                        san.AddIpAddress(IPAddress.IPv6Loopback);
+                        san.AddDnsName("localhost");
+                        san.AddDnsName(Environment.MachineName);
+                        request.CertificateExtensions.Add(san.Build());
+
+                        var password = Guid.NewGuid().ToString();
+                        cert = request.CreateSelfSigned(now.AddMinutes(-4), now.AddYears(1));
+                        cert = new X509Certificate2(cert.Export(X509ContentType.Pfx, password), password, X509KeyStorageFlags.MachineKeySet);
+
+                        store.Add(cert);
+                    }
+                }
+
+                return cert;
+            }
         }
     }
 }

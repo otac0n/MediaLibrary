@@ -5,18 +5,12 @@ namespace MediaLibrary.Storage.Search
     using System;
     using System.Collections.Immutable;
     using System.Linq;
-    using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.Search.Expressions;
-    using TaggingLibrary;
 
     public class PredicateSearchCompiler : SearchCompiler<Predicate<SearchResult>>
     {
         private static readonly PredicateReplacer ReplacerInstance = new PredicateReplacer();
-
-        public PredicateSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden, Func<string, Term> getSavedSearch)
-            : base(tagEngine, excludeHidden, getSavedSearch)
-        {
-        }
 
         protected override Predicate<SearchResult> Compile(Expression expression) => ReplacerInstance.Replace(expression);
 
@@ -28,6 +22,12 @@ namespace MediaLibrary.Storage.Search
                 {
                     case FieldTerm.EqualsOperator:
                         return x => x == 0;
+
+                    case FieldTerm.UnequalOperator:
+                        return x => x != 0;
+
+                    case FieldTerm.ComparableOperator:
+                        return x => true;
 
                     case FieldTerm.GreaterThanOperator:
                         return x => x > 0;
@@ -75,6 +75,9 @@ namespace MediaLibrary.Storage.Search
                 var op = ConvertOperator(expression.Operator);
                 return x => op(StringComparer.InvariantCultureIgnoreCase.Compare(x.Hash, expression.Value));
             }
+
+            public override Predicate<SearchResult> Replace(SampleExpression expression) =>
+                x => Random.Shared.NextDouble() < expression.Portion;
 
             /// <inheritdoc/>
             public override Predicate<SearchResult> Replace(PeopleCountExpression expression)
@@ -130,13 +133,6 @@ namespace MediaLibrary.Storage.Search
 
             /// <inheritdoc/>
             public override Predicate<SearchResult> Replace(TextExpression expression) => x => x.Paths.Any(p => p.IndexOf(expression.Value, StringComparison.CurrentCultureIgnoreCase) > 0);
-
-            /// <inheritdoc/>
-            public override Predicate<SearchResult> Replace(StarsExpression expression)
-            {
-                var op = ConvertOperator(expression.Operator);
-                throw new NotImplementedException("Get stars statistics from the database and compare to the percentiles.");
-            }
 
             /// <inheritdoc/>
             public override Predicate<SearchResult> Replace(TagExpression expression) => x => x.Tags.Overlaps(expression.Tags);

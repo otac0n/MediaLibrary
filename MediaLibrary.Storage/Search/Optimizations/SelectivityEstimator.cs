@@ -5,7 +5,7 @@ namespace MediaLibrary.Storage.Search.Optimizations
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.Search.Expressions;
 
     public class SelectivityEstimator : ExpressionReplacer<double>
@@ -19,8 +19,8 @@ namespace MediaLibrary.Storage.Search.Optimizations
         protected const double ExpectedTagCount = 5;
         protected const double IndividualPersonSelectivity = 0.01;
         protected const double NameSelectivity = 0.1;
-        protected const double PerRejectedTagSelectivity = 0.001;
-        protected const double PerTagSelectivity = 0.01;
+        protected const double PerRejectedTagSelectivity = 0.0001;
+        protected const double PerTagSelectivity = 0.001;
         protected const double TextSelectivity = 0.1;
         protected const double TypeEqualsSelectivity = 0.3;
         protected const double TypePrefixSelectivity = 0.5;
@@ -41,10 +41,10 @@ namespace MediaLibrary.Storage.Search.Optimizations
             expression.Expressions.Aggregate(1.0, (s, e) => s * this.Replace(e));
 
         public override double Replace(DisjunctionExpression expression) =>
-            1.0 - expression.Expressions.Aggregate(1.0, (s, e) => s * (1.0 - this.Replace(e)));
+            1 - expression.Expressions.Aggregate(1.0, (s, e) => s * (1.0 - this.Replace(e)));
 
         public override double Replace(NegationExpression expression) =>
-            1.0 - this.Replace(expression.Expression);
+            1 - this.Replace(expression.Expression);
 
         public override double Replace(CopiesExpression expression) =>
             AccumulateDiscreet(expression.Operator, expression.Copies, ExpectedCopies);
@@ -59,9 +59,14 @@ namespace MediaLibrary.Storage.Search.Optimizations
         {
             const double HexSelectivity = 1 / 16.0;
 
-            if (expression.Operator == FieldTerm.EqualsOperator)
+            switch (expression.Operator)
             {
-                return Math.Pow(HexSelectivity, expression.Value.Length);
+                case FieldTerm.EqualsOperator:
+                    return Math.Pow(HexSelectivity, expression.Value.Length);
+                case FieldTerm.UnequalOperator:
+                    return 1 - Math.Pow(HexSelectivity, expression.Value.Length);
+                case FieldTerm.ComparableOperator:
+                    return 0;
             }
 
             int HexValue(char c)
@@ -106,6 +111,9 @@ namespace MediaLibrary.Storage.Search.Optimizations
             }
         }
 
+        public override double Replace(SampleExpression expression) =>
+            Math.Clamp(expression.Portion, 0, 1);
+
         public override double Replace(PeopleCountExpression expression) =>
             AccumulateDiscreet(expression.Operator, expression.PeopleCount, ExpectedPeopleCount);
 
@@ -125,20 +133,6 @@ namespace MediaLibrary.Storage.Search.Optimizations
 
         public override double Replace(RatingsCountExpression expression) =>
             AccumulateDiscreet(expression.Operator, expression.RatingsCount, ExpectedRatingsCount);
-
-        public override double Replace(StarsExpression expression) =>
-            AccumulateDiscreet(expression.Operator, expression.Stars, i =>
-            {
-                switch (i)
-                {
-                    case 1: return 0.1;
-                    case 2: return 0.2;
-                    case 3: return 0.4;
-                    case 4: return 0.2;
-                    case 5: return 0.1;
-                    default: return 0;
-                }
-            });
 
         public override double Replace(TagExpression expression) =>
             1 - Math.Pow(1 - PerTagSelectivity, expression.Tags.Count);
@@ -160,9 +154,14 @@ namespace MediaLibrary.Storage.Search.Optimizations
 
         protected static double AccumulateContinuous(string fieldOperator, double value, double mean, double scale)
         {
-            if (fieldOperator == FieldTerm.EqualsOperator)
+            switch (fieldOperator)
             {
-                return 1 / scale;
+                case FieldTerm.EqualsOperator:
+                    return 1 / scale;
+                case FieldTerm.UnequalOperator:
+                    return 1 - 1 / scale;
+                case FieldTerm.ComparableOperator:
+                    return 0;
             }
 
             var sum = CumulativeLogistic(mean, scale, value);
@@ -193,6 +192,12 @@ namespace MediaLibrary.Storage.Search.Optimizations
             {
                 case FieldTerm.EqualsOperator:
                     return probability(value);
+
+                case FieldTerm.UnequalOperator:
+                    return 1 - probability(value);
+
+                case FieldTerm.ComparableOperator:
+                    return 0;
 
                 case FieldTerm.GreaterThanOperator:
                     upper = value;

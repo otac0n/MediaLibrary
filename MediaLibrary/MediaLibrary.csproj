@@ -13,25 +13,26 @@
     <UseWindowsForms>true</UseWindowsForms>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <StartupObject>MediaLibrary.Program</StartupObject>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ByteSize" Version="2.0.0" />
-    <PackageReference Include="CommandLineParser" Version="2.7.82" />
+    <PackageReference Include="ByteSize" Version="2.1.1" />
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="FixMe" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="GitVersionTask" Version="5.5.0" PrivateAssets="All" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.28" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8" PrivateAssets="All" />
     <PackageReference Include="NeoSmart.AsyncLock" Version="0.3.0.2" />
     <PackageReference Include="ObjectListView.Official" Version="2.9.1" />
     <PackageReference Include="Pegasus" Version="4.1.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All" />
-    <PackageReference Include="System.Collections.Immutable" Version="1.7.1" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
-    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.117" />
+    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
     <PackageReference Include="System.Runtime" Version="4.3.1" />
     <PackageReference Include="System.Windows.Forms.DataVisualization" Version="1.0.0-prerelease.20110.1" />
   </ItemGroup>
@@ -58,6 +59,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <PegGrammar Include="Services\ColorParser.peg" />
     <COMReference Include="AxWMPLib.dll">
       <Guid>6bf52a50-394a-11d3-b153-00c04f79faa6</Guid>
       <VersionMajor>1</VersionMajor>
@@ -67,9 +69,8 @@
       <Isolated>false</Isolated>
     </COMReference>
     <None Remove="ColorParser.peg" />
-    <PegGrammar Include="ColorParser.peg" />
-    <Compile Update="EditSavedSearchForm.cs" />
     <AdditionalFiles Include="MediaLibrary.ruleset" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
     <COMReference Include="WMPLib.dll">
       <Guid>6bf52a50-394a-11d3-b153-00c04f79faa6</Guid>

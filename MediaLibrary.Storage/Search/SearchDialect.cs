@@ -7,19 +7,54 @@ namespace MediaLibrary.Storage.Search
     using System.Collections.Immutable;
     using System.Linq;
     using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search.Expressions;
     using TaggingLibrary;
 
     public sealed class SearchDialect : QueryCompiler<Expression>
     {
-        public SearchDialect(TagRuleEngine tagEngine, Func<string, Term> getSavedSearch)
+        public static readonly string HiddenTag = "hidden";
+
+        private static readonly Term ExcludeHiddenTerm = new NegationTerm(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, HiddenTag));
+
+        private ImmutableList<(double? min, double? max)> starRanges;
+
+        public SearchDialect(TagRuleEngine tagEngine, ImmutableList<(double? min, double? max)> starRanges, Func<string, Term> getSavedSearch)
             : base(getSavedSearch)
         {
             this.TagEngine = tagEngine;
+            this.starRanges = starRanges;
         }
 
         private TagRuleEngine TagEngine { get; }
+
+        public Expression CompileQuery(Term term, bool excludeHidden = true)
+        {
+            var expression = this.Compile(term);
+
+            if (excludeHidden)
+            {
+                // An empty search would usually return everything, but this is bad for performance and causes user anxiety.
+                if (expression is ConjunctionExpression conjunction && conjunction.Expressions.Count == 0)
+                {
+                    expression = new DisjunctionExpression(conjunction.Expressions);
+                }
+                else
+                {
+                    // Hidden tags should be excluded unless explicitly requested.
+                    var containsHidden = new ContainsHiddenReplacer(this.TagEngine).Replace(expression);
+                    if (!containsHidden)
+                    {
+                        expression = new ConjunctionExpression(ImmutableList.Create(
+                            expression,
+                            this.Compile(ExcludeHiddenTerm)));
+                    }
+                }
+            }
+
+            return expression;
+        }
 
         /// <inheritdoc/>
         public override Expression CompileConjunction(IEnumerable<Expression> query) =>
@@ -112,33 +147,26 @@ namespace MediaLibrary.Storage.Search
                         this.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value))),
                         this.CompileNegation(this.CompileField(new FieldTerm("rejected", FieldTerm.GreaterThanOrEqualOperator, field.Value))));
 
-                case "?":
                 case "suggested":
-                    if (field.Operator != FieldTerm.EqualsOperator)
                     {
-                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                        var tagInfo = this.TagEngine[field.Value];
+                        var tags = tagInfo.RelatedTags(TagDialect.TagRelationships[field.Operator]);
+                        return this.CompileDisjunction(
+                            tags.Select(tag => this.CompileTagRelation(TagOperator.Suggestion, tag)));
                     }
 
-                    return this.CompileTagRelation(TagOperator.Suggestion, field.Value);
-
-                case "^":
                 case "missing":
-                    if (field.Operator != FieldTerm.EqualsOperator)
                     {
-                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                        var tagInfo = this.TagEngine[field.Value];
+                        var tags = tagInfo.RelatedTags(TagDialect.TagRelationships[field.Operator]);
+                        return this.CompileDisjunction(
+                            tags.Select(tag => this.CompileTagRelation(TagOperator.Implication, tag)));
                     }
 
-                    return this.CompileTagRelation(TagOperator.Implication, field.Value);
-
-                case "+":
-                    if (field.Operator != FieldTerm.EqualsOperator)
-                    {
-                        throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
-                    }
-
+                case "add":
                     return this.CompileDisjunction(
-                        this.CompileField(new FieldTerm("missing", FieldTerm.EqualsOperator, field.Value)),
-                        this.CompileField(new FieldTerm("suggested", FieldTerm.EqualsOperator, field.Value)));
+                        this.CompileField(new FieldTerm("missing", field.Operator, field.Value)),
+                        this.CompileField(new FieldTerm("suggested", field.Operator, field.Value)));
 
                 case "*":
                     if (field.Operator != FieldTerm.EqualsOperator)
@@ -148,8 +176,8 @@ namespace MediaLibrary.Storage.Search
 
                     return this.CompileDisjunction(
                         this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, field.Value)),
-                        this.CompileField(new FieldTerm("missing", FieldTerm.EqualsOperator, field.Value)),
-                        this.CompileField(new FieldTerm("suggested", FieldTerm.EqualsOperator, field.Value)));
+                        this.CompileField(new FieldTerm("missing", FieldTerm.LessThanOrEqualOperator, field.Value)),
+                        this.CompileField(new FieldTerm("suggested", FieldTerm.LessThanOrEqualOperator, field.Value)));
 
                 case "similar":
                     {
@@ -213,7 +241,56 @@ namespace MediaLibrary.Storage.Search
                         throw new NotSupportedException($"Field '{field.Field}' expects a value between 1 and 5.");
                     }
 
-                    return new StarsExpression(field.Operator, stars);
+                    Expression StarsExpr(string op, int stars)
+                    {
+                        switch (op)
+                        {
+                            case FieldTerm.LessThanOperator:
+                                return StarsExpr(FieldTerm.LessThanOrEqualOperator, stars - 1);
+
+                            case FieldTerm.GreaterThanOperator:
+                                return StarsExpr(FieldTerm.GreaterThanOrEqualOperator, stars + 1);
+
+                            case FieldTerm.EqualsOperator:
+                                var lte = StarsExpr(FieldTerm.LessThanOrEqualOperator, stars);
+                                var gte = StarsExpr(FieldTerm.GreaterThanOrEqualOperator, stars);
+                                return gte != null && lte != null ? this.CompileConjunction(gte, lte) : gte ?? lte;
+
+                            case FieldTerm.LessThanOrEqualOperator:
+                                if (stars >= this.starRanges.Count)
+                                {
+                                    return null;
+                                }
+                                else if (stars >= 0 && this.starRanges[stars].min is double min)
+                                {
+                                    return new RatingExpression(FieldTerm.LessThanOperator, min);
+                                }
+                                else
+                                {
+                                    return this.CompileDisjunction();
+                                }
+
+                            case FieldTerm.GreaterThanOrEqualOperator:
+                                stars -= 1;
+                                if (stars >= this.starRanges.Count)
+                                {
+                                    return this.CompileDisjunction();
+                                }
+                                else if (stars >= 0 && this.starRanges[stars].min is double min)
+                                {
+                                    return new RatingExpression(FieldTerm.GreaterThanOrEqualOperator, min);
+                                }
+                                else
+                                {
+                                    return null;
+                                }
+
+                            default:
+                                throw new NotSupportedException($"Cannot use operator '{field.Operator}' with field '{field.Field}'.");
+                        }
+                    }
+
+                    return StarsExpr(field.Operator, stars) ?? this.CompileConjunction();
 
                 case "size":
                     // TODO: Parse filesizes.
@@ -243,6 +320,22 @@ namespace MediaLibrary.Storage.Search
                         return new DetailsExpression(ImageDetailRecognizer.Properties.Duration, field.Operator, seconds);
                     }
 
+                case "width":
+                    if (!long.TryParse(field.Value, out var width))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return new DetailsExpression(ImageDetailRecognizer.Properties.Width, field.Operator, width);
+
+                case "height":
+                    if (!long.TryParse(field.Value, out var height))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return new DetailsExpression(ImageDetailRecognizer.Properties.Height, field.Operator, height);
+
                 case "hash":
                     {
                         var value = field.Value.ToLowerInvariant();
@@ -253,6 +346,14 @@ namespace MediaLibrary.Storage.Search
 
                         return new HashExpression(field.Operator, value);
                     }
+
+                case "percent":
+                    if (!double.TryParse(field.Value, out var percent))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return new SampleExpression(Math.Clamp(percent / 100.0, 0, 1));
 
                 default:
                     throw new NotSupportedException();
@@ -318,7 +419,7 @@ namespace MediaLibrary.Storage.Search
             var tagInfo = tagEngine[tag];
             var searchTags = tagInfo.RelatedTags(HierarchyRelation.SelfOrDescendant);
             var exclusionTags = tagInfo.RelatedTags(HierarchyRelation.SelfOrAncestor);
-            var rules = tagEngine[@operator].Where(rule => rule.Right.Any(r => searchTags.Contains(r)));
+            var rules = tagEngine[@operator].Where(rule => rule.Right.Contains(tag));
             var exclusions = tagEngine[TagOperator.Exclusion].Where(rule => rule.Right.Any(r => exclusionTags.Contains(r)));
             return this.CompileConjunction(
                 this.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, tag))),
@@ -337,6 +438,56 @@ namespace MediaLibrary.Storage.Search
                         rule.Right.Where(r => !exclusionTags.Contains(r)).Select(excluded => this.CompileNegation(this.CompileField(new FieldTerm("tag", FieldTerm.LessThanOrEqualOperator, excluded)))));
                     return this.CompileDisjunction(requirements);
                 })));
+        }
+
+        private class ContainsHiddenReplacer : ExpressionReplacer<bool>
+        {
+            private readonly ImmutableHashSet<string> hiddenTags;
+
+            public ContainsHiddenReplacer(TagRuleEngine tagEngine)
+            {
+                this.hiddenTags = tagEngine.GetTagDescendants(HiddenTag).Add(HiddenTag);
+            }
+
+            public override bool Replace(ConjunctionExpression expression) => expression.Expressions.Select(this.Replace).Any(c => c);
+
+            public override bool Replace(DisjunctionExpression expression) => expression.Expressions.Select(this.Replace).Any(c => c);
+
+            public override bool Replace(NegationExpression expression) => this.Replace(expression.Expression);
+
+            public override bool Replace(CopiesExpression expression) => false;
+
+            public override bool Replace(DetailsExpression expression) => false;
+
+            public override bool Replace(FileSizeExpression expression) => false;
+
+            public override bool Replace(HashExpression expression) => false;
+
+            public override bool Replace(SampleExpression expression) => false;
+
+            public override bool Replace(NoPeopleExpression expression) => false;
+
+            public override bool Replace(PeopleCountExpression expression) => false;
+
+            public override bool Replace(PersonIdExpression expression) => false;
+
+            public override bool Replace(PersonNameExpression expression) => false;
+
+            public override bool Replace(RatingExpression expression) => false;
+
+            public override bool Replace(RatingsCountExpression expression) => false;
+
+            public override bool Replace(TagExpression expression) => expression.Tags.Overlaps(this.hiddenTags);
+
+            public override bool Replace(RejectedTagExpression expression) => expression.Tags.Overlaps(this.hiddenTags);
+
+            public override bool Replace(TagCountExpression expression) => false;
+
+            public override bool Replace(TextExpression expression) => false;
+
+            public override bool Replace(TypeEqualsExpression expression) => false;
+
+            public override bool Replace(TypePrefixExpression expression) => false;
         }
     }
 }

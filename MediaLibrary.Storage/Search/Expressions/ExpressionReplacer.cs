@@ -3,7 +3,7 @@
 namespace MediaLibrary.Storage.Search.Expressions
 {
     using System;
-    using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
 
     public abstract class ExpressionReplacer<TResult>
     {
@@ -21,6 +21,8 @@ namespace MediaLibrary.Storage.Search.Expressions
 
         public abstract TResult Replace(HashExpression expression);
 
+        public abstract TResult Replace(SampleExpression expression);
+
         public virtual TResult Replace(NoPeopleExpression expression) => this.Replace(new PeopleCountExpression(FieldTerm.EqualsOperator, 0));
 
         public abstract TResult Replace(PeopleCountExpression expression);
@@ -32,8 +34,6 @@ namespace MediaLibrary.Storage.Search.Expressions
         public abstract TResult Replace(RatingExpression expression);
 
         public abstract TResult Replace(RatingsCountExpression expression);
-
-        public abstract TResult Replace(StarsExpression expression);
 
         public abstract TResult Replace(TagExpression expression);
 
@@ -58,13 +58,13 @@ namespace MediaLibrary.Storage.Search.Expressions
                 case DetailsExpression detailsExpression: return this.Replace(detailsExpression);
                 case FileSizeExpression fileSizeExpression: return this.Replace(fileSizeExpression);
                 case HashExpression hashExpression: return this.Replace(hashExpression);
+                case SampleExpression sampleExpression: return this.Replace(sampleExpression);
                 case NoPeopleExpression noPeopleExpression: return this.Replace(noPeopleExpression);
                 case PeopleCountExpression peopleCountExpression: return this.Replace(peopleCountExpression);
                 case PersonIdExpression personIdExpression: return this.Replace(personIdExpression);
                 case PersonNameExpression personNameExpression: return this.Replace(personNameExpression);
                 case RatingExpression ratingExpression: return this.Replace(ratingExpression);
                 case RatingsCountExpression ratingsCountExpression: return this.Replace(ratingsCountExpression);
-                case StarsExpression starsExpression: return this.Replace(starsExpression);
                 case TagExpression tagExpression: return this.Replace(tagExpression);
                 case RejectedTagExpression rejectedTagExpression: return this.Replace(rejectedTagExpression);
                 case TagCountExpression tagCountExpression: return this.Replace(tagCountExpression);

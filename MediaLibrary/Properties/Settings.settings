@@ -15,7 +15,7 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="AutoSearchDelay" Type="System.TimeSpan" Scope="User">
-      <Value Profile="(Default)">00:00:00.7500000</Value>
+      <Value Profile="(Default)">00:00:01.5000000</Value>
     </Setting>
     <Setting Name="DefaultMute" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>

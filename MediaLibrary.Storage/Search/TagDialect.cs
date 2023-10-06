@@ -4,7 +4,7 @@ namespace MediaLibrary.Storage.Search
 {
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
     using TaggingLibrary;
 
     public static class TagDialect
@@ -16,6 +16,8 @@ namespace MediaLibrary.Storage.Search
             [FieldTerm.GreaterThanOrEqualOperator] = HierarchyRelation.SelfOrAncestor,
             [FieldTerm.LessThanOperator] = HierarchyRelation.Descendant,
             [FieldTerm.LessThanOrEqualOperator] = HierarchyRelation.SelfOrDescendant,
+            [FieldTerm.UnequalOperator] = HierarchyRelation.Related,
+            [FieldTerm.ComparableOperator] = HierarchyRelation.SelfOrRelated,
         });
     }
 }

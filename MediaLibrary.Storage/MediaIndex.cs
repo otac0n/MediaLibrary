@@ -17,12 +17,14 @@ namespace MediaLibrary.Storage
     using System.Threading.Tasks;
     using Dapper;
     using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;
+    using MediaLibrary.Storage.Search.Expressions;
     using Nito.AsyncEx;
     using TaggingLibrary;
 
-    public class MediaIndex : IMediaIndex
+    public class MediaIndex
     {
         public static readonly char[] PathSeparators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
         private static readonly TimeSpan BufferOverflowDelay = TimeSpan.FromSeconds(2);
@@ -42,6 +44,10 @@ namespace MediaLibrary.Storage
         private readonly TagRulesParser tagRuleParser;
         private Task fileScanTask;
         private Task indexRescanTask;
+
+        private long starRangesCacheVersion;
+        private ImmutableList<(double? min, double? max)> starRangesCache;
+        private object starRangesSync = new object();
 
         public MediaIndex(string indexPath)
         {
@@ -312,6 +318,30 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<string>(Rating.Queries.GetRatingCategories).ConfigureAwait(false)).ToList());
 
+        public async Task<ImmutableList<(double? min, double? max)>> GetRatingStarRanges()
+        {
+            var starRanges = this.starRangesCache;
+            if (starRanges != null)
+            {
+                return starRanges;
+            }
+
+            var currentVersion = this.starRangesCacheVersion;
+
+            starRanges = await this.IndexReadAsync(async conn =>
+                (await conn.QueryAsync<(long stars, double? min, double? max)>(Rating.Queries.GetRatingStarRanges).ConfigureAwait(false)).Select(r => (r.min, r.max)).ToImmutableList()).ConfigureAwait(false);
+
+            lock (this.starRangesSync)
+            {
+                if (currentVersion == this.starRangesCacheVersion)
+                {
+                    this.starRangesCache = starRanges;
+                }
+            }
+
+            return starRanges;
+        }
+
         public Task<List<RuleCategory>> GetAllRuleCategories() =>
             this.IndexReadAsync(async conn =>
                 (await conn.QueryAsync<RuleCategory>(RuleCategory.Queries.GetAllRuleCategories).ConfigureAwait(false)).ToList());
@@ -495,6 +525,25 @@ namespace MediaLibrary.Storage
             this.HashTagRemoved?.Invoke(this, new ItemRemovedEventArgs<HashTag>(hashTag));
         }
 
+        public async Task RemoveRejectedHashTag(HashTag hashTag)
+        {
+            if (hashTag == null)
+            {
+                throw new ArgumentNullException(nameof(hashTag));
+            }
+
+            await this.IndexWriteAsync(conn => conn.ExecuteAsync(HashTag.Queries.RemoveRejectedHashTag, hashTag)).ConfigureAwait(false);
+
+            var hash = hashTag.Hash;
+            if (this.searchResultsCache.TryGetValue(hash, out var searchResult) && searchResult.RejectedTags.Contains(hashTag.Tag))
+            {
+                searchResult.RejectedTags = searchResult.RejectedTags.Remove(hashTag.Tag);
+            }
+
+            this.HashInvalidated?.Invoke(this, new HashInvalidatedEventArgs(hash));
+            this.HashTagRemoved?.Invoke(this, new ItemRemovedEventArgs<HashTag>(hashTag));
+        }
+
         public async Task RemoveIndexedPath(string path)
         {
             this.RemoveFileSystemWatcher(path);
@@ -531,18 +580,37 @@ namespace MediaLibrary.Storage
             await this.StartIndexRescanTask().ConfigureAwait(false);
         }
 
-        public Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true)
+        public async Task<Expression> CompileQuery(string query, bool excludeHidden = true)
+        {
+            var grammar = new SearchGrammar();
+            var term = grammar.Parse(query ?? string.Empty);
+            var containsSavedSearches = new ContainsSavedSearchTermCompiler().Compile(term);
+            var savedSearches = containsSavedSearches
+                ? (await this.GetAllSavedSearches().ConfigureAwait(false)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
+                : null;
+            var starRanges = await this.GetRatingStarRanges().ConfigureAwait(false);
+            var dialect = new SearchDialect(this.TagEngine, starRanges, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
+            return dialect.CompileQuery(term, excludeHidden);
+        }
+
+        public async Task<TQuery> CompileQuery<TCompiler, TQuery>(string query, bool excludeHidden = true)
+            where TCompiler : SearchCompiler<TQuery>, new() =>
+                await this.CompileQuery<TCompiler, TQuery>(await this.CompileQuery(query, excludeHidden).ConfigureAwait(false)).ConfigureAwait(false);
+
+        public async Task<TQuery> CompileQuery<TCompiler, TQuery>(Expression query)
+            where TCompiler : SearchCompiler<TQuery>, new()
+        {
+            return new TCompiler().CompileQuery(query);
+        }
+
+        public async Task<List<SearchResult>> SearchIndex(string query, bool excludeHidden = true) =>
+            await this.SearchIndex(await this.CompileQuery(query, excludeHidden).ConfigureAwait(false)).ConfigureAwait(false);
+
+        public Task<List<SearchResult>> SearchIndex(Expression query)
         {
             return Task.Run(async () =>
             {
-                var grammar = new SearchGrammar();
-                var term = grammar.Parse(query ?? string.Empty);
-                var containsSavedSearches = new ContainsSavedSearchTermCompiler().Compile(term);
-                var savedSearches = containsSavedSearches
-                    ? (await this.GetAllSavedSearches().ConfigureAwait(false)).ToDictionary(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
-                    : null;
-                var dialect = new SqlSearchCompiler(this.TagEngine, excludeHidden, name => savedSearches.TryGetValue(name, out var search) ? grammar.Parse(search.Query) : null);
-                var sqlQuery = dialect.Compile(term);
+                var sqlQuery = await this.CompileQuery<SqlSearchCompiler, string>(query).ConfigureAwait(false);
 
                 using (var conn = await this.GetConnection().ConfigureAwait(false))
                 {
@@ -595,6 +663,7 @@ namespace MediaLibrary.Storage
                             (key, searchResult) =>
                             {
                                 // TODO: Deeper inspection of changes.
+                                // TODO: Trigger Change Events?
                                 if (searchResult.Details != updatedDetails)
                                 {
                                     searchResult.Details = updatedDetails;
@@ -646,6 +715,12 @@ namespace MediaLibrary.Storage
 
             if (string.IsNullOrEmpty(rating.Category))
             {
+                lock (this.starRangesSync)
+                {
+                    this.starRangesCache = null;
+                    this.starRangesCacheVersion++;
+                }
+
                 var hash = rating.Hash;
                 if (this.searchResultsCache.TryGetValue(hash, out var searchResult))
                 {
@@ -1089,7 +1164,7 @@ namespace MediaLibrary.Storage
 
                 try
                 {
-                    foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+                    foreach (var file in FileEnumerable.EnumerateFiles(path, "*", SearchOption.AllDirectories))
                     {
                         if (seen.Add(file))
                         {

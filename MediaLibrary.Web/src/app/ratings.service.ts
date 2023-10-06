@@ -3,6 +3,12 @@ import { Injectable } from '@angular/core';
 
 import { Rating } from '../schema';
 
+export type StarRange = [number | null, number | null];
+
+function isRating(value: number | Rating): value is Rating {
+    return typeof value === 'object';
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -13,22 +19,26 @@ export class RatingsService {
         private http: HttpClient) { }
 
     public getAllRatingCategories(): Promise<string[]> {
-        return this.http.get<string[]>('ratings').toPromise();
+        return this.http.get<string[]>('ratings/categories').toPromise();
+    }
+
+    public getRatingStarRanges(): Promise<StarRange[]> {
+        return this.http.get<StarRange[]>('ratings/stars').toPromise();
     }
 
     public get(id: string, category: string): Promise<Rating> {
         const uri = category
-            ? `ratings/${encodeURIComponent(category)}/files/${encodeURIComponent(id)}`
+            ? `ratings/categories/${encodeURIComponent(category)}/files/${encodeURIComponent(id)}`
             : `ratings/files/${encodeURIComponent(id)}`;
         return this.http.get<Rating>(uri).toPromise();
     }
 
     public getExpectedScore(left: number | Rating, right: number | Rating) {
-        if (typeof left === 'object') {
+        if (isRating(left)) {
             left = left.value;
         }
 
-        if (typeof right === 'object') {
+        if (isRating(right)) {
             right = right.value;
         }
 
@@ -43,8 +53,11 @@ export class RatingsService {
         }
 
         const uri = leftCategory
-            ? `ratings/${encodeURIComponent(left.category)}/rate`
+            ? `ratings/categories/${encodeURIComponent(left.category)}/rate`
             : `ratings/rate`;
-        return this.http.post<void>(uri, { score, leftHash: left.hash, rightHash: right.hash }).toPromise();
+        return this.http.post<Rating[]>(uri, { score, leftHash: left.hash, rightHash: right.hash }).toPromise().then(updates => {
+            Object.assign(left, updates[0]);
+            Object.assign(right, updates[1]);
+        });
     }
 }

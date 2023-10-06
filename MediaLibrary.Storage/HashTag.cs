@@ -49,6 +49,10 @@ namespace MediaLibrary.Storage
             public static readonly string RemoveHashTag = @"
                 DELETE FROM HashTag WHERE Hash = @Hash AND Tag = @Tag
             ";
+
+            public static readonly string RemoveRejectedHashTag = @"
+                DELETE FROM RejectedTags WHERE Hash = @Hash AND Tag = @Tag
+            ";
         }
     }
 }

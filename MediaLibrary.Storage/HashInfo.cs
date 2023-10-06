@@ -1,9 +1,9 @@
 // Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
-using System;
-
 namespace MediaLibrary.Storage
 {
+    using System;
+
     public class HashInfo
     {
         public HashInfo(string hash, long fileSize, string fileType, long version)

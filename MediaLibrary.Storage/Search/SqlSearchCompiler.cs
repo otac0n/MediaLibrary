@@ -3,21 +3,16 @@
 namespace MediaLibrary.Storage.Search
 {
     using System;
+    using System.Collections.Immutable;
     using System.Linq;
     using System.Text;
-    using MediaLibrary.Search;
+    using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.Search.Expressions;
     using MediaLibrary.Storage.Search.Optimizations;
-    using TaggingLibrary;
     using static MediaLibrary.Storage.Search.QueryBuilder;
 
     public class SqlSearchCompiler : SearchCompiler<string>
     {
-        public SqlSearchCompiler(TagRuleEngine tagEngine, bool excludeHidden, Func<string, Term> getSavedSearch)
-            : base(tagEngine, excludeHidden, getSavedSearch)
-        {
-        }
-
         protected override string Compile(Expression expression)
         {
             var fetchTags = true;
@@ -34,6 +29,35 @@ namespace MediaLibrary.Storage.Search
             var filter = replacer.Replace(expression);
 
             var sb = new StringBuilder();
+
+            if (replacer.MaterializedTags.Count > 0)
+            {
+                sb
+                    .AppendLine("DROP TABLE IF EXISTS temp.MaterializedTags;")
+                    .AppendLine("CREATE TABLE temp.MaterializedTags (SetIndex integer, Tag text);")
+                    .AppendLine("INSERT INTO temp.MaterializedTags VALUES");
+
+                var first = true;
+                for (var i = 0; i < replacer.MaterializedTags.Count; i++)
+                {
+                    var tags = replacer.MaterializedTags[i];
+                    foreach (var tag in tags)
+                    {
+                        if (first)
+                        {
+                            first = false;
+                        }
+                        else
+                        {
+                            sb.AppendLine(",");
+                        }
+
+                        sb.Append("(").Append(i).Append(", ").Append(Literal(tag)).Append(")");
+                    }
+                }
+
+                sb.AppendLine(";");
+            }
 
             if (fetchAny)
             {
@@ -88,11 +112,9 @@ namespace MediaLibrary.Storage.Search
             {
                 sb
                     .AppendLine("LEFT JOIN (")
-                    .AppendLine("    SELECT Hash, Value, Count, CASE WHEN NTile < 2 THEN 1 WHEN NTile < 4 THEN 2 WHEN NTile < 8 THEN 3 WHEN NTile < 10 THEN 4 ELSE 5 END AS Stars FROM (")
-                    .AppendLine("        SELECT Hash, Value, Count, NTILE(10) OVER (PARTITION BY Category ORDER BY Value) NTile")
-                    .AppendLine("        FROM Rating")
-                    .AppendLine("        WHERE Category = ''")
-                    .AppendLine("    ) z")
+                    .AppendLine("    SELECT Hash, Value, Count")
+                    .AppendLine("    FROM Rating")
+                    .AppendLine("    WHERE Category = ''")
                     .AppendLine(") s ON h.Hash = s.Hash");
             }
 
@@ -100,6 +122,11 @@ namespace MediaLibrary.Storage.Search
                 .AppendLine("WHERE (")
                 .AppendLine(filter)
                 .AppendLine(");");
+
+            if (replacer.MaterializedTags.Count > 0)
+            {
+                sb.AppendLine("DROP TABLE temp.MaterializedTags;");
+            }
 
             if (fetchTags)
             {
@@ -162,7 +189,8 @@ namespace MediaLibrary.Storage.Search
                     .AppendLine("DROP TABLE temp.SearchHashInfo;");
             }
 
-            return sb.ToString();
+            var query = sb.ToString();
+            return query;
         }
 
         private class SqlReplacer : ExpressionReplacer<string>
@@ -178,6 +206,8 @@ namespace MediaLibrary.Storage.Search
             public bool JoinRatings { get; private set; }
 
             public bool JoinTagCount { get; private set; }
+
+            public ImmutableList<ImmutableHashSet<string>> MaterializedTags { get; private set; } = ImmutableList<ImmutableHashSet<string>>.Empty;
 
             public static string Contains(string expr, string patternValue)
             {
@@ -208,6 +238,7 @@ namespace MediaLibrary.Storage.Search
                     case FieldTerm.GreaterThanOrEqualOperator:
                     case FieldTerm.LessThanOperator:
                     case FieldTerm.LessThanOrEqualOperator:
+                    case FieldTerm.UnequalOperator:
                         return fieldOperator;
 
                     default:
@@ -357,7 +388,16 @@ namespace MediaLibrary.Storage.Search
             public override string Replace(FileSizeExpression expression) => $"{this.indent}FileSize {ConvertOperator(expression.Operator)} {expression.FileSize}{Environment.NewLine}";
 
             /// <inheritdoc/>
-            public override string Replace(HashExpression expression) => $"{this.indent}Hash {ConvertOperator(expression.Operator)} {Literal(expression.Value)}{Environment.NewLine}";
+            public override string Replace(HashExpression expression) => $"{this.indent}h.Hash {ConvertOperator(expression.Operator)} {Literal(expression.Value)}{Environment.NewLine}";
+
+            /// <inheritdoc/>
+            public override string Replace(SampleExpression expression)
+            {
+                double Lerp(double x) =>
+                    x * (long.MaxValue - (double)long.MinValue) + long.MinValue;
+
+                return $"{this.indent}RANDOM() < {Literal(Lerp(expression.Portion))}{Environment.NewLine}";
+            }
 
             /// <inheritdoc/>
             public override string Replace(PeopleCountExpression expression)
@@ -386,18 +426,54 @@ namespace MediaLibrary.Storage.Search
                 return $"{this.indent}COALESCE(s.Count, 0) {ConvertOperator(expression.Operator)} {expression.RatingsCount}{Environment.NewLine}";
             }
 
-            /// <inheritdoc/>
-            public override string Replace(RejectedTagExpression expression) => $"{this.indent}EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
-
-            /// <inheritdoc/>
-            public override string Replace(StarsExpression expression)
+            private int GetOrAddMaterializedTags(ImmutableHashSet<string> tags)
             {
-                this.JoinRatings = true;
-                return $"{this.indent}COALESCE(s.Stars, 3) {ConvertOperator(expression.Operator)} {expression.Stars}{Environment.NewLine}";
+                var setIndex = -1;
+                for (var i = 0; i < this.MaterializedTags.Count; i++)
+                {
+                    if (tags.SetEquals(this.MaterializedTags[i]))
+                    {
+                        setIndex = i;
+                        break;
+                    }
+                }
+
+                if (setIndex < 0)
+                {
+                    setIndex = this.MaterializedTags.Count;
+                    this.MaterializedTags = this.MaterializedTags.Add(tags);
+                }
+
+                return setIndex;
             }
 
             /// <inheritdoc/>
-            public override string Replace(TagExpression expression) => $"{this.indent}EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
+            public override string Replace(RejectedTagExpression expression)
+            {
+                if (expression.Tags.Count > 3)
+                {
+                    var setIndex = this.GetOrAddMaterializedTags(expression.Tags);
+                    return $"{this.indent}EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN (SELECT Tag FROM temp.MaterializedTags WHERE SetIndex = {setIndex})){Environment.NewLine}";
+                }
+                else
+                {
+                    return $"{this.indent}EXISTS (SELECT 1 FROM RejectedTags t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
+                }
+            }
+
+            /// <inheritdoc/>
+            public override string Replace(TagExpression expression)
+            {
+                if (expression.Tags.Count > 3)
+                {
+                    var setIndex = this.GetOrAddMaterializedTags(expression.Tags);
+                    return $"{this.indent}EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN (SELECT Tag FROM temp.MaterializedTags WHERE SetIndex = {setIndex})){Environment.NewLine}";
+                }
+                else
+                {
+                    return $"{this.indent}EXISTS (SELECT 1 FROM HashTag t WHERE h.Hash = t.Hash AND t.Tag IN ({string.Join(", ", expression.Tags.Select(Literal))})){Environment.NewLine}";
+                }
+            }
 
             /// <inheritdoc/>
             public override string Replace(TagCountExpression expression)

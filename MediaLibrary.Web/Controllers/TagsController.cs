@@ -7,11 +7,13 @@ namespace MediaLibrary.Web.Controllers
     using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
-    using System.Web.Http;
     using MediaLibrary.Storage;
+    using Microsoft.AspNetCore.Mvc;
+    using TaggingLibrary;
 
-    [RoutePrefix("tags")]
-    public class TagsController : ApiController
+    [ApiController]
+    [Route("tags")]
+    public class TagsController : ControllerBase
     {
         private readonly MediaIndex index;
 
@@ -22,29 +24,29 @@ namespace MediaLibrary.Web.Controllers
 
         [Route("{tag}")]
         [HttpGet]
-        public IHttpActionResult Get(string tag)
+        public ActionResult Get(string tag)
         {
+            ControllerUtilities.FixSlashes(ref tag);
+
             var tagInfo = this.index.TagEngine[tag];
 
             if (tagInfo.Tag != tag)
             {
-                var uri = new UriBuilder(this.Request.RequestUri);
-                uri.Path = uri.Path.Substring(0, uri.Path.LastIndexOf('/') + 1) + Uri.EscapeDataString(tagInfo.Tag);
-                return this.Redirect(uri.Uri);
+                return this.RedirectToRoute(new { Controller = "Tags", Action = "Get", tagInfo.Tag });
             }
 
-            return this.Content(HttpStatusCode.OK, tagInfo);
+            return this.Ok(tagInfo);
         }
 
         [Route("")]
         [HttpGet]
-        public async Task<IHttpActionResult> List()
+        public async Task<ActionResult> List()
         {
             var engine = this.index.TagEngine;
             var rawTags = await this.index.GetAllHashTags().ConfigureAwait(true);
             var tags = new HashSet<string>(engine.GetKnownTags().Concat(rawTags).Select(engine.Rename));
 
-            return this.Content(HttpStatusCode.OK, tags.OrderBy(t => t).Select(t => engine[t]));
+            return this.Ok(tags.OrderBy(t => t).Select(t => engine[t]));
         }
     }
 }

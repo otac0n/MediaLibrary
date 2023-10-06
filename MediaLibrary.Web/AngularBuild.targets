@@ -11,7 +11,7 @@
     <Exec Command="$(NpmCommand) --version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
   </Target>
   <Target Name="EnsureAngular" DependsOnTargets="NpmRestore">
-    <Exec Command="$(AngularCommand) --version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
+    <Exec Command="$(AngularCommand) version" StandardOutputImportance="low" IgnoreStandardErrorWarningFormat="true" />
   </Target>
   <Target Name="NpmRestore" DependsOnTargets="EnsureNpm" Inputs="package.json;$(MSBuildThisFile)" Outputs="node_modules\.msbuild">
     <Exec Command="$(NpmCommand) install" IgnoreStandardErrorWarningFormat="true" CustomWarningRegularExpression="^npm WARN" CustomErrorRegularExpression="^npm ERR!" />
@@ -21,7 +21,7 @@
     <AngularBuildTask AngularCommand="$(AngularCommand)" />
   </Target>
   <Target Name="IncludeDistributables" DependsOnTargets="AngularBuild" AfterTargets="BeforeBuild">
-    <Exec Command="$(AngularCommand) lint --format=msbuild" IgnoreExitCode="true" />
+    <Exec Command="$(AngularCommand) lint --format visualstudio" IgnoreExitCode="true" />
     <ItemGroup>
       <AngularDistributable Include="obj\dist\**\*.*" />
     </ItemGroup>
@@ -41,7 +41,7 @@
       <Code Type="Fragment" Language="cs">
         <![CDATA[
 var errorRegex = new Regex(
-    @"\AAn unhandled exception occurred:(?'MESSAGE'.*)|\A(?'MESSAGE'The build command requires to be run in an Angular project, but a project definition could not be found\.)\z|(?:\r?\n|\r)*(?:Error: |ERROR in )?(?'FILENAME'[^\r\n*?:]+):(?'LINE'\d+):(?'COLUMN'\d+) - (?'CATEGORY'error|warning) (?'CODE'\w+): (?'MESSAGE'[^\r\n]+(?:(?:\r?\n|\r){2})(?:(?:(?'LASTLINE'\d+) (?:[^\r\n]+)?(?:\r?\n|\r))+)(?:(?'UNDERLINE' +~+)?(?:\r?\n|\r))(?:(?:(?:\r?\n|\r)|[\d ][^\r\n]+(?:\r?\n|\r|\z)))*)",
+    @"\AAn unhandled exception occurred:(?'MESSAGE'.*)|\A(?'MESSAGE'The build command requires to be run in an Angular project, but a project definition could not be found\.)\z|(?:\r?\n|\r)*(?:Error: |ERROR in )?(?'FILENAME'[^\r\n*?:]+):(?'LINE'\d+):(?'COLUMN'\d+) - (?'CATEGORY'error|warning) (?'CODE'\w+): (?'MESSAGE'(?:[^\r\n]+(?:\r\n|\r|\n))+(?:\r\n|\r|\n)(?:(?:(?'LASTLINE'\d+) (?:[^\r\n]+)?(?:\r?\n|\r))+)(?:(?'UNDERLINE' +~+)?(?:\r?\n|\r))(?:(?:(?:\r?\n|\r)|[\d ][^\r\n]+(?:\r?\n|\r|\z)))*)",
     RegexOptions.Singleline | RegexOptions.Multiline);
 
 var where = new Func<string, IEnumerable<string>>(file =>

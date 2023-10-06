@@ -3,13 +3,15 @@
 namespace MediaLibrary.Web.Hosting
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Reflection;
 
     internal static class StaticContent
     {
-        public static Assembly ContentAssembly = Assembly.GetExecutingAssembly();
+        private static readonly Assembly ContentAssembly = Assembly.GetExecutingAssembly();
 
+        [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Lowercase used for file paths.")]
         public static Stream GetContent(string path)
         {
             if (path == null)

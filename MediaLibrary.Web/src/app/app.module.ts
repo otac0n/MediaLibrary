@@ -19,6 +19,7 @@ import { TagListComponent } from './tag-list/tag-list.component';
 import { TagComponent } from './tag/tag.component';
 import { TagsService } from './tags.service';
 import { UrlEncodePipe } from './url-encode.pipe';
+import { StarsComponent } from './stars/stars.component';
 
 @NgModule({
     declarations: [
@@ -34,6 +35,7 @@ import { UrlEncodePipe } from './url-encode.pipe';
         TagListComponent,
         TagListEditorComponent,
         UrlEncodePipe,
+        StarsComponent,
     ],
     imports: [
         AppRoutingModule,

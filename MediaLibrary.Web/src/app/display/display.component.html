@@ -1,2 +1,2 @@
-<img *ngIf="displayResult?.fileType == 'image' || displayResult?.fileType.startsWith('image/')" src="files/{{displayResult?.hash | urlEncode}}" />
-<video *ngIf="displayResult?.fileType == 'video' || displayResult?.fileType.startsWith('video/')" autoplay controls muted src="files/{{displayResult?.hash | urlEncode}}"></video>
+<img *ngIf="isImage" src="files/{{displayResult?.hash | urlEncode}}" />
+<video *ngIf="isVideo" autoplay controls muted playsinline src="files/{{displayResult?.hash | urlEncode}}" (click)="stopClick($event)"></video>

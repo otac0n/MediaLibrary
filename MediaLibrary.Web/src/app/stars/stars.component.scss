@@ -1,0 +1,29 @@
+:host {
+    height: 1.5em;
+    display: inline-flex;
+    vertical-align: middle;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.star {
+    width: 1.5em;
+    height: 100%;
+    display: flex;
+
+    svg {
+        width: 100%;
+        height: 100%;
+        stroke: black;
+        fill: yellow;
+        fill-opacity: 0;
+    }
+
+    &.filled svg {
+        fill-opacity: 1;
+    }
+
+    &.filled.implied svg {
+        fill-opacity: 0.25;
+    }
+}

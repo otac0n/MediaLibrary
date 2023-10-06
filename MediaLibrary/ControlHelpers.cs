@@ -116,37 +116,23 @@ namespace MediaLibrary
             return null;
         }
 
-        public static Rectangle GetFormRectangle(this Control control, bool clip = true)
+        public static TabPage GetTabFromPoint(this TabControl tabControl, Point point)
         {
-            if (control is Form form)
-            {
-                return form.ClientRectangle;
-            }
-            else if (control.Parent is Control parent)
-            {
-                var rect = parent.GetFormRectangle(clip);
-                var size = control.Size;
-                var position = new Point(
-                    control.Left,
-                    control.Top);
-                rect.Offset(position);
+            var index = tabControl.GetTabIndexFromPoint(point);
+            return index == -1 ? null : tabControl.TabPages[index];
+        }
 
-                if (clip)
+        public static int GetTabIndexFromPoint(this TabControl tabControl, Point point)
+        {
+            for (var i = tabControl.TabCount - 1; i >= 0; i--)
+            {
+                if (tabControl.GetTabRect(i).Contains(point))
                 {
-                    var bounds = parent.ClientSize;
-                    size = new Size(
-                        Math.Min(size.Width, Math.Max(0, bounds.Width - position.X)),
-                        Math.Min(size.Height, Math.Max(0, bounds.Height - position.Y)));
+                    return i;
                 }
-
-                rect.Size = size;
-
-                return rect;
             }
-            else
-            {
-                throw new InvalidOperationException();
-            }
+
+            return -1;
         }
 
         /// <summary>
