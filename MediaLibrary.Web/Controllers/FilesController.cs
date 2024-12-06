@@ -9,6 +9,7 @@ namespace MediaLibrary.Web.Controllers
     using MediaLibrary.Storage;
     using MediaLibrary.Storage.Search;
     using Microsoft.AspNetCore.Mvc;
+    using TaggingLibrary;
 
     [ApiController]
     [Route("files")]
@@ -48,7 +49,7 @@ namespace MediaLibrary.Web.Controllers
             ControllerUtilities.FixSlashes(ref q);
 
             var results = await this.index.SearchIndex(q).ConfigureAwait(true);
-            return results.OrderBy(r => r.Paths.OrderBy(p => p, PathComparer.Instance).FirstOrDefault(), PathComparer.Instance).Take(1000);
+            return results.OrderBy(r => r.Rating, Rating.Comparer).Take(1000);
         }
     }
 }

@@ -1,12 +1,15 @@
 namespace MediaLibrary.Storage
 {
     using System;
+    using System.Collections;
+    using System.Collections.Generic;
 
     public class Rating : IComparable<Rating>
     {
         public static readonly double DefaultRating = 1500;
         public static readonly double RatingScale = 400.0;
         public static readonly long ProvisionalPeriod = 15;
+        public static readonly Comparer<Rating> Comparer = Comparer<Rating>.Create(Rating.Compare);
 
         public Rating(string hash, string category, double value, long count)
         {
