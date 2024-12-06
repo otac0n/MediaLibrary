@@ -50,7 +50,7 @@ namespace MediaLibrary.Services
                 }
 
                 string key;
-                using (var sha = new SHA256Managed())
+                using (var sha = SHA256.Create())
                 {
                     key = string.Concat(sha.ComputeHash(Encoding.UTF8.GetBytes(baseUri.ToString())).Select(h => $"{h:x2}"));
                 }
