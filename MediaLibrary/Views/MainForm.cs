@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary.Views
 {
@@ -59,6 +59,7 @@ namespace MediaLibrary.Views
                 Name = "preview",
                 TabIndex = 5,
             };
+            this.preview.EditClick += this.Preview_EditClick;
 
             this.splitContainer.Panel1.Controls.Add(this.listView);
             this.splitContainer.Panel2.Controls.Add(this.preview);
@@ -128,6 +129,15 @@ namespace MediaLibrary.Views
             }
         }
 
+        private void Preview_EditClick(object sender, EventArgs e)
+        {
+            var searchResults = this.listView.SelectedResults;
+            if (searchResults.Count > 0)
+            {
+                this.OpenSelectionDialog(new EditTagsForm(this.index, this.listView.SelectedResults));
+            }
+        }
+
         private void ApplySettings()
         {
             var settings = Settings.Default;
@@ -180,7 +190,7 @@ namespace MediaLibrary.Views
             };
         }
 
-        private void CloseSelectionDialogs()
+        private void CloseOrUpdateSelectionDialogs()
         {
             this.selectionDialogs.ForEach(d => d.Dispose());
             this.selectionDialogs.Clear();
@@ -373,7 +383,7 @@ namespace MediaLibrary.Views
 
         private void ListView_SelectionChanged(object sender, EventArgs e)
         {
-            this.CloseSelectionDialogs();
+            this.CloseOrUpdateSelectionDialogs();
             this.UpdatePreview();
         }
 

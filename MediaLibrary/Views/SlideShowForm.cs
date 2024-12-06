@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary.Views
 {
@@ -39,6 +39,8 @@ namespace MediaLibrary.Views
             this.preview.Paused += this.Preview_PausedOrScannedBackward;
             this.preview.ScannedBackward += this.Preview_PausedOrScannedBackward;
             this.preview.Stopped += this.Preview_Stopped;
+            this.preview.EditClick += this.Preview_EditClick;
+            this.preview.AllowEdit = false; // TODO: Allow edit.
             this.Controls.Add(this.preview);
 
             this.InitializeComponent();
@@ -184,6 +186,12 @@ namespace MediaLibrary.Views
             {
                 this.Resume();
             }
+        }
+
+        private void Preview_EditClick(object sender, EventArgs e)
+        {
+            // TODO: Show edit tags dialog.
+            // TODO: Pause slide show while dialog is open.
         }
 
         private void Preview_Finished(object sender, EventArgs e)

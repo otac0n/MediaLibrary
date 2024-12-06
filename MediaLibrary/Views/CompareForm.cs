@@ -1,4 +1,4 @@
-namespace MediaLibrary.Views
+﻿namespace MediaLibrary.Views
 {
     using System;
     using System.Collections.Generic;
@@ -40,6 +40,8 @@ namespace MediaLibrary.Views
                 Name = "leftPreview",
                 TabIndex = 0,
             };
+            this.leftPreview.EditClick += this.LeftPreview_EditClick;
+            this.leftPreview.AllowEdit = false; // TODO: Allow edit.
 
             this.rightPreview = new PreviewControl(index)
             {
@@ -48,11 +50,23 @@ namespace MediaLibrary.Views
                 Name = "rightPreview",
                 TabIndex = 1,
             };
+            this.rightPreview.EditClick += this.RightPreview_EditClick;
+            this.rightPreview.AllowEdit = false; // TODO: Allow edit.
 
             this.previewTable.Controls.Add(this.leftPreview, 0, 0);
             this.previewTable.Controls.Add(this.rightPreview, 1, 0);
 
             this.LoadNextComparison();
+        }
+
+        private void RightPreview_EditClick(object sender, EventArgs e)
+        {
+            // TODO: Show edit dialog over right preview.
+        }
+
+        private void LeftPreview_EditClick(object sender, EventArgs e)
+        {
+            // TODO: Show edit dialog over left preview.
         }
 
         private enum Mode

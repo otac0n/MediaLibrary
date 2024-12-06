@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary.Components
 {
@@ -17,6 +17,7 @@ namespace MediaLibrary.Components
     {
         private readonly MediaIndex index;
         private ImmutableList<SearchResult> searchResults;
+        private TagControl editButton;
 
         public SearchResultsVectors(MediaIndex index)
         {
@@ -25,13 +26,26 @@ namespace MediaLibrary.Components
             this.index.HashTagRemoved += this.Index_HashTagRemoved;
             this.AutoSize = true;
             this.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+
+            this.editButton = ControlHelpers.Construct<TagControl>(b =>
+            {
+                b.AllowDelete = false;
+                b.Text = "…";
+            });
+            this.editButton.Click += this.EditButton_Click;
+            this.Controls.Add(this.editButton);
         }
+
+        public event EventHandler EditClick;
 
         [DefaultValue(true)]
         public override bool AutoSize { get => base.AutoSize; set => base.AutoSize = value; }
 
         [DefaultValue(AutoSizeMode.GrowAndShrink)]
         public override AutoSizeMode AutoSizeMode { get => base.AutoSizeMode; set => base.AutoSizeMode = value; }
+
+        [DefaultValue(true)]
+        public bool AllowEdit { get => this.editButton.Visible; set => this.editButton.Visible = value; }
 
         [Category("Data")]
         public IList<SearchResult> SearchResults
@@ -101,6 +115,11 @@ namespace MediaLibrary.Components
             this.UpdateSearchResult(e.Item.Hash);
         }
 
+        private void EditButton_Click(object sender, EventArgs e)
+        {
+            this.EditClick?.Invoke(sender, e);
+        }
+
         private void UpdateSearchResult(string hash)
         {
             if (this.searchResults.Any(r => r.Hash == hash))
@@ -114,6 +133,8 @@ namespace MediaLibrary.Components
             var vectors = this.GetVectorsInOrder().ToList();
 
             this.UpdateControlsCollection(
+                0,
+                this.Controls.Count - 1,
                 vectors,
                 vector => vector.key is string tag
                     ? tag == TagComparer.FavoriteTag

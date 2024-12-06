@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary.Components
 {
@@ -123,8 +123,11 @@ namespace MediaLibrary.Components
             this.existingTags.Dock = DockStyle.Bottom;
             this.existingTags.Name = "existingTags";
             this.existingTags.TabIndex = 2;
+            this.existingTags.EditClick += this.ExistingTags_EditClick;
             this.Controls.Add(this.existingTags);
         }
+
+        public event EventHandler EditClick;
 
         public event EventHandler Finished;
 
@@ -137,6 +140,9 @@ namespace MediaLibrary.Components
         public event EventHandler ScannedForward;
 
         public event EventHandler Stopped;
+
+        [DefaultValue(true)]
+        public bool AllowEdit { get => this.existingTags.AllowEdit; set => this.existingTags.AllowEdit = value; }
 
         [Category("Data")]
         public IList<SearchResult> PreviewItems
@@ -197,6 +203,11 @@ namespace MediaLibrary.Components
             {
                 PreviewControl.MediaDisplays[selected].Update(items, this.displayInstances[selected]);
             }
+        }
+
+        private void ExistingTags_EditClick(object sender, EventArgs e)
+        {
+            this.EditClick?.Invoke(sender, e);
         }
 
         private class Display
