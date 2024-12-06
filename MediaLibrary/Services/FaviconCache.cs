@@ -141,7 +141,7 @@ namespace MediaLibrary.Services
 
         private static List<Uri> FindFaviconLinks(HtmlDocument doc, Uri baseUri)
         {
-            UpdateBasUri(doc, ref baseUri);
+            UpdateBaseUri(doc, ref baseUri);
             var links = doc.DocumentNode.SelectNodes("//link[@href][@rel='icon' or @rel='shortcut icon' or @rel='apple-touch-icon']") ?? Enumerable.Empty<HtmlNode>();
             return links.Select(l => GetBaseRelativeHref(l, baseUri)).ToList();
         }
@@ -221,7 +221,7 @@ namespace MediaLibrary.Services
             return null;
         }
 
-        private static void UpdateBasUri(HtmlDocument doc, ref Uri baseUri)
+        private static void UpdateBaseUri(HtmlDocument doc, ref Uri baseUri)
         {
             var baseNode = doc.DocumentNode.SelectSingleNode("/html/head/base[@href]");
             if (baseNode != null)
