@@ -97,7 +97,11 @@ export class TagListEditorComponent implements OnChanges {
             case 32:
                 // TODO: Handle different cursor positions.
                 this.inputValue.split(' ').filter(t => !!t).forEach(t => {
-                    this.addTag(t);
+                    if (t[0] == '-') {
+                        this.rejectTag(t.slice(1));
+                    } else {
+                        this.addTag(t);
+                    }
                 });
                 this.inputValue = '';
                 event.preventDefault();
