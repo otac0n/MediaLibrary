@@ -86,77 +86,120 @@ namespace MediaLibrary.Views
 
         private async Task LoadNextComparison(int? leftIndex = null, int? rightIndex = null)
         {
-            int RandomIndex(Mode mode = Mode.PickByFrequency, int? avoid = null)
+            int RandomIndexUniform(int? avoid = null)
             {
-                switch (mode)
+                if (avoid == null)
                 {
-                    case Mode.Uniform:
-                        {
-                            if (avoid == null)
-                            {
-                                return this.random.Next(this.searchResults.Count);
-                            }
-
-                            var ix = this.random.Next(this.searchResults.Count - 1);
-                            if (ix >= avoid)
-                            {
-                                ix += 1;
-                            }
-
-                            return ix;
-                        }
-
-                    case Mode.PickByFrequency:
-                        {
-                            var indices = Enumerable.Range(0, this.searchResults.Count);
-                            if (avoid is int avoidVavlue)
-                            {
-                                indices = indices.Where(i => i != avoidVavlue);
-                            }
-
-                            var power = indices.Select(i => (index: i, power: 1.0 / this.ratingsInverseFrequency[this.searchResults[i].Hash])).OrderBy(i => i.power).ToList();
-                            var total = power.Sum(p => p.power);
-
-                            var target = this.random.NextDouble() * total;
-                            var acc = 0.0;
-                            for (var i = 0; i < power.Count - 1; i++)
-                            {
-                                acc += power[i].power;
-                                if (acc >= target)
-                                {
-                                    return power[i].index;
-                                }
-                            }
-
-                            return power[power.Count - 1].index;
-                        }
+                    return this.random.Next(this.searchResults.Count);
                 }
 
-                throw new NotImplementedException();
+                var ix = this.random.Next(this.searchResults.Count - 1);
+                if (ix >= avoid)
+                {
+                    ix += 1;
+                }
+
+                return ix;
             }
 
-            int leftIx, rightIx;
-            if (leftIndex == null)
+            int RandomIndexInverseRatings(int? avoid = null)
             {
-                if (rightIndex == null)
+                var indices = Enumerable.Range(0, this.searchResults.Count);
+                if (avoid is int avoidVavlue)
                 {
-                    leftIx = RandomIndex();
-                    rightIx = RandomIndex(mode: Mode.Uniform, avoid: leftIx);
+                    indices = indices.Where(i => i != avoidVavlue);
+                }
+
+                var power = indices.Select(i => (index: i, power: 1.0 / this.ratingsInverseFrequency[this.searchResults[i].Hash])).OrderBy(i => i.power).ToList();
+                var total = power.Sum(p => p.power);
+
+                var target = this.random.NextDouble() * total;
+                var acc = 0.0;
+                for (var i = 0; i < power.Count - 1; i++)
+                {
+                    acc += power[i].power;
+                    if (acc >= target)
+                    {
+                        return power[i].index;
+                    }
+                }
+
+                return power[power.Count - 1].index;
+            }
+
+            bool RandomBit() => this.random.Next(2) > 0;
+
+            (int, int) PickNext()
+            {
+                int leftIx, rightIx;
+
+                if (leftIndex == null)
+                {
+                    if (rightIndex == null)
+                    {
+                        leftIx = RandomIndexInverseRatings();
+                        rightIx = RandomIndexUniform(avoid: leftIx);
+                    }
+                    else
+                    {
+                        rightIx = rightIndex.Value;
+                        leftIx = RandomIndexInverseRatings(avoid: rightIx);
+                    }
                 }
                 else
                 {
-                    rightIx = rightIndex.Value;
-                    leftIx = RandomIndex(avoid: rightIx);
+                    leftIx = leftIndex.Value;
+                    rightIx = RandomIndexInverseRatings(avoid: leftIx);
                 }
-            }
-            else
-            {
-                leftIx = leftIndex.Value;
-                rightIx = RandomIndex(avoid: leftIx);
+
+                return (leftIx, rightIx);
             }
 
-            var leftResult = this.searchResults[leftIx];
-            var rightResult = this.searchResults[rightIx];
+            (int, SearchResult, int, SearchResult) GetNextResults()
+            {
+                int leftIx, rightIx;
+                SearchResult leftResult, rightResult;
+                bool rejected;
+                do
+                {
+                    (leftIx, rightIx) = PickNext();
+                    leftResult = this.searchResults[leftIx];
+                    rightResult = this.searchResults[rightIx];
+
+                    var people = leftResult.People.Count;
+                    var tags = leftResult.Tags.Count;
+                    var total = people + tags;
+
+                    rejected = RandomBit();
+
+                    if (rejected && total > 0)
+                    {
+                        var personOrTag = Random.Shared.Next(total);
+                        if (personOrTag < people)
+                        {
+                            var person = leftResult.People.ToArray()[personOrTag];
+                            if (!rightResult.People.Contains(person))
+                            {
+                                rejected = false;
+                            }
+                        }
+                        else
+                        {
+                            personOrTag -= people;
+                            var tag = leftResult.Tags.ToArray()[personOrTag];
+                            if (!rightResult.Tags.Contains(tag))
+                            {
+                                rejected = false;
+                            }
+                        }
+                    }
+                }
+                while (rejected);
+
+                return (leftIx, leftResult, rightIx, rightResult);
+            }
+
+            var (leftIx, leftResult, rightIx, rightResult) = GetNextResults();
             var leftRating = await this.index.GetRating(leftResult.Hash, this.category).ConfigureAwait(true) ?? new Rating(leftResult.Hash, this.category, Rating.DefaultRating, 0);
             var rightRating = await this.index.GetRating(rightResult.Hash, this.category).ConfigureAwait(true) ?? new Rating(rightResult.Hash, this.category, Rating.DefaultRating, 0);
             var left = new ItemInfo(leftIx, leftRating);
