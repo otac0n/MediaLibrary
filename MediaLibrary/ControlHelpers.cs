@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary
 {
@@ -260,7 +260,19 @@ namespace MediaLibrary
             control.UpdateControlsCollection(items, create, (c, i) => true, update, destroy);
         }
 
+        public static void UpdateControlsCollection<TItem, TControl>(this Control control, int start, int length, IList<TItem> items, Func<TItem, TControl> create, Action<TControl, TItem> update, Action<TControl> destroy)
+            where TControl : Control
+        {
+            control.UpdateControlsCollection(start, length, items, create, (c, i) => true, update, destroy);
+        }
+
         public static void UpdateControlsCollection<TItem, TControl>(this Control control, IList<TItem> items, Func<TItem, TControl> create, Func<TControl, TItem, bool> canUpdate, Action<TControl, TItem> update, Action<TControl> destroy)
+            where TControl : Control
+        {
+            control.UpdateControlsCollection(0, control.Controls.Count, items, create, canUpdate, update, destroy);
+        }
+
+        public static void UpdateControlsCollection<TItem, TControl>(this Control control, int start, int length, IList<TItem> items, Func<TItem, TControl> create, Func<TControl, TItem, bool> canUpdate, Action<TControl, TItem> update, Action<TControl> destroy)
             where TControl : Control
         {
             void RemoveAndDestroy(int index, TControl toDestroy)
@@ -273,7 +285,7 @@ namespace MediaLibrary
             control.SuspendLayout();
             try
             {
-                if (items.Count == 0)
+                if (items.Count == 0 && start == 0 && length >= control.Controls.Count)
                 {
                     foreach (var child in control.Controls)
                     {
@@ -284,11 +296,14 @@ namespace MediaLibrary
                 }
                 else
                 {
-                    var write = 0;
+                    var tail = control.Controls.Count - (start + length);
+                    int End() => control.Controls.Count - tail;
+
+                    var write = start;
                     foreach (var item in items)
                     {
                         var updated = false;
-                        if (write < control.Controls.Count)
+                        if (write < End())
                         {
                             var child = (TControl)control.Controls[write];
                             if (canUpdate(child, item))
@@ -313,7 +328,7 @@ namespace MediaLibrary
                         write++;
                     }
 
-                    while (write < control.Controls.Count)
+                    while (write < End())
                     {
                         var child = (TControl)control.Controls[write];
                         RemoveAndDestroy(write, child);
