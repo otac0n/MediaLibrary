@@ -33,7 +33,8 @@ prop <PropertyPredicate>
     / property:atom { new PropertyPredicate(property) }
 
 atom
-    = str:([^-" \t\r\n:(){}[\]<>][^" \t\r\n:(){}[\]<>]*)
+    = str:([^-"“ \t\r\n:(){}[\]<>][^"“ \t\r\n:(){}[\]<>]*)
+    / '“' str:([^”] / '”' t:'”' { t })+ ('”' / EOF) { string.Concat(str) }
     / '"' str:([^"] / '"' t:'"' { t })+ ('"' / EOF) { string.Concat(str) };
 
 _ = "" WS?;
