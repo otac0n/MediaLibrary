@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary.Storage.Search
 {
@@ -6,6 +6,7 @@ namespace MediaLibrary.Storage.Search
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using MediaLibrary.Search;
     using MediaLibrary.Search.Terms;
     using MediaLibrary.Storage.FileTypes;
@@ -70,6 +71,31 @@ namespace MediaLibrary.Storage.Search
             if (field == null)
             {
                 throw new ArgumentNullException(nameof(field));
+            }
+
+            static Regex GlobToRegex(string tag) =>
+                new Regex(
+                    string.Join(".*", tag.Split('*').Select(Regex.Escape)), // TODO: Remove catastrophic backtracking from "**"
+                    RegexOptions.Singleline);
+
+            // Tag globbing.
+            if (field.Value.Contains('*', StringComparison.Ordinal))
+            {
+                switch (field.Field)
+                {
+                    case "tag":
+                    case "rejected":
+                        // TODO: Handle the above in the DB engine for sargability?
+                    case "~":
+                    case "suggested":
+                    case "missing":
+                    case "add":
+                    case "*":
+                        var regex = GlobToRegex(field.Value);
+                        var matching = this.TagEngine.GetKnownTags().Where((Func<string, bool>)regex.IsMatch);
+                        return this.CompileDisjunction(
+                            matching.Select(t => this.CompileField(new FieldTerm(field.Field, t))));
+                }
             }
 
             switch (field.Field)
