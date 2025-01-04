@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary.Storage
 {
@@ -21,6 +21,7 @@ namespace MediaLibrary.Storage
     using MediaLibrary.Storage.FileTypes;
     using MediaLibrary.Storage.Search;
     using MediaLibrary.Storage.Search.Expressions;
+    using Microsoft.Extensions.FileSystemGlobbing;
     using Nito.AsyncEx;
     using TaggingLibrary;
 
@@ -36,10 +37,10 @@ namespace MediaLibrary.Storage
         private readonly CancellationTokenSource disposeCancel = new CancellationTokenSource();
         private readonly ChangeQueue<string, (int attempt, string path, FilePath filePath, HashInfo hashInfo, bool? hasDetails, bool forceRehash)> fileChangeQueue;
         private readonly Dictionary<string, FileSystemWatcher> fileSystemWatchers = new Dictionary<string, FileSystemWatcher>();
-        private readonly List<string> indexedPaths = new List<string>();
+        private readonly Dictionary<string, IndexedPath> indexedPaths = new Dictionary<string, IndexedPath>();
         private readonly string indexPath;
         private readonly WeakReferenceCache<long, Person> personCache = new WeakReferenceCache<long, Person>();
-        private readonly ChangeQueue<string, (int attempt, string path, bool forceRehash)> rescanQueue;
+        private readonly ChangeQueue<string, (int attempt, IndexedPath indexedPath, bool forceRehash)> rescanQueue;
         private readonly WeakReferenceCache<string, SearchResult> searchResultsCache = new WeakReferenceCache<string, SearchResult>();
         private readonly TagRulesParser tagRuleParser;
         private Task fileScanTask;
@@ -65,8 +66,8 @@ namespace MediaLibrary.Storage
                     return a;
                 });
 
-            this.rescanQueue = new ChangeQueue<string, (int attempt, string path, bool forceRehash)>(
-                getKey: item => item.path,
+            this.rescanQueue = new ChangeQueue<string, (int attempt, IndexedPath indexedPath, bool forceRehash)>(
+                getKey: item => item.indexedPath.Path,
                 merge: (a, b) =>
                 {
                     a.attempt += b.attempt;
@@ -213,31 +214,31 @@ namespace MediaLibrary.Storage
             this.HashTagAdded?.Invoke(this, new ItemAddedEventArgs<HashTag>(hashTag));
         }
 
-        public async Task AddIndexedPath(string path)
+        public async Task AddIndexedPath(IndexedPath indexedPath)
         {
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(indexedPath.Path))
             {
-                throw new ArgumentNullException(nameof(path));
+                throw new ArgumentNullException(nameof(indexedPath));
             }
 
-            if (!Path.IsPathRooted(path))
+            if (!Path.IsPathRooted(indexedPath.Path))
             {
-                throw new ArgumentOutOfRangeException(nameof(path));
+                throw new ArgumentOutOfRangeException(nameof(indexedPath));
             }
 
-            await this.IndexWriteAsync(conn => conn.ExecuteAsync(Queries.AddIndexedPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) })).ConfigureAwait(false);
+            await this.IndexWriteAsync(conn => conn.ExecuteAsync(IndexedPath.Queries.AddIndexedPath, indexedPath)).ConfigureAwait(false);
 
             lock (this.indexedPaths)
             {
-                this.indexedPaths.Add(path);
+                this.indexedPaths.Add(indexedPath.Path, indexedPath);
             }
 
-            this.rescanQueue.Enqueue((0, path, false));
+            this.rescanQueue.Enqueue((0, indexedPath, false));
             this.StartIndexRescanTask();
 
             lock (this.fileSystemWatchers)
             {
-                this.AddFileSystemWatcher(path);
+                this.AddFileSystemWatcher(indexedPath);
             }
         }
 
@@ -409,6 +410,15 @@ namespace MediaLibrary.Storage
                         tran.Commit();
                     }
                 }
+
+                if (!(await conn.QueryAsync<string>("SELECT name FROM pragma_table_info('IndexedPaths') WHERE name = 'Include'").ConfigureAwait(false)).Any())
+                {
+                    using (var tran = conn.BeginTransaction())
+                    {
+                        await conn.ExecuteAsync(Queries.CreateSchema_03_AddWildcardIncludeExclude, transaction: tran).ConfigureAwait(false);
+                        tran.Commit();
+                    }
+                }
             }).ConfigureAwait(false);
 
             var ruleCategories = await this.GetAllRuleCategories().ConfigureAwait(false);
@@ -418,28 +428,29 @@ namespace MediaLibrary.Storage
             {
                 lock (this.fileSystemWatchers)
                 {
-                    foreach (var path in indexedPaths)
+                    foreach (var indexedPath in indexedPaths)
                     {
-                        this.indexedPaths.Add(path);
-                        this.AddFileSystemWatcher(path);
+                        this.indexedPaths.Add(indexedPath.Path, indexedPath);
+                        this.AddFileSystemWatcher(indexedPath);
                     }
                 }
             }
         }
 
-        public bool IsPathIndexed(string fullPath)
+        public bool IsPathIndexed(string fullPath) => this.IsPathIndexed(fullPath, out _);
+
+        public bool IsPathIndexed(string fullPath, out IndexedPath indexedPath)
         {
             lock (this.indexedPaths)
             {
                 // TODO: Convert to a Trie.
                 // TODO: Case insensitive on such filesystems.
-                if (this.indexedPaths.Any(p => fullPath.StartsWith(p)))
-                {
-                    return true;
-                }
+                indexedPath = this.indexedPaths.Values
+                    .Where(p => fullPath.StartsWith(p.Path))
+                    .OrderByDescending(p => p.Path.Length)
+                    .FirstOrDefault();
+                return indexedPath != null;
             }
-
-            return false;
         }
 
         public async Task MergePeople(int targetId, int duplicateId)
@@ -547,7 +558,7 @@ namespace MediaLibrary.Storage
         public async Task RemoveIndexedPath(string path)
         {
             this.RemoveFileSystemWatcher(path);
-            await this.IndexWriteAsync(conn => conn.ExecuteAsync(Queries.RemoveIndexedPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) })).ConfigureAwait(false);
+            await this.IndexWriteAsync(conn => conn.ExecuteAsync(IndexedPath.Queries.RemoveIndexedPath, new { Path = path, PathRaw = PathEncoder.GetPathRaw(path) })).ConfigureAwait(false);
         }
 
         public Task RemovePerson(Person person) => this.IndexWriteAsync(conn => conn.ExecuteAsync(Person.Queries.RemovePerson, new { person.PersonId }));
@@ -572,9 +583,9 @@ namespace MediaLibrary.Storage
         {
             var indexedPaths = await this.GetIndexedPaths().ConfigureAwait(false);
 
-            foreach (var path in indexedPaths)
+            foreach (var indexedPath in indexedPaths)
             {
-                this.rescanQueue.Enqueue((0, path, forceRehash));
+                this.rescanQueue.Enqueue((0, indexedPath, forceRehash));
             }
 
             await this.StartIndexRescanTask().ConfigureAwait(false);
@@ -848,14 +859,14 @@ namespace MediaLibrary.Storage
             await this.IndexWriteAsync(conn =>
                 conn.ExecuteAsync(FilePath.Queries.AddFilePath, filePath)).ConfigureAwait(false);
 
-        private void AddFileSystemWatcher(string path)
+        private void AddFileSystemWatcher(IndexedPath indexedPath)
         {
             FileSystemWatcher watcher = null;
             try
             {
                 try
                 {
-                    watcher = new FileSystemWatcher(path);
+                    watcher = new FileSystemWatcher(indexedPath.Path, indexedPath.Include ?? "*");
                 }
                 catch (ArgumentException)
                 {
@@ -878,7 +889,7 @@ namespace MediaLibrary.Storage
                 watcher.Renamed += this.Watcher_Renamed;
                 watcher.Error += this.Watcher_Error;
                 watcher.EnableRaisingEvents = true;
-                this.fileSystemWatchers.Add(path, watcher);
+                this.fileSystemWatchers.Add(watcher.Path, watcher);
                 watcher = null;
             }
             finally
@@ -926,9 +937,9 @@ namespace MediaLibrary.Storage
             this.IndexReadAsync(conn =>
                 conn.QuerySingleOrDefaultAsync<HashInfo>(HashInfo.Queries.GetHashInfo, new { Hash = hash }));
 
-        private Task<List<string>> GetIndexedPaths() =>
+        private Task<List<IndexedPath>> GetIndexedPaths() =>
             this.IndexReadAsync(async conn =>
-                conn.Query<string, byte[], string>(Queries.GetIndexedPaths, (path, pathRaw) => PathEncoder.GetPath(path, pathRaw), splitOn: "PathRaw", buffered: false).ToList());
+                (await conn.QueryAsync<IndexedPath>(IndexedPath.Queries.GetIndexedPaths).ConfigureAwait(false)).ToList());
 
         private Task<List<(FilePath filePath, HashInfo hashInfo, bool hasDetails)>> GetIndexInfoUnder(string path) =>
             this.IndexReadAsync(async conn =>
@@ -1140,7 +1151,7 @@ namespace MediaLibrary.Storage
             }
         }
 
-        private Task RescanIndexedPath(string path, bool forceRehash = false)
+        private Task RescanIndexedPath(IndexedPath indexedPath, bool forceRehash = false)
         {
             return Task.Run(async () =>
             {
@@ -1156,7 +1167,7 @@ namespace MediaLibrary.Storage
                     }
                 }
 
-                foreach (var (filePath, hashInfo, hasDetails) in await this.GetIndexInfoUnder(path).ConfigureAwait(false))
+                foreach (var (filePath, hashInfo, hasDetails) in await this.GetIndexInfoUnder(indexedPath.Path).ConfigureAwait(false))
                 {
                     seen.Add(filePath.Path);
                     Scan(0, filePath.Path, filePath, hashInfo, hasDetails);
@@ -1164,11 +1175,14 @@ namespace MediaLibrary.Storage
 
                 try
                 {
-                    foreach (var file in FileEnumerable.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+                    foreach (var file in FileEnumerable.EnumerateFiles(indexedPath.Path, "*", SearchOption.AllDirectories))
                     {
-                        if (seen.Add(file))
+                        if (indexedPath.Matcher.Match(Path.GetFileName(file)).HasMatches)
                         {
-                            Scan(0, file, null, null, null);
+                            if (seen.Add(file))
+                            {
+                                Scan(0, file, null, null, null);
+                            }
                         }
                     }
                 }
@@ -1301,13 +1315,15 @@ namespace MediaLibrary.Storage
                 this.rescanQueue,
                 () => this.indexRescanTask,
                 task => this.indexRescanTask = task,
-                value => this.RescanIndexedPath(value.path, value.forceRehash));
+                value => this.RescanIndexedPath(value.indexedPath, value.forceRehash));
 
-        private void TouchFile(string fullPath, bool forceRehash = true, TimeSpan delay = default)
+        private void TouchFile(string fullPath, IndexedPath parentPath, bool forceRehash = true, TimeSpan delay = default)
         {
-            // TODO: This should detect if the path is inside some indexed folder.
-            this.fileChangeQueue.Enqueue((0, fullPath, null, null, null, forceRehash), delay);
-            this.StartFileScanTask();
+            if (parentPath.Matcher.Match(Path.GetFileName(fullPath)).HasMatches)
+            {
+                this.fileChangeQueue.Enqueue((0, fullPath, null, null, null, forceRehash), delay);
+                this.StartFileScanTask();
+            }
         }
 
         private async Task UpdateHashDetails(HashInfo hashInfo, FileStream file)
@@ -1383,7 +1399,7 @@ namespace MediaLibrary.Storage
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
             var path = e.FullPath;
-            if (this.IsPathIndexed(path))
+            if (this.IsPathIndexed(path, out var parentPath))
             {
                 // Avoid attempting to hash a newly created directory.
                 if (Directory.Exists(path))
@@ -1391,23 +1407,24 @@ namespace MediaLibrary.Storage
                     return;
                 }
 
-                this.TouchFile(path, delay: FileChangeDelay);
+                this.TouchFile(path, parentPath, delay: FileChangeDelay);
             }
         }
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
         {
             var path = e.FullPath;
-            if (this.IsPathIndexed(path))
+            if (this.IsPathIndexed(path, out var indexedPath))
             {
                 if (Directory.Exists(path))
                 {
-                    this.rescanQueue.Enqueue((0, path, false));
+                    indexedPath = new IndexedPath(path, indexedPath.Include, indexedPath.Exclude);
+                    this.rescanQueue.Enqueue((0, indexedPath, false));
                     this.StartIndexRescanTask();
                 }
                 else
                 {
-                    this.TouchFile(path, delay: FileCreatedDelay);
+                    this.TouchFile(path, indexedPath, delay: FileCreatedDelay);
                 }
             }
         }
@@ -1425,7 +1442,7 @@ namespace MediaLibrary.Storage
             var exception = e.GetException();
             if (exception is InternalBufferOverflowException && sender is FileSystemWatcher fsw)
             {
-                this.rescanQueue.Enqueue((0, fsw.Path, false), BufferOverflowDelay);
+                this.rescanQueue.Enqueue((0, this.indexedPaths[fsw.Path], false), BufferOverflowDelay);
                 this.StartIndexRescanTask();
             }
         }
@@ -1437,23 +1454,21 @@ namespace MediaLibrary.Storage
                 await this.RemoveFile(e.OldFullPath).ConfigureAwait(false);
             }
 
-            if (this.IsPathIndexed(e.FullPath))
+            if (this.IsPathIndexed(e.FullPath, out var parentPath))
             {
-                this.TouchFile(e.FullPath);
+                this.TouchFile(e.FullPath, parentPath);
             }
         }
 
         private static class Queries
         {
-            public static readonly string AddIndexedPath = @"
-                INSERT INTO IndexedPaths (Path, PathRaw) VALUES (@Path, @PathRaw)
-            ";
-
             public static readonly string CreateSchema = @"
                 CREATE TABLE IF NOT EXISTS IndexedPaths
                 (
                     Path text NOT NULL,
                     PathRaw blob NULL,
+                    Include text NULL,
+                    Exclude text NULL,
                     PRIMARY KEY (Path)
                 );
 
@@ -1609,24 +1624,16 @@ namespace MediaLibrary.Storage
                 ALTER TABLE HashInfo ADD COLUMN Version integer NOT NULL DEFAULT (0);
             ";
 
+            public static readonly string CreateSchema_03_AddWildcardIncludeExclude = @"
+                ALTER TABLE IndexedPaths ADD COLUMN Include text NULL;
+                ALTER TABLE IndexedPaths ADD COLUMN Exclude text NULL;
+            ";
+
             public static readonly string GetHashDetails = @"
                 SELECT
                     *
                 FROM HashDetails
                 WHERE Hash = @Hash
-            ";
-
-            public static readonly string GetIndexedPaths = @"
-                SELECT
-                    Path,
-                    PathRaw
-                FROM IndexedPaths
-            ";
-
-            public static readonly string RemoveIndexedPath = @"
-                DELETE FROM IndexedPaths
-                WHERE Path = @Path
-                AND ((@PathRaw IS NULL AND PathRaw IS NULL) OR (@PathRaw IS NOT NULL AND PathRaw = @PathRaw))
             ";
         }
 

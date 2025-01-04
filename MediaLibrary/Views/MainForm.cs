@@ -86,14 +86,14 @@ namespace MediaLibrary.Views
             {
                 if (addIndexedPathForm.ShowDialog(this) == DialogResult.OK)
                 {
-                    this.AddIndexedPath(addIndexedPathForm.SelectedPath);
+                    this.AddIndexedPath(new IndexedPath(addIndexedPathForm.SelectedPath, addIndexedPathForm.Include, addIndexedPathForm.Exclude));
                 }
             }
         }
 
-        private void AddIndexedPath(string selectedPath)
+        private void AddIndexedPath(IndexedPath indexedPath)
         {
-            this.TrackTask(this.index.AddIndexedPath(selectedPath));
+            this.TrackTask(this.index.AddIndexedPath(indexedPath));
         }
 
         private void AddPeopleMenuItem_Click(object sender, EventArgs e)
@@ -393,7 +393,7 @@ namespace MediaLibrary.Views
             {
                 foreach (var dir in (string[])e.Data.GetData(DataFormats.FileDrop))
                 {
-                    this.AddIndexedPath(dir);
+                    this.AddIndexedPath(new IndexedPath(dir, null, null));
                 }
             }
         }

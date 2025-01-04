@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary.Views
 {
@@ -43,6 +43,28 @@ namespace MediaLibrary.Views
                     throw;
                 }
             }
+        }
+
+        public string Include
+        {
+            get
+            {
+                var text = this.include.Text;
+                return string.IsNullOrEmpty(text) ? null : text;
+            }
+
+            set => this.include.Text = value ?? string.Empty;
+        }
+
+        public string Exclude
+        {
+            get
+            {
+                var text = this.exclude.Text;
+                return string.IsNullOrEmpty(text) ? null : text;
+            }
+
+            set => this.exclude.Text = value ?? string.Empty;
         }
 
         private void BrowseButton_Click(object sender, System.EventArgs e)
