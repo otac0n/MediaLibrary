@@ -381,6 +381,14 @@ namespace MediaLibrary.Storage.Search
 
                     return new SampleExpression(Math.Clamp(percent / 100.0, 0, 1));
 
+                case "sample":
+                    if (!double.TryParse(field.Value, out var sample))
+                    {
+                        throw new NotSupportedException($"Cannot use non-numeric value '{field.Value}' with field '{field.Field}'.");
+                    }
+
+                    return new SampleExpression(Math.Clamp(sample, 0, 1));
+
                 default:
                     throw new NotSupportedException();
             }
