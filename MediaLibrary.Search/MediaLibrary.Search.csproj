@@ -6,7 +6,7 @@
     <DebugType>Full</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <TargetFrameworks>net6.0-windows;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net9.0</TargetFrameworks>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/otac0n/MediaLibrary</PackageProjectUrl>
   </PropertyGroup>
