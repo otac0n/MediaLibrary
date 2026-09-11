@@ -1,4 +1,4 @@
-namespace MediaLibrary.Views
+﻿namespace MediaLibrary.Views
 {
     partial class EditTagsForm
     {
@@ -35,6 +35,7 @@ namespace MediaLibrary.Views
             this.suggestedTags = new System.Windows.Forms.FlowLayoutPanel();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.tagContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.addTagToAllMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeTagMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rejectTagMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.suggestionContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -110,9 +111,17 @@ namespace MediaLibrary.Views
             // tagContextMenu
             // 
             this.tagContextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
-            this.tagContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.removeTagMenuItem, this.rejectTagMenuItem });
+            this.tagContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.addTagToAllMenuItem, this.removeTagMenuItem, this.rejectTagMenuItem });
             this.tagContextMenu.Name = "tagContextMenu";
             this.tagContextMenu.Size = new System.Drawing.Size(181, 68);
+            this.tagContextMenu.Opening += this.TagContextMenu_Opening;
+            // 
+            // addTagToAllMenuItem
+            // 
+            this.addTagToAllMenuItem.Name = "addTagToAllMenuItem";
+            this.addTagToAllMenuItem.Size = new System.Drawing.Size(180, 32);
+            this.addTagToAllMenuItem.Text = "Add to all";
+            this.addTagToAllMenuItem.Click += this.AddTagToAllMenuItem_Click;
             // 
             // removeTagMenuItem
             // 
@@ -253,6 +262,7 @@ namespace MediaLibrary.Views
         private System.Windows.Forms.FlowLayoutPanel suggestedTags;
         private System.Windows.Forms.ToolTip toolTip;
         private System.Windows.Forms.ContextMenuStrip tagContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem addTagToAllMenuItem;
         private System.Windows.Forms.ToolStripMenuItem removeTagMenuItem;
         private System.Windows.Forms.ToolStripMenuItem rejectTagMenuItem;
         private System.Windows.Forms.ContextMenuStrip suggestionContextMenu;

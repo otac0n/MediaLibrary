@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary.Views
 {
@@ -271,6 +271,13 @@ namespace MediaLibrary.Views
             await this.AddTagAndUpdate(tag).ConfigureAwait(true);
         }
 
+        private async void AddTagToAllMenuItem_Click(object sender, EventArgs e)
+        {
+            var tagControl = (TagControl)((sender as ToolStripMenuItem)?.Owner as ContextMenuStrip)?.SourceControl;
+            var tag = tagControl.Text;
+            await this.AddTagAndUpdate(tag).ConfigureAwait(true);
+        }
+
         private void CancelRejectionMenuItem_Click(object sender, EventArgs e)
         {
             var context = ((sender as ToolStripMenuItem)?.Owner as ContextMenuStrip)?.SourceControl;
@@ -357,6 +364,16 @@ namespace MediaLibrary.Views
             var hasText = !string.IsNullOrEmpty(this.tagSearchBox.Text);
             this.addSelectedTagMenuItem.Enabled = hasText;
             this.rejectSelectedTagMenuItem.Enabled = hasText;
+        }
+
+        private void TagContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (sender == this.tagContextMenu && this.tagContextMenu.SourceControl is TagControl tagControl)
+            {
+                var tag = tagControl.Text;
+                this.addTagToAllMenuItem.Text = $"Add '{tag}' to all";
+                this.addTagToAllMenuItem.Visible = tagControl.Indeterminate;
+            }
         }
 
         private void SuggestionContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
