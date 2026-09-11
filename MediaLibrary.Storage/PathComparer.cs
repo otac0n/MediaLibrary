@@ -1,4 +1,4 @@
-// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the MIT license. Please see license.md for more information.
 
 namespace MediaLibrary.Storage
 {
@@ -32,21 +32,21 @@ namespace MediaLibrary.Storage
             var bParts = bPath.ToUpperInvariant().Split(MediaIndex.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
 
             var num = 0;
-            for (var j = 0; j < aParts.Length && j < bParts.Length; j++)
+            for (var i = 0; i < aParts.Length && i < bParts.Length; i++)
             {
                 if (aParts.Length != bParts.Length)
                 {
-                    if (j == aParts.Length - 1)
+                    if (i == aParts.Length - 1)
                     {
                         return 1;
                     }
-                    else if (j == bParts.Length - 1)
+                    else if (i == bParts.Length - 1)
                     {
                         return -1;
                     }
                 }
 
-                if ((num = string.Compare(aParts[j], bParts[j], StringComparison.CurrentCultureIgnoreCase)) != 0)
+                if ((num = string.Compare(aParts[i], bParts[i], StringComparison.OrdinalIgnoreCase)) != 0)
                 {
                     return num;
                 }
