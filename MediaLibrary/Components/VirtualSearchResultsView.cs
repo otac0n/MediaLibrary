@@ -63,7 +63,7 @@ namespace MediaLibrary.Components
                         return path == null ? null : Path.GetFileNameWithoutExtension(path);
                     },
                     value => value ?? string.Empty,
-                    (a, b) => StringComparer.CurrentCultureIgnoreCase.Compare(GetBestPath(a), GetBestPath(b)),
+                    (a, b) => StringComparer.CurrentCultureIgnoreCase.Compare(Path.GetFileNameWithoutExtension(GetBestPath(a)), Path.GetFileNameWithoutExtension(GetBestPath(b))),
                     getImage: r => GetImageKey(r)),
                 ColumnDefinition.Create(
                     Column.People,
