@@ -80,9 +80,10 @@ namespace MediaLibrary.Web.Hosting
                         san.AddDnsName(Environment.MachineName);
                         request.CertificateExtensions.Add(san.Build());
 
-                        var password = Guid.NewGuid().ToString();
-                        cert = request.CreateSelfSigned(now.AddMinutes(-4), now.AddYears(1));
-                        cert = new X509Certificate2(cert.Export(X509ContentType.Pfx, password), password, X509KeyStorageFlags.MachineKeySet);
+                        cert = request.CreateSelfSigned(now.AddMinutes(-5), now.AddYears(1));
+
+                        var pfxBytes = cert.Export(X509ContentType.Pfx);
+                        cert = X509CertificateLoader.LoadPkcs12(pfxBytes, password: null, keyStorageFlags: X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
 
                         store.Add(cert);
                     }
