@@ -2,6 +2,7 @@
 
 namespace MediaLibrary.Web.Controllers
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -39,7 +40,13 @@ namespace MediaLibrary.Web.Controllers
                 return this.NotFound();
             }
 
-            return new PhysicalFileResult(path, result.FileType);
+            var fileType = result.FileType;
+            if (!fileType.Contains('/', StringComparison.Ordinal))
+            {
+                fileType += "/other";
+            }
+
+            return new PhysicalFileResult(path, fileType);
         }
 
         [Route("")]
